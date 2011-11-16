@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="berkeleymapper" default="all">
+
+
+    <!-- BJS: instead of requiring the file below, just add the path to the JDK -->
+    <property name="jdk.home.1.6" value="/usr"/>
+
+    <!-- Uncomment the following property if no tests compilation is needed -->
+    <!--
+   <property name="skip.tests" value="true"/>
+    -->
+
+    <!-- Compiler options -->
+
+    <property name="compiler.debug" value="on"/>
+    <property name="compiler.generate.no.warnings" value="off"/>
+    <property name="compiler.args" value=""/>
+    <property name="compiler.max.memory" value="128m"/>
+    <patternset id="ignored.files">
+        <exclude name="**/CVS/**"/>
+        <exclude name="**/SCCS/**"/>
+        <exclude name="**/RCS/**"/>
+        <exclude name="**/rcs/**"/>
+        <exclude name="**/.DS_Store/**"/>
+        <exclude name="**/.svn/**"/>
+        <exclude name="**/.pyc/**"/>
+        <exclude name="**/.pyo/**"/>
+        <exclude name="**/*.pyc/**"/>
+        <exclude name="**/*.pyo/**"/>
+        <exclude name="**/.git/**"/>
+        <exclude name="**/*.hprof/**"/>
+        <exclude name="**/_svn/**"/>
+        <exclude name="**/.hg/**"/>
+    </patternset>
+    <patternset id="library.patterns">
+        <include name="*.zip"/>
+        <include name="*.war"/>
+        <include name="*.egg"/>
+        <include name="*.ear"/>
+        <include name="*.swc"/>
+        <include name="*.jar"/>
+    </patternset>
+    <patternset id="compiler.resources">
+        <include name="**/?*.properties"/>
+        <include name="**/?*.xml"/>
+        <include name="**/?*.gif"/>
+        <include name="**/?*.png"/>
+        <include name="**/?*.jpeg"/>
+        <include name="**/?*.jpg"/>
+        <include name="**/?*.html"/>
+        <include name="**/?*.dtd"/>
+        <include name="**/?*.tld"/>
+        <include name="**/?*.ftl"/>
+    </patternset>
+
+    <!-- JDK definitions -->
+
+    <property name="jdk.bin.1.6" value="${jdk.home.1.6}/bin"/>
+    <path id="jdk.classpath.1.6">
+    </path>
+
+    <property name="project.jdk.home" value="${jdk.home.1.6}"/>
+    <property name="project.jdk.bin" value="${jdk.bin.1.6}"/>
+    <property name="project.jdk.classpath" value="jdk.classpath.1.6"/>
+
+
+    <!-- Project Libraries -->
+
+    <!-- BJS: instead of listing each JAR, switched this to use the "fileset" mechanism -->
+    <path id="library.lib.classpath">
+        <fileset dir="${basedir}/lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+
+    <!-- Application Server Libraries -->
+
+    <!-- Modules -->
+
+
+    <!-- Module berkeleymapper -->
+
+    <dirname property="module.berkeleymapper.basedir" file="${ant.file}"/>
+
+
+    <property name="module.jdk.home.berkeleymapper" value="${project.jdk.home}"/>
+    <property name="module.jdk.bin.berkeleymapper" value="${project.jdk.bin}"/>
+    <property name="module.jdk.classpath.berkeleymapper" value="${project.jdk.classpath}"/>
+
+    <property name="compiler.args.berkeleymapper" value="${compiler.args}"/>
+
+    <property name="berkeleymapper.output.dir" value="${module.berkeleymapper.basedir}/out/production/berkeleymapper"/>
+    <property name="berkeleymapper.testoutput.dir" value="${module.berkeleymapper.basedir}/out/test/berkeleymapper"/>
+
+    <path id="berkeleymapper.module.bootclasspath">
+        <!-- Paths to be included in compilation bootclasspath -->
+    </path>
+
+    <path id="berkeleymapper.module.production.classpath">
+        <path refid="${module.jdk.classpath.berkeleymapper}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+    <!-- added by BJS -->
+    <path id="berkeleymapper.module.buildtests.classpath">
+        <path refid="${module.jdk.classpath.berkeleymapper}"/>
+        <pathelement location="${berkeleymapper.output.dir}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+    <!-- added by BJS -->
+    <path id="berkeleymapper.module.runtests.classpath">
+        <path refid="${module.jdk.classpath.berkeleymapper}"/>
+        <pathelement location="${berkeleymapper.output.dir}"/>
+        <pathelement location="${berkeleymapper.testoutput.dir}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+    <path id="berkeleymapper.runtime.production.module.classpath">
+        <pathelement location="${berkeleymapper.output.dir}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+    <path id="berkeleymapper.module.classpath">
+        <path refid="${module.jdk.classpath.berkeleymapper}"/>
+        <pathelement location="${berkeleymapper.output.dir}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+    <path id="berkeleymapper.runtime.module.classpath">
+        <pathelement location="${berkeleymapper.output.dir}"/>
+        <pathelement location="${berkeleymapper.testoutput.dir}"/>
+        <path refid="library.lib.classpath"/>
+    </path>
+
+
+    <patternset id="excluded.from.module.berkeleymapper">
+        <patternset refid="ignored.files"/>
+    </patternset>
+
+    <patternset id="excluded.from.compilation.berkeleymapper">
+        <patternset refid="excluded.from.module.berkeleymapper"/>
+    </patternset>
+
+    <path id="berkeleymapper.module.sourcepath">
+        <dirset dir="/">
+            <include name="src"/>
+        </dirset>
+    </path>
+
+
+
+    <target name="compile.module.berkeleymapper" depends="compile.module.berkeleymapper.production"
+            description="Compile module berkeleymapper"/>
+
+    <target name="compile.module.berkeleymapper.production" description="Compile module berkeleymapper; production classes">
+        <mkdir dir="${berkeleymapper.output.dir}"/>
+        <javac destdir="${berkeleymapper.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+               srcdir="src" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.berkeleymapper}/javac">
+            <compilerarg line="${compiler.args.berkeleymapper}"/>
+            <bootclasspath refid="berkeleymapper.module.bootclasspath"/>
+            <classpath refid="berkeleymapper.module.production.classpath"/>
+            <patternset refid="excluded.from.compilation.berkeleymapper"/>
+        </javac>
+
+        <copy todir="${berkeleymapper.output.dir}">
+            <fileset dir="${module.berkeleymapper.basedir}/src">
+                <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+    </target>
+
+
+
+    <target name="clean.module.berkeleymapper" description="cleanup module">
+        <delete dir="${berkeleymapper.output.dir}"/>
+        <delete dir="${berkeleymapper.testoutput.dir}"/>
+    </target>
+
+    <target name="init" description="Build initialization">
+        <!-- Perform any build initialization in this target -->
+    </target>
+
+    <target name="clean" depends="clean.module.berkeleymapper" description="cleanup all"/>
+
+    <target name="build.modules" depends="init, clean, compile.module.berkeleymapper, war" description="build all modules"/>
+
+    <target name="war" depends="compile.module.berkeleymapper.production">
+        <war destfile="dist/berkeleymapper.war" webxml="web/WEB-INF/web.xml">
+            <fileset dir="web"/>
+            <lib dir="lib" excludes="servlet-api.jar"/>
+            <classes dir="${berkeleymapper.output.dir}"/>
+            <classes dir="" includes="/xsl/*.*"/>
+        </war>
+    </target>
+
+
+    <target name="all" depends="build.modules" description="build all"/>
+
+</project>
