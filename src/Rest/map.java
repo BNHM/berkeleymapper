@@ -11,6 +11,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 
 
+// REST Service
 @Path("v2/map")
 public class map {
 
