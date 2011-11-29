@@ -1,149 +1,29 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-    <title>Google Maps JavaScript API v3 Example</title>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <title>Google Maps JavaScript API v3 Example</title>            
+        <LINK REL=StyleSheet HREF="css/berkeleymapper.css"> 
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery.url.js"></script>
+        <script type="text/javascript" src="js/berkeleymapper.js"></script>        
+    </head>
 
-    <style type="text/css">
-        html {
-            height: 100%
-        }
+    <body onload="initialize()">
+        <table id="wholePage">
+            <tr>
+                <td id="leftnav">
+                    Point Attributes visible on Screen (from REST service)
+                    <br>TODO: 
+                    <br>Area Measures on Map: http://gmaps-samples-v3.googlecode.com/svn/trunk/poly/poly_edit.html
+                </td>
 
-        body {
-            height: 100%;
-            margin: 0px;
-            padding: 0px
-        }
+                <td id="resultContainer"><div id="map"></div></td>
+            </tr>
+        </table>
+    </body>
 
-        #map_canvas {
-            height: 100%
-        }
-
-        .bmControl {
-            margin-top: 5px;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            margin-left: 5px;
-            cursor: pointer;
-            position: absolute;
-            text-align: left;
-            width: 85px;
-            right: 0px;
-            top: 0px;
-            z-index: 0;
-            font-family: Times;
-            background: white;
-        }
-
-        .bmControlTitle {
-            direction: ltr;
-            overflow-x: hidden;
-            overflow-y: hidden;
-            text-align: left;
-            position: relative;
-            font-family: Arial, sans-serif;
-            -webkit-user-select: none;
-            font-size: 13px;
-            padding-top: 1px;
-            padding-right: 6px;
-            padding-bottom: 1px;
-            -webkit-box-shadow: rgba(0, 0, 0, 0.398438) 0px 2px 4px;
-            box-shadow: rgba(0, 0, 0, 0.398438) 0px 2px 4px;
-            color: rgb(0, 0, 0);
-            border-top-width: 1px;
-            border-right-width: 1px;
-            border-bottom-width: 1px;
-            border-left-width: 1px;
-            border-top-style: solid;
-            border-right-style: solid;
-            border-bottom-style: solid;
-            border-left-style: solid;
-            border-top-color: rgb(113, 123, 135);
-            border-right-color: rgb(113, 123, 135);
-            border-bottom-color: rgb(113, 123, 135);
-            border-left-color: rgb(113, 123, 135);
-            padding-left: 6px;
-            font-weight: bold;
-            background-color: rgb(255, 255, 255);
-        }
-
-        .bmControlBox {
-            background-color: white;
-            z-index: -1;
-            padding-top: 2px;
-            border-right-width: 1px;
-            border-bottom-width: 1px;
-            border-left-width: 1px;
-            border-right-style: solid;
-            border-bottom-style: solid;
-            border-left-style: solid;
-            border-right-color: rgb(113, 123, 135);
-            border-bottom-color: rgb(113, 123, 135);
-            border-left-color: rgb(113, 123, 135);
-            border-top-width: 0px;
-            -webkit-box-shadow: rgba(0, 0, 0, 0.398438) 0px 2px 4px;
-            box-shadow: rgba(0, 0, 0, 0.398438) 0px 2px 4px;
-            position: relative;
-            text-align: left;
-            display: none;
-        }
-
-    </style>
-    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-    <script type="text/javascript" src="js/jquery.js"></script>
-    <script type="text/javascript" src="js/jquery.url.js"></script>
-    <script type="text/javascript" src="js/berkeleymapper.js"></script>
-
-
-</head>
-<body onload="initialize()">
-
-<div id=Services class="bmControl">
-    <div id="ServicesTitle" class="bmControlTitle">Services</div>
-
-    <div id="ServicesBox" class="bmControlBox">
-        County
-        <br>Ecoregion
-        <br><input type=checkbox>checkbox</input>
-    </div>
-
-</div>
-
-<div id=Points class="bmControl">
-    Points<br>
-    <select name=Points>
-        <option value=1>Default</option>
-        <option value=2>Colors</option>
-    </select>
-    <br><input type=checkbox name=errorradii>Errors
-    <br></bfr><input type=checkbox name=glyphs>Glyps
-</div>
-
-<div id=Layers class="bmControl">
-    Layers
-    <br><input type=checkbox name=layer1>Layer1
-    <br><input type=checkbox name=layer2>Layer2
-</div>
-
-<div id=Download class="bmControl">
-    Download
-    <br><select name=Points>
-    <option value=1>KML</option>
-    <option value=2>Tabs</option>
-</select>
-</div>
-
-<div id=Map class="bmControl">
-    <select name=Points>
-        <option value=1>Map</option>
-        <option value=2>Satellite</option>
-        <option value=3>Hybrid</option>
-        <option value=4>Topo</option>
-        <option value=5>DOQ</option>
-    </select>
-</div>
-
-<div id="map_canvas"></div>
-</body>
 </html>
