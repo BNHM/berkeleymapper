@@ -1,20 +1,20 @@
 html, body {
     margin: 0;
     padding: 0;
-	 height: 100%;
+    height: 100%;
     border: none;
 }
 
 #wholePage {
-   width: 100%;
-	height: 100%;
-	border-collapse: collapse; 
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse; 
 }
 
 #top, #footer {
-	 margin: 0;
+    margin: 0;
     padding: 0px;
-	 height: 0px;
+    height: 0px;
     color: #333;
     background-color: #ddd;
 }
@@ -24,22 +24,24 @@ html, body {
 }
 
 #leftnav {
-	 margin: 0;
-	 padding: 8px; 
+    margin: 0;
+    padding: 8px; 
     border-right: 1px solid gray;
     vertical-align: top;
-	min-width: 300px;
+    min-width: 300px;
 }
 
-#resultContainer { margin: 0;
-   padding: 0px;
-   height: 100%;
-	width: 100%;
+#resultContainer { 
+    margin: 0;
+    padding: 0px;
+    height: 100%;
+    width: 100%;
 }
-	
+
 #map {
-   margin: 0;
-	padding: 0; /*background-color: #FFFFE6 !important;*/
-	height: 100%;
-	background-color: white !important;
+    margin: 0;
+    padding: 0; /*background-color: #FFFFE6 !important;*/
+    height: 100%;
+    background-color: white !important;
 }
+
