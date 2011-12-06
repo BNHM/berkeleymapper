@@ -1,17 +1,115 @@
 
 var map;
-//var poly, map;
-//var polyPath = new google.maps.MVCArray;
-//var polyMarkers = [];
 var overlays = []; // array of user-defined overlays
 var overlayMarkers = []; // array of markers for user-defined overlays
+
+var query = $.parseQuery();
+var tabfile = query.tabfile;
+var pointMode = new Boolean(0);
+
+var ptLayer;
 
 function initialize() {
     
     // Initial State
     $("#leftnav").hide();
 
+    if (jQuery.url.param('tabfile')) {
+        pointMode = new Boolean(1);
+    }
     map = getMap();
+
+    // Setup Map type Options (add KML overlays to this??)
+    setMapTypes(map);
+    
+    // Point File Management
+    kmlfileName= getKMLFileName("default");
+    // uncomment this line for local testing (Enables Google to find SOME KML file)
+    kmlfileName = 'http://darwin.berkeley.edu/kmltest2.kml';
+    
+    
+    if (kmlfileName != null) {
+        setKMLLayer(kmlfileName);                                                
+        // Control Panel pops over from left side
+        var attControl = new PanelControl(document.createElement('DIV'), map);
+        google.maps.event.addDomListener(attControl, 'click', function() {
+            $("#leftnav").toggle("slide", {
+                direction: "left"
+            }, 1000, function() {
+                google.maps.event.trigger(map, "resize");                        
+            });                     
+        });     
+    }                     
+    
+    // Drawing Options
+    initializeDrawingManager();
+}
+
+function  setKMLLayer(a) {
+    if (null != ptLayer) {
+        ptLayer.setMap(null);
+    }
+    ptLayer = new google.maps.KmlLayer(a);
+    ptLayer.setMap(map);
+}
+
+// Construct the KMLFileName by calling the berkeleymapper service
+function getKMLFileName(option) {
+    if (jQuery.url.param("tabfile")) {
+        tabfile = jQuery.url.param("tabfile");
+    } else {
+        return null;
+    }
+    protocol = jQuery.url.attr('protocol') + '://';
+    if (jQuery.url.attr('host') != null) {
+        host = jQuery.url.attr('host'); 
+    } else {
+        return null;
+    }
+    if (jQuery.url.attr('port') != null) {
+        port = ':' + jQuery.url.attr('port');
+    } else {
+        port = '';
+    }
+    urlString = protocol + host + port + '/berkeleymapper/rest/v2/map';
+    kmlfile = urlString + '?tabfile=' + tabfile + "&option=" + option;
+    return kmlfile;
+}
+
+
+// Set the initial Map
+function getMap() {
+    var myOptions;
+    // Don't zoom/center if pointMode is true
+    if (pointMode) {    
+        myOptions = {            
+            mapTypeId: google.maps.MapTypeId.ROADMAP,        
+            panControl: true,
+            panControlOptions: {
+                position: google.maps.ControlPosition.LEFT_TOP
+            },
+            zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.LEFT_TOP
+            }
+        };
+    } else {
+        myOptions = {
+            zoom: 2,
+            center: new google.maps.LatLng(0,0),
+            mapTypeId: google.maps.MapTypeId.ROADMAP,        
+            panControl: true,
+            panControlOptions: {
+                position: google.maps.ControlPosition.LEFT_TOP
+            },
+            zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.LEFT_TOP
+            }
+        };  
+    }
+    
+    map = new google.maps.Map(document.getElementById('map'), myOptions);
     
     map.enableKeyDragZoom({
         visualEnabled: true,
@@ -25,184 +123,8 @@ function initialize() {
             on: "Turn off"
         }
     });
-    // This is the KML Point file
-    setKML('http://darwin.berkeley.edu/kmltest2.kml', map);
-
-    // Setup Map type Options (add KML overlays to this??)
-    setMapTypes(map);   
     
-    // Control Panel pops over from left side
-    var attControl = new PanelControl(document.createElement('DIV'), map);
-    google.maps.event.addDomListener(attControl, 'click', function() {
-        $("#leftnav").toggle("slide", {
-            direction: "left"
-        }, 1000, function() {
-            google.maps.event.trigger(map, "resize");                        
-        });                     
-    });                   
-    
-    // Darwing Manager for Polygons and Circles
-    var drawingManager = new google.maps.drawing.DrawingManager({
-        drawingMode: null,
-        drawingControl: true,
-        drawingControlOptions: {
-            position: google.maps.ControlPosition.TOP_CENTER,
-            drawingModes: [
-            google.maps.drawing.OverlayType.CIRCLE,
-            google.maps.drawing.OverlayType.POLYLINE,
-            google.maps.drawing.OverlayType.POLYGON
-            ]
-        },       
-        polygonOptions: {
-            fillColor: '#5555FF',
-            fillOpacity: 0.5,
-            strokeWeight: 3,
-            clickable: true,
-            editable: false,
-            zIndex: 1
-        }
-    });
-    drawingManager.setMap(map);
-    
-    google.maps.event.addDomListener(drawingManager, 'polylinecomplete', function(l) {
-        overlays.push(l);
-        index = overlays.length - 1;
-        
-        var lengthInMeters = Math.round(google.maps.geometry.spherical.computeLength(l.getPath()));
-        var lengthInFeet = Math.round(lengthInMeters*3.2808399);
-        var lengthInMiles = (lengthInFeet/5280).toFixed(4);
-
-        var contentString = "<div id='content'>User Defined Polyline:" +
-        "<br>Length in Meters: <i> " + lengthInMeters + " </i>" +
-        "<br>Length in Feet: <i> " + lengthInFeet + " </i>" +
-        "<br>Length in Miles: <i> " + lengthInMiles + " </i>" +
-        "<br>---------------" +
-        "<br><a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>" +
-        "</div>";
-    
-        var marker = new google.maps.Marker({
-            position: l.getBounds().getCenter(), 
-            map: map,
-            title:"User Polyline"
-        }); 
-        var infowindow = new google.maps.InfoWindow({            
-            content: contentString
-        });
-            
-        infowindow.open(map,marker);
-        google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
-        });
-        
-        drawingManager.setDrawingMode(null); // revert to normal map mode
-        
-        overlayMarkers.push(marker); 
-    });
-    
-    google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
-        overlays.push(c);
-        index = overlays.length - 1;
-        var lat = c.getCenter().lat().toFixed(4);
-        var lng = c.getCenter().lng().toFixed(4);
-        var radius = Math.round(c.getRadius());
-        var contentString = "<div id='content'>User Defined Point & Error Radius:" +
-        "<br>Center: <i>" +lat +", " + lng + "</i>" +
-        "<br>Error Radius In Meters: <i>" + radius + "</i>" +
-        "<br>Text: <i>Generated visually in BerkeleyMapper</i>" + 
-        "<br>---------------" +
-        "<br><a href='#' id='callback' onclick='callbackPoint(" + index + ");'>Callback</a>" +
-        "<br><a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>" +
-        "</div>";
-    
-        var marker = new google.maps.Marker({
-            position: c.getBounds().getCenter(), 
-            map: map,
-            title:"User Point & Error Radius"
-        }); 
-        var infowindow = new google.maps.InfoWindow({            
-            content: contentString
-        });
-            
-        infowindow.open(map,marker);
-        google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
-        });
-        
-        drawingManager.setDrawingMode(null); // revert to normal map mode
-        
-        overlayMarkers.push(marker); 
-    });
-        
-    google.maps.event.addDomListener(drawingManager, 'polygoncomplete', function(p) {        
-        overlays.push(p);        
-        index = overlays.length - 1;
-        
-        var areaInSqMeters = Math.round(google.maps.geometry.spherical.computeArea(p.getPath()));
-        var areaInAcres = Math.round(areaInSqMeters/4046.85642);
-        var areaInSqMiles = (areaInSqMeters*0.000000386102159).toFixed(4);
-                
-        var contentString = "<div id='content'>Polygon statistics:" + 
-        "<br>Sq Meters = " +areaInSqMeters  +
-        "<br>Acres = " + areaInAcres +
-        "<br>Sq Miles = " + areaInSqMiles +
-        "<br>---------------" +
-        "<br><a href='#' id='query' onclick='queryOverlay(" + index  + ");'>Query Points Inside</a>" +
-        "<br><a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>" +
-        "</div>";        
-
-        var marker = new google.maps.Marker({
-            position: p.getBounds().getCenter(), 
-            map: map,
-            title:"User Polygon"
-        }); 
-        var infowindow = new google.maps.InfoWindow({            
-            content: contentString
-        });
-            
-        infowindow.open(map,marker);
-        google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
-        });
-        
-        drawingManager.setDrawingMode(null); // revert to normal map mode
-        
-        overlayMarkers.push(marker);        
-    });
-
-}
-
-// Construct the KMLFileName by calling the berkeleymapper service
-function getKMLFileName(url) {
-    tabfile = url.param("tabfile");
-    protocol = url.attr('protocol');
-    host = url.attr('host');
-    port = url.attr('port');
-    urlString = protocol + '://' + host + ':' + port + '/berkeleymapper/rest/v2/map';
-    kmlfile = urlString + '?tabfile=' + tabfile;
-    return kmlfile;
-}
-
-
-// set the KML file
-function setKML(kmlfile, map) {
-    var ptLayer = new google.maps.KmlLayer(kmlfile);
-    ptLayer.setMap(map);
-}
-
-// Set the initial Map
-function getMap(map) {
-    var myOptions = {
-        mapTypeId: google.maps.MapTypeId.ROADMAP,        
-        panControl: true,
-        panControlOptions: {
-            position: google.maps.ControlPosition.LEFT_TOP
-        },
-        zoomControl: true,
-        zoomControlOptions: {
-            position: google.maps.ControlPosition.LEFT_TOP
-        }
-    };
-    return new google.maps.Map(document.getElementById('map'), myOptions);
+    return map;
 }
 
 // mapTypes DropDown
@@ -237,9 +159,7 @@ function setMapTypes(map) {
     });
 }
 
-function PanelControl(controlDiv, map) {
-    //controlDiv.style.padding = '5px';
-    
+function PanelControl(controlDiv, map) {    
     controlDiv.index = -1;  // value of -1 supersedes control position of others
     map.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
     var controlUI = document.createElement('DIV');
