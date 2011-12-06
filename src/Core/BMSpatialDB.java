@@ -17,17 +17,17 @@ import java.util.Iterator;
  */
 public class BMSpatialDB {
 
-    protected Object[] header;
     protected int numRows = 0;
+    protected Object[] columns;
     protected ArrayList rows = new ArrayList();
     protected GeometryFactory geometryFactory;
 
-    public BMSpatialDB(GeometryFactory geometryFactory) {
-        this.geometryFactory = geometryFactory;
+    public BMSpatialDB() {
+        this.geometryFactory = new GeometryFactory();
     }
 
     /**
-     * This returns a multipoint geometry representation of the Input File
+     * This returns a MultiPoint geometry representation of the ArrayList of rows
      * @return
      */
     public MultiPoint getMultiPointGeometry() {
@@ -36,7 +36,7 @@ public class BMSpatialDB {
         Coordinate[] coord = new Coordinate[length];
         int count = 0;
         while (i.hasNext()) {
-            BMRow r = (BMRow)i.next();
+            BMRow r = (BMRow) i.next();
             coord[count++] = r.getBMCoord();
         }
         return geometryFactory.createMultiPoint(coord);
@@ -68,12 +68,12 @@ public class BMSpatialDB {
             Coordinate cu = c[i];
             Iterator iRow = this.rows.iterator();
             while (iRow.hasNext()) {
-                BMRow r = (BMRow)iRow.next();
+                BMRow r = (BMRow) iRow.next();
                 if (r.getBMCoord().equals(cu)) {
                     BMCoordinates.add(r.getBMCoord());
                 }
             }
         }
-        return (BMCoordinate[])BMCoordinates.toArray(new BMCoordinate[BMCoordinates.size()]);
+        return (BMCoordinate[]) BMCoordinates.toArray(new BMCoordinate[BMCoordinates.size()]);
     }
 }
