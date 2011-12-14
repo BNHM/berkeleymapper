@@ -11,11 +11,14 @@ import java.util.Iterator;
  * To change this template use File | Settings | File Templates.
  */
 public class BMRow {
+    /*
     private double Latitude;
     private double Longitude;
     private double ErrorRadiusInMeters;
     private String Datum;
     private ArrayList fields = new ArrayList();
+     */
+
     private BMCoordinate BMCoord;
 
     /**
@@ -24,8 +27,14 @@ public class BMRow {
      * @param header
      * @param line
      */
-    public BMRow(Object[] header, String line) {
-        BMLineStringReader lsr = new BMLineStringReader(line);
+    public BMRow(int line, Object[] header, String lineStr) {
+        double Latitude = 0;
+        double Longitude = 0;
+        double ErrorRadiusInMeters = 0;
+        String Datum = "";
+        ArrayList fields = new ArrayList();
+
+        BMLineStringReader lsr = new BMLineStringReader(lineStr);
 
         Iterator lsri = lsr.iterator();
 
@@ -36,14 +45,15 @@ public class BMRow {
             try {
                 title = (String) header[fieldNum++];
             } catch (ArrayIndexOutOfBoundsException e) {
-                System.out.println("mismatch between values & titles?");
+                System.err.println("Title Elements out of bounds");
             }
             if (title != null && value != null) {
                 // Assign application specific field names
+                // TODO: how to recognize these from BM1 config files (need type??)
                 if (title.equalsIgnoreCase("Latitude")) {
-                    Latitude = Double.parseDouble(value);
+                    Latitude = round(Double.parseDouble(value), 5);
                 } else if (title.equalsIgnoreCase("Longitude")) {
-                    Longitude = Double.parseDouble(value);
+                    Longitude = round(Double.parseDouble(value), 5);
                 } else if (title.equalsIgnoreCase("ErrorRadiusInMeters")) {
                     ErrorRadiusInMeters = Double.parseDouble(value);
                 } else if (title.equalsIgnoreCase("Datum")) {
@@ -52,30 +62,18 @@ public class BMRow {
                 fields.add(new BMField(title, value));
             }
         }
-        this.BMCoord = new BMCoordinate(Latitude,Longitude, fields);
-    }
-
-    public double getLatitude() {
-        return Latitude;
-    }
-
-    public double getLongitude() {
-        return Longitude;
-    }
-
-    public double getErrorRadiusInMeters() {
-        return ErrorRadiusInMeters;
-    }
-
-    public String getDatum() {
-        return Datum;
+        if (Latitude != 0 && Longitude != 0) {
+            this.BMCoord = new BMCoordinate(line, Latitude, Longitude, ErrorRadiusInMeters, Datum, fields);
+        }
     }
 
     public BMCoordinate getBMCoord() {
         return BMCoord;
     }
 
-    public ArrayList getFields() {
-        return fields;
+    public static Double round(Double valueToRound, int numberOfDecimalPlaces) {
+        Double multipicationFactor = Math.pow(10, numberOfDecimalPlaces);
+        Double interestedInZeroDPs = valueToRound * multipicationFactor;
+        return Math.round(interestedInZeroDPs) / multipicationFactor;
     }
 }

@@ -17,7 +17,7 @@ import java.util.Iterator;
  */
 public class BMSpatialDB {
 
-    protected int numRows = 0;
+    public int numRows = 0;
     protected Object[] columns;
     protected ArrayList rows = new ArrayList();
     protected GeometryFactory geometryFactory;
@@ -25,6 +25,16 @@ public class BMSpatialDB {
     public BMSpatialDB() {
         this.geometryFactory = new GeometryFactory();
     }
+
+   public BMRow getRowAt(int i) {
+       // Need to calculate actual line Number we are asking for
+       // numRows is actual number of rows and rows.size is the number of the
+       // Array.  Add another 1 since array starts at 0.
+       int offset = (numRows - rows.size()) + 1;
+       int rowNum = i - offset;
+       BMRow r =  (BMRow)rows.get(rowNum);
+       return r;       
+   }
 
     /**
      * This returns a MultiPoint geometry representation of the ArrayList of rows
@@ -76,4 +86,6 @@ public class BMSpatialDB {
         }
         return (BMCoordinate[]) BMCoordinates.toArray(new BMCoordinate[BMCoordinates.size()]);
     }
+    
+    
 }

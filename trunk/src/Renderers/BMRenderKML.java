@@ -2,6 +2,7 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
+import Core.BMSpatialDB;
 import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.Arrays;
@@ -14,10 +15,12 @@ import java.util.Iterator;
  * Time: 5:38 PM
  * To change this template use File | Settings | File Templates.
  */
-public class BMRenderKML {
-     private String kml = "";
+public class BMRenderKML implements BMRendererInterface {
 
-    public  BMRenderKML(Geometry g) {
+    @Override
+    public String AllPoints(Geometry g) {
+
+        String kml = "";
         kml += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         kml += "<kml xmlns=\"http://earth.google.com/kml/2.2\">\n";
         kml += "<Document>\n";
@@ -37,11 +40,6 @@ public class BMRenderKML {
         kml += "    </LineStyle>\n";
         kml += "  </Style>\n";
 
-        /*
-                              <Point>
-                                      <coordinates>-106.4144400000,38.4041700000</coordinates>
-                              </Point>
-        */
         // Print Rows
         Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
         String name = "";
@@ -49,8 +47,7 @@ public class BMRenderKML {
             try {
                 BMCoordinate coord = (BMCoordinate) i2.next();
                 Iterator f = coord.fields.iterator();
-                //kml += "<Folder>\n";
-                //kml += "  <visibility>1</visibility>\n";
+
                 kml += "<Placemark>\n";
                 kml += "  <description>\n";
                 kml += "    <![CDATA[";
@@ -62,7 +59,6 @@ public class BMRenderKML {
                         name = field.getValue();
                     }
                     kml += field.getTitle() + " = " + field.getValue() + "<br/>";
-                    //System.out.print(field.getValue() + "   ");
                     count++;
                 }
                 kml += "    ]]>\n";
@@ -73,9 +69,6 @@ public class BMRenderKML {
                 kml += "  </Point>\n";
                 kml += "  <styleUrl>#red-star</styleUrl>\n";
                 kml += "</Placemark>\n";
-                //kml += "</Folder>\n";
-
-                //System.out.println("");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -83,8 +76,18 @@ public class BMRenderKML {
 
         kml += "</Document>\n";
         kml += "</kml>\n";
-    }
-    public String toString() {
         return kml;
     }
+
+    @Override
+    public String Record(int line, BMSpatialDB ptsFile) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry polygon) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+ 
 }

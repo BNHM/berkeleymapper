@@ -2,6 +2,7 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
+import Core.BMSpatialDB;
 import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.Arrays;
@@ -14,8 +15,11 @@ import java.util.Iterator;
  * Time: 5:38 PM
  * To change this template use File | Settings | File Templates.
  */
-public class BMRenderSimpleText {
-    public BMRenderSimpleText(Geometry g) {
+public class BMRenderSimpleText implements BMRendererInterface {
+    
+     @Override
+    public String AllPoints(Geometry g) {
+        String strRet = "";
         // Print Header
         Iterator i = Arrays.asList(g.getCoordinates()).iterator();
         while (i.hasNext()) {
@@ -23,12 +27,12 @@ public class BMRenderSimpleText {
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
-                System.out.print(field.getTitle() + "   ");
+                strRet += field.getTitle() + "   ";
             }
             break;
         }
-        System.out.println("");
-
+        strRet += "\n";
+        
         // Print Rows
         Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
         while (i2.hasNext()) {
@@ -38,12 +42,25 @@ public class BMRenderSimpleText {
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
-                System.out.print(field.getValue() + "   ");
+                strRet += field.getValue() + "   ";
             }
-            System.out.println("");
+            strRet += "\n";
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+        return strRet;
     }
+
+    @Override
+    public String Record(int line, BMSpatialDB ptsFile) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry polygon) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+   
+ 
 }
