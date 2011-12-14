@@ -1,4 +1,6 @@
-import Core.BMTabDelimitedFile;
+import Core.BMConfigAndTabFileReader;
+import Core.BMTabFileReader;
+import Renderers.BMRenderJSON;
 import Renderers.BMRenderKML;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
@@ -24,29 +26,41 @@ public class test {
         // Initial URL
         URL url = null;
         try {
-            url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
+            //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
+            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt");
+        } catch (MalformedURLException ex) {
+            ex.printStackTrace();
+        }
+        
+        URL configUrl = null;       
+        try {
+            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
         
         // Load the File
-        BMTabDelimitedFile f = null;
+        BMTabFileReader f = null;
         try {
-            f = new BMTabDelimitedFile(url);
+            //f = new BMTabFileReader(url,configUrl);
+            f = new BMTabFileReader(url);
         } catch (IOException ex) {
             Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
         }
                                
-
         // Adapt the postgres clustering fxn here to duplicate BerkeleyMapper functionality
-
+        
+        // Output points
+        BMRenderJSON json = new BMRenderJSON();
+        String output = json.AllPoints(f.getMultiPointGeometry());
+        String id = json.Record(2, f); 
         // Perform a spatial operation
-        Geometry subset = f.BMPointsInPolygon(createPolygon());
-
-        // Render Results
-        //new BMRenderKML(f.getMultiPointGeometry());
-        String output = new BMRenderKML(subset).toString();
+        //String output = new BMRenderJSON().renderPts(f.BMPointsInPolygon(createTestPolygon());
+        
+        //String output = new BMRenderKML(subset).toString();
         System.out.println(output);
+        System.out.println(id);
     }
 
     /**
@@ -54,11 +68,12 @@ public class test {
      *
      * @return
      */
-    private static Polygon createPolygon() {
+    private static Polygon createTestPolygon() {
         WKTReader r = new WKTReader(new GeometryFactory());
         Polygon p = null;
         try {
-            p = (Polygon) r.read("POLYGON ((38 -120, 39 -120, 39 -119, 38 -119, 38 -120))");
+            //p = (Polygon) r.read("POLYGON ((38 -120, 39 -120, 39 -119, 38 -119, 38 -120))");
+            p = (Polygon) r.read("POLYGON ((37.2523 -118.7987,37.2020 -118.2081,37.1122 -118.9305,37.2523 -118.7987))");
         } catch (ParseException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

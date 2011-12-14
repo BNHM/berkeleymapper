@@ -11,15 +11,22 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+ import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 /**
  *
  * @author jdeck
@@ -29,6 +36,7 @@ public class BMSession {
     private String session = null;
     final private String filesLocation = "/tmp/ms_tmp/";
     private File file = null;
+    private File configFile = null;
 
     /**
      * Used for testing purposes only
@@ -37,11 +45,15 @@ public class BMSession {
     public static void main(String args[]) {
         try {
             int i = 0;
-            while (i < 1000) {
-                BMSession bm = new BMSession(new URL("file:///foo.txt"));
-                System.out.println(bm.getFile().getAbsoluteFile());
-                i++;
-            }
+            //while (i < 1000) {
+            // NOTE: encoding on darwin.berkeley.edu/amphibiaweb.txt is strange--
+            // I spent 2 days researching this to no avail!!  It seems that this instance
+            // has a strange encoding but could not find the reason.
+            BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt"));
+            
+            System.out.println(bm.getFile().getAbsoluteFile());
+            //   i++;
+            //}
         } catch (IOException ex) {
             Logger.getLogger(BMSession.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -52,12 +64,23 @@ public class BMSession {
         UUID uuid = new UUID();
         this.session = String.valueOf(uuid);
         this.file = new File(filesLocation + session);
-        copy(url, file);
+        this.configFile = new File(filesLocation + session + ".xml");
+        String complete = url.getProtocol() + "://" + url.getHost() + ":" + url.getPort() + "/" + url.getFile();
+            if (!copy(url, file)) {
+                System.err.println("problem copying " + complete + " to local server to " + file.getAbsolutePath());
+            } else {
+                System.out.println("success copying " + complete + " to local server to " + file.getAbsolutePath());
+            }
+                  
     }
 
     public BMSession(String session) {
         this.session = session;
         this.file = new File(filesLocation + session);
+    }
+
+    public File getConfigFile() {
+        return configFile;
     }
 
     public File getFile() {
@@ -72,62 +95,16 @@ public class BMSession {
         return session;
     }
 
-    /**
-     * Save URL contents to a file.
-     */
-    public static boolean copy(URL from, File to) {
-        BufferedInputStream urlin = null;
-        BufferedOutputStream fout = null;
+    public static boolean copy(URL url, File file) {
         try {
-            int bufSize = 8 * 1024;
-            urlin = new BufferedInputStream(
-                    from.openConnection().getInputStream(),
-                    bufSize);
-
-            try {
-                fout = new BufferedOutputStream(new FileOutputStream(to), bufSize);
-            } catch (Exception e) {
-                System.out.println("unable to write file into out output directory on server");
-            }
-
-            copyPipe(urlin, fout, bufSize);
-        } catch (IOException ioex) {
+            ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.getChannel().transferFrom(rbc, 0, 1 << 24);
+        } catch (IOException ex) {
+            Logger.getLogger(BMSession.class.getName()).log(Level.SEVERE, null, ex);
             return false;
-        } catch (SecurityException sx) {
-            return false;
-        } finally {
-            if (urlin != null) {
-                try {
-                    urlin.close();
-                } catch (IOException cioex) {
-                }
-            }
-            if (fout != null) {
-                try {
-                    fout.close();
-                } catch (IOException cioex) {
-                }
-            }
         }
         return true;
     }
-
-    /**
-     * Reads data from the input and writes it to the output, until the end of the input
-     * stream.
-     * 
-     * @param in
-     * @param out
-     * @param bufSizeHint
-     * @throws IOException
-     */
-    public static void copyPipe(InputStream in, OutputStream out, int bufSizeHint)
-            throws IOException {
-        int read = -1;
-        byte[] buf = new byte[bufSizeHint];
-        while ((read = in.read(buf, 0, bufSizeHint)) >= 0) {
-            out.write(buf, 0, read);
-        }
-        out.flush();
-    }
+    
 }

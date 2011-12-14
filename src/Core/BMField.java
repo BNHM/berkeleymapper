@@ -8,8 +8,9 @@ package Core;
  * To change this template use File | Settings | File Templates.
  */
 public class BMField {
-    private String title;
-    private String value;
+
+    protected String title;
+    protected String value;
 
     public BMField(String title, String value) {
         this.title = title;
@@ -23,4 +24,6 @@ public class BMField {
     public String getValue() {
         return value;
     }
+
+   
 }

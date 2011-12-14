@@ -14,15 +14,17 @@ import java.net.URL;
  *
  * @author jdeck
  */
-public class BMDelimitedFileReader extends BMSpatialDB {
-        protected BufferedReader reader = null;
+public class BMFileReader extends BMSpatialDB {
 
-      /**
+    protected BufferedReader reader = null;
+    BMSession session;
+
+    /**
      * Pass in a URL (this is done the first time)
      */
-    public BMDelimitedFileReader(URL url) throws IOException {
-        BMSession session = new BMSession(url);
-        setReader(session);       
+    public BMFileReader(URL url) throws IOException {
+        this.session = new BMSession(url);
+        setReader();
     }
 
     /**
@@ -30,11 +32,12 @@ public class BMDelimitedFileReader extends BMSpatialDB {
      * @param file
      * @throws FileNotFoundException 
      */
-    public BMDelimitedFileReader(BMSession session) throws FileNotFoundException {
-        setReader(session);
+    public BMFileReader(BMSession session) throws FileNotFoundException {
+        this.session = session;
+        setReader();
     }
 
-    public void setReader(BMSession session) throws FileNotFoundException {
+    private void setReader() throws FileNotFoundException {
         reader = new BufferedReader(
                 new FileReader(
                 session.getFile()));
