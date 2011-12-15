@@ -91,7 +91,7 @@ public class BMSession {
         return filesLocation;
     }
 
-    public String getSession() {
+    public String getSessionString() {
         return session;
     }
 

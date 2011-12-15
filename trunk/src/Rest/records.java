@@ -35,7 +35,7 @@ public class records {
         try {
             f = new BMTabFileReader(sess);
         } catch (IOException e) {
-            ResponseBuilder rb = Response.ok("Session not active: " + sess.getSession());
+            ResponseBuilder rb = Response.status(204);
             return rb.build();
         }
 
@@ -47,8 +47,8 @@ public class records {
     @POST
     @Produces("application/json")
     public Response getRecords(
-            @QueryParam("session") String session,
-            @QueryParam("polygon") String polygon) throws MalformedURLException {
+            @FormParam("session") String session,
+            @FormParam("polygon") String polygon) throws MalformedURLException {
 
         GeometryFactory geometryFactory = new GeometryFactory();
 
@@ -58,7 +58,7 @@ public class records {
         try {
             f = new BMTabFileReader(sess);
         } catch (IOException e) {
-            ResponseBuilder rb = Response.ok("Session not active: " + sess.getSession());
+            ResponseBuilder rb = Response.status(204);
             return rb.build();
         }
 
