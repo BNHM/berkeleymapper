@@ -1,30 +1,32 @@
 package Rest;
 
 import Core.BMSession;
-import Core.BMTabFileReader;
+import Readers.BMTabFileReader;
 import Renderers.BMRenderJSON;
-import Renderers.BMRenderKML;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
-
 import java.net.MalformedURLException;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URL;
-import java.util.logging.Logger;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-// REST Service
+/**
+ * "allpoints" service returns a JSON representation of all of the points 
+ * present for the given session.  The JSON format returns the following fields:
+ * 
+ * line,lat,lng,radius,datum
+ * 
+ * http://johns-macbook-air.local:8080/berkeleymapper/v2/allpoints?session=<SESSION_STRING>
+ *
+ * An error returns an empty response with status code = 204
+ * @author jdeck
+ */
 @Path("allpoints")
 public class allpoints {
     
     @GET
     @Produces("application/json")
-    public Response getRelations(
+    public Response getAllPoints(
             @QueryParam("session") String session) throws MalformedURLException {
 
         GeometryFactory geometryFactory = new GeometryFactory();
@@ -35,7 +37,7 @@ public class allpoints {
         try {
             f = new BMTabFileReader(sess);
         } catch (IOException e) {
-            ResponseBuilder rb = Response.ok("");
+            ResponseBuilder rb = Response.status(204);
             return rb.build();
         }       
 

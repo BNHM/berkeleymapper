@@ -1,5 +1,9 @@
-package Core;
+package Readers;
 
+import Core.BMLineStringReader;
+import Core.BMRow;
+import Core.BMSession;
+import Readers.BMFileReader;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.io.*;

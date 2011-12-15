@@ -2,18 +2,14 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
-import Core.BMSpatialDB;
+import Readers.BMSpatialDB;
 import com.vividsolutions.jts.geom.Geometry;
-
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 11/9/11
- * Time: 5:38 PM
- * To change this template use File | Settings | File Templates.
+ * Render output results as Simple Text.  Useful for testing.
+ * @author jdeck
  */
 public class BMRenderSimpleText implements BMRendererInterface {
     

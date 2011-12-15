@@ -1,16 +1,10 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-package Core;
+package Readers;
 
-import com.vividsolutions.jts.geom.GeometryFactory;
-
-import java.io.*;
+import Core.BMRow;
+import Core.BMSession;
 import java.net.URL;
 import java.util.ArrayList;
 import java.io.*;
-import java.util.Iterator;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
