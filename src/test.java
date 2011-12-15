@@ -1,11 +1,8 @@
-import Core.BMConfigAndTabFileReader;
-import Core.BMTabFileReader;
+import Readers.BMTabFileReader;
 import Renderers.BMRenderJSON;
-import Renderers.BMRenderKML;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,11 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 11/9/11
- * Time: 2:49 PM
- * To change this template use File | Settings | File Templates.
+ * Class useful for testing outside of REST services
+ * @author jdeck
  */
 public class test {
     static GeometryFactory geometryFactory = new GeometryFactory();

@@ -7,14 +7,14 @@ package Renderers;
 import Core.BMCoordinate;
 import Core.BMField;
 import Core.BMRow;
-import Core.BMSpatialDB;
+import Readers.BMSpatialDB;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- *
+ * JSON Representation of BMRendererInterface
  * @author jdeck
  */
 public class BMRenderJSON implements BMRendererInterface {
@@ -22,7 +22,9 @@ public class BMRenderJSON implements BMRendererInterface {
     private String json = "";
 
     /**
-     * Render a points File as JSON
+     * Render a points File as JSON with the following fields:
+     * line,lat,lng,radius*,datum*
+     * "*" means this is optional
      * @param ptsFile
      * @return 
      */

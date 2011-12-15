@@ -1,11 +1,8 @@
 package Core;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 11/9/11
- * Time: 3:31 PM
- * To change this template use File | Settings | File Templates.
+ * Represent a common field value
+ * @author jdeck
  */
 public class BMField {
 

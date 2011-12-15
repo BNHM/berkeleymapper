@@ -1,34 +1,21 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package Core;
 
 import com.eaio.uuid.UUID;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
- import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+
 /**
- *
+ * Create a session by passing in a remote URL, copying file to local
+ * server, and assigning a session variable.
+ * 
+ * Remote file expects certain fields to identify location, including:
+ * Latitude,Longitude,ErrorRadiusInMeters,Datum
  * @author jdeck
  */
 public class BMSession {

@@ -1,19 +1,18 @@
-package Core;
+package Readers;
 
+import Core.BMCoordinate;
+import Core.BMRow;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.MultiPoint;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 11/9/11
- * Time: 8:10 PM
- * To change this template use File | Settings | File Templates.
+ * This class runs spatial operations on the given file.  It acts as
+ * a superclass for all of the file readers.
+ * @author jdeck
  */
 public class BMSpatialDB {
 

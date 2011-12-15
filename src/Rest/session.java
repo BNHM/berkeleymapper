@@ -1,12 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package Rest;
 
-// REST Service
-
-import Core.BMTabFileReader;
+import Readers.BMTabFileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -17,6 +11,20 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+/**
+ * "session" service converts a data file from an external server to a 
+ * tab-delimited file on the berkeleymapper server.
+ * Returns a text/html of the session string, which is given by a UUID.
+ * This session string is used for all future interactions with this datafile, 
+ * eliminating the need for remotely querying external file.
+ *  
+ * Example Use:
+ * http://jlocalhost:8080/berkeleymapper/v2/session?tabfile=http://darwin.berkeley.edu/amphibiaweb.txt
+ * 
+ *  An error returns an empty response with status code = 204
+ * 
+ * @author jdeck
+ */
 @Path("session")
 public class session {
     

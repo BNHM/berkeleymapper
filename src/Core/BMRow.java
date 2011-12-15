@@ -4,20 +4,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 11/9/11
- * Time: 3:40 PM
- * To change this template use File | Settings | File Templates.
+ * Represents a row in a data file
+ * @author jdeck
  */
 public class BMRow {
-    /*
-    private double Latitude;
-    private double Longitude;
-    private double ErrorRadiusInMeters;
-    private String Datum;
-    private ArrayList fields = new ArrayList();
-     */
+  
 
     private BMCoordinate BMCoord;
 
@@ -49,7 +40,6 @@ public class BMRow {
             }
             if (title != null && value != null) {
                 // Assign application specific field names
-                // TODO: how to recognize these from BM1 config files (need type??)
                 if (title.equalsIgnoreCase("Latitude")) {
                     Latitude = round(Double.parseDouble(value), 5);
                 } else if (title.equalsIgnoreCase("Longitude")) {
