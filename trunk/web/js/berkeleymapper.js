@@ -58,9 +58,7 @@ function initialize() {
     }                     
     
     // Drawing Options
-    initializeDrawingManager();
-    
-    
+    initializeDrawingManager();       
 }
 
 function setJSONPoints(session) {
