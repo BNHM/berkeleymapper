@@ -1,6 +1,42 @@
-<body>
-<form method="GET" action="/berkeleymapper/run.html">
-    Enter a URL w/ a tab-delimited text file: <input type=text name=tabfile value="http://darwin.berkeley.edu/amphibiaweb.txt">  </input>
-    <input type=submit>
-</form>
-</body>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <title>BerkeleyMapper</title>            
+        <LINK REL=StyleSheet HREF="css/berkeleymapper.css"> 
+        <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing,geometry"></script>        
+        <script type="text/javascript" src="js/keydragzoom.js"></script>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery.url.js"></script>
+        <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
+        <script type="text/javascript" src="js/berkeleymapper.js"></script>
+        <script type="text/javascript" src="js/drawingManager.js"></script> 
+                <script type="text/javascript" src="js/markerclusterer.js"></script> 
+
+        <script>
+     	
+        </script>
+    </head>
+
+    <body onload="initialize()">
+        <table id="wholePage">
+            <tr>
+                <td id="leftnav">
+                    Marker Styling
+                    <ul>
+                    <li><a href="#" onclick="setPtLayer();">Toggle</a></li>
+                    <li><a href="#" onclick="setKMLLayer(getKMLFileName('errorradii'));">Points w/ Error Radii</a></li>
+                    <li><a href="#" onclick="setKMLLayer(getKMLFileName('small'));">Small markers (for many points)</a></li>
+                    <li><a href="#" onclick="//no popups but like regular">Faster Loading (no popups available</a></li>
+                    </ul>
+                    Visible Attributes
+                    <div id="resultPoints"></div>
+                </td>
+                <td id="resultContainer"><div id="map"></div></td>
+            </tr>
+        </table>
+    </body>
+
+</html>

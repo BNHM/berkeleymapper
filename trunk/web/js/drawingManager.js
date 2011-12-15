@@ -60,8 +60,9 @@ function initializeDrawingManager() {
     google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
         overlays.push(c);
         index = overlays.length - 1;
-        var lat = c.getCenter().lat().toFixed(4);
-        var lng = c.getCenter().lng().toFixed(4);
+        // use 5 decimal places for approx 1 meter accuracy
+        var lat = c.getCenter().lat().toFixed(5);
+        var lng = c.getCenter().lng().toFixed(5);
         var radius = Math.round(c.getRadius());
         var contentString = "<div id='content'>User Defined Point & Error Radius:" +
         "<br>Center: <i>" +lat +", " + lng + "</i>" +
@@ -97,7 +98,7 @@ function initializeDrawingManager() {
         
         var areaInSqMeters = Math.round(google.maps.geometry.spherical.computeArea(p.getPath()));
         var areaInAcres = Math.round(areaInSqMeters/4046.85642);
-        var areaInSqMiles = (areaInSqMeters*0.000000386102159).toFixed(4);
+        var areaInSqMiles = (areaInSqMeters*0.000000386102159).toFixed(5);
                 
         var contentString = "<div id='content'>Polygon statistics:" + 
         "<br>Sq Meters = " +areaInSqMeters  +

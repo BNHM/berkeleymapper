@@ -2,35 +2,51 @@
 var map;
 var overlays = []; // array of user-defined overlays
 var overlayMarkers = []; // array of markers for user-defined overlays
+var markers = [];
 
 var query = $.parseQuery();
 var tabfile = query.tabfile;
-var pointMode = new Boolean(0);
+var pointMode = false;
 
 var ptLayer;
+var session = "";
 
 function initialize() {
     
-    // Initial State
+    // Hide Left Panel
     $("#leftnav").hide();
 
+    // Set pointMode
     if (jQuery.url.param('tabfile')) {
-        pointMode = new Boolean(1);
+        pointMode = true;
     }
+
+    // Initialize Session
+    $.ajax({
+        url: "/berkeleymapper/v2/session?tabfile=" + jQuery.url.param('tabfile'),
+        async: false,
+        success: function(data) {
+            session = data;
+        },
+        statusCode: {
+            204: function() {
+                alert('Unable to set session on server.');
+                pointMode = false;
+            }
+        }
+    });
+
+    // Initialize Map
     map = getMap();
 
     // Setup Map type Options (add KML overlays to this??)
     setMapTypes(map);
+        
     
-    // Point File Management
-    kmlfileName= getKMLFileName("default");
-    // uncomment this line for local testing (Enables Google to find SOME KML file)
-    kmlfileName = 'http://darwin.berkeley.edu/kmltest2.kml';
-    
-    
-    if (kmlfileName != null) {
-        setKMLLayer(kmlfileName);                                                
+    if (pointMode) {
+        setJSONPoints(session);
         // Control Panel pops over from left side
+        
         var attControl = new PanelControl(document.createElement('DIV'), map);
         google.maps.event.addDomListener(attControl, 'click', function() {
             $("#leftnav").toggle("slide", {
@@ -43,38 +59,148 @@ function initialize() {
     
     // Drawing Options
     initializeDrawingManager();
+    
+    
 }
 
-function  setKMLLayer(a) {
-    if (null != ptLayer) {
-        ptLayer.setMap(null);
-    }
-    ptLayer = new google.maps.KmlLayer(a);
-    ptLayer.setMap(map);
+function setJSONPoints(session) {
+    var url = "/berkeleymapper/v2/allpoints?session=" + session;
+    var bound = new google.maps.LatLngBounds();
+    $.ajax({
+        type: "GET",
+        url: url,        
+        dataType: "json",
+        success: function(data, success){
+            count = 0;
+            $.each(data, function() {
+                var lat, lng, line, radius;
+                
+                $.each(this, function(k, v) {
+                    if (k == "lat") lat = v;
+                    if (k == "lng") lng = v;
+                    if (k == "line") line = v;
+                    if (k == "radius") radius = v;                                       
+                });
+                
+                var latlng = new google.maps.LatLng(lat,lng);
+                    
+                
+                    
+                var marker = new google.maps.Marker({
+                    position: latlng, 
+                    map: map,
+                    title:"Point Data"
+                });  
+                   
+                // Add circle overlay and bind to marker
+                //var circle = new google.maps.Circle({
+                //    map: map,
+                //    radius: radius,    
+                //    fillColor: '#AA0000'
+                //});
+                //circle.bindTo('center', marker, 'position');
+                
+                google.maps.event.addListener(marker, 'click', (function(marker,count) {
+                    return function() {
+                        var infowindow = new google.maps.InfoWindow();
+                        infowindow.setContent(fetchRecord(line));
+                        infowindow.open(map,marker);
+                    }
+                })(marker,count));
+                
+                markers[count++]= marker;
+                bound.extend(marker.getPosition());
+            }); 
+            
+            map.fitBounds(bound);
+            setMarkerClustererOn();
+
+        }  
+    }); 
 }
 
-// Construct the KMLFileName by calling the berkeleymapper service
-function getKMLFileName(option) {
-    if (jQuery.url.param("tabfile")) {
-        tabfile = jQuery.url.param("tabfile");
-    } else {
-        return null;
-    }
-    protocol = jQuery.url.attr('protocol') + '://';
-    if (jQuery.url.attr('host') != null) {
-        host = jQuery.url.attr('host'); 
-    } else {
-        return null;
-    }
-    if (jQuery.url.attr('port') != null) {
-        port = ':' + jQuery.url.attr('port');
-    } else {
-        port = '';
-    }
-    urlString = protocol + host + port + '/berkeleymapper/rest/v2/map';
-    kmlfile = urlString + '?tabfile=' + tabfile + "&option=" + option;
-    return kmlfile;
+function fetchRecord(line) {
+    var retStr = "";
+    // Initialize Session
+    $.ajax({
+        url: "/berkeleymapper/v2/records?session=" + session + "&line=" + line,
+        async: false,
+        success: function(data) {
+            // Loop through JSON elements to construct response
+            $.each(data, function() {                
+                $.each(this, function(k, v) {
+                    retStr += k + "=" + v + "<br>";             
+                });
+            });
+        },
+        statusCode: {
+            204: function() {
+                return "unable to fetch results for line "+ line;
+            }
+        }
+    }); 
+    return retStr;
 }
+
+function fetchRecords(session, polygon) {
+    var retStr = "";
+    // Initialize Session
+    $.ajax({
+        type: "POST",
+        data: "session=" +session + "&polygon=" + polygon,
+        url: "/berkeleymapper/v2/records",
+        async: false,
+        success: function(data) {
+            // Loop through JSON elements to construct response
+            $.each(data, function() {                
+                $.each(this, function(k, v) {
+                    retStr += k + "=" + v + "<br>";             
+                });
+            });
+        },
+        statusCode: {
+            204: function() {
+                return "unable to fetch results for polygon";
+            }
+        }
+    }); 
+    return retStr;
+}
+
+function setMarkerClustererOn() {
+    var mcOptions = {
+        gridSize:25, 
+        averageCenter:true, 
+        title:"multiple markers",
+        zoomOnClick:false
+    };
+    mc = new MarkerClusterer(map,markers,mcOptions);
+            
+    google.maps.event.addListener(mc, 'click', function (c) {
+        var cb = new google.maps.LatLngBounds();
+        var m = c.getMarkers();
+        for (var i = 0; i < m.length; i++) {                    
+            ll = m[i].getPosition();
+            cb.extend(m[i].getPosition());
+        }                
+        // Create a WKT polygon from this bounding box
+        lat1 = cb.getNorthEast().lat();
+        lng1 = cb.getNorthEast().lng();
+        lat2 = cb.getSouthWest().lat();
+        lng2 = cb.getSouthWest().lng();
+        polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
+
+
+        $("#leftnav").show();
+        $("#resultPoints").html(fetchRecords(session, polygon));
+    
+    //    var infowindow = new google.maps.InfoWindow();
+    //   infowindow.setContent(c.getSize() + ' locations<br>' + fetchRecords(session, polygon));
+    //   myLatlng = new google.maps.LatLng(c.getCenter());
+    //   infowindow.setPosition(c.getCenter());
+    //   infowindow.open(map);
+    });
+} 
 
 
 // Set the initial Map
@@ -235,9 +361,25 @@ function removeOverlay(num) {
 }
 
 function queryOverlay(num) {
-    var encoded = google.maps.geometry.encoding.encodePath(overlays[num].getPath());
-    alert("send to server following encoding and query it: " + encoded );      
+    var path = overlays[num].getPath();
+    var polygon = "POLYGON ((";
+    var firstPoint = "";
+    for (var i = 0; i < path.getLength(); i++) {
+        var point = path.getAt(i);
+        var lat = point.lat().toFixed(5);
+        var lng = point.lng().toFixed(5);
+        if (i == 0) {
+            firstPoint += lat + " " + lng;
+        }        
+        polygon += lat + " " + lng;
+        polygon += ",";
+    }
+    polygon += firstPoint + "))";
+    
+    $("#leftnav").show();
+    $("#resultPoints").html(fetchRecords(session, polygon));
 }
+
 function callbackPoint(num) {
     alert("possible to send this data back to some calling application??");      
 }
