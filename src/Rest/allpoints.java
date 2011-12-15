@@ -1,5 +1,6 @@
 package Rest;
 
+import Core.BMSession;
 import Core.BMTabFileReader;
 import Renderers.BMRenderJSON;
 import Renderers.BMRenderKML;
@@ -24,17 +25,17 @@ public class allpoints {
     @GET
     @Produces("application/json")
     public Response getRelations(
-            @QueryParam("tabfile") String tabfile) throws MalformedURLException {
+            @QueryParam("session") String session) throws MalformedURLException {
 
         GeometryFactory geometryFactory = new GeometryFactory();
 
         // Load the File
-        URL url = new URL(tabfile);
+        BMSession sess = new BMSession(session);
         BMTabFileReader f = null;
         try {
-            f = new BMTabFileReader(url);
+            f = new BMTabFileReader(sess);
         } catch (IOException e) {
-            ResponseBuilder rb = Response.ok("Unable to fetch " + tabfile);
+            ResponseBuilder rb = Response.ok("");
             return rb.build();
         }       
 

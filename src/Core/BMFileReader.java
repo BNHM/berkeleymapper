@@ -42,4 +42,7 @@ public class BMFileReader extends BMSpatialDB {
                 new FileReader(
                 session.getFile()));
     }
+    public BMSession getSession() {
+        return session;
+    }
 }

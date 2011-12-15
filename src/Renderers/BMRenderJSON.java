@@ -8,6 +8,7 @@ import Core.BMCoordinate;
 import Core.BMField;
 import Core.BMRow;
 import Core.BMSpatialDB;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -63,7 +64,7 @@ public class BMRenderJSON implements BMRendererInterface {
         Iterator fields = coord.fields.iterator();
         json += "[\n{";
         while (fields.hasNext()) {
-            BMField field = (BMField)fields.next();
+            BMField field = (BMField) fields.next();
             json += "\"" + field.getTitle() + "\":\"" + field.getValue() + "\"";
             if (fields.hasNext()) {
                 json += ",";
@@ -74,7 +75,28 @@ public class BMRenderJSON implements BMRendererInterface {
     }
 
     @Override
-    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry box) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry polygon) {
+        Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+        Coordinate[] coords = subset.getCoordinates();
+        String json = "[\n";
+        for (int i = 0; i < coords.length; i++) {
+            BMCoordinate coord = (BMCoordinate) coords[i];
+            Iterator fields = coord.fields.iterator();
+            if (i != 0) {
+                json += ",";
+            }
+
+            json += "{";
+            while (fields.hasNext()) {
+                BMField field = (BMField) fields.next();
+                json += "\"" + field.getTitle() + "\":\"" + field.getValue() + "\"";
+                if (fields.hasNext()) {
+                    json += ",";
+                }
+            }
+            json += "}";
+        }
+        json += "\n]";
+        return json;
     }
 }
