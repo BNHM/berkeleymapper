@@ -2,14 +2,44 @@
 var map;
 var overlays = []; // array of user-defined overlays
 var overlayMarkers = []; // array of markers for user-defined overlays
-var markers = [];
+var markers = [];   // array of markers
+var circles = [];   // array of circles
+
 
 var query = $.parseQuery();
 var tabfile = query.tabfile;
 var pointMode = false;
 
-var ptLayer;
+var kmlLayer;        // KML Layer
 var session = "";
+//var urlRoot = "/berkeleymapper/v2/";    // When deployment target is exposed
+//var urlRoot = "/v2/";                   // When this is proxied
+
+var urlRoot = "v2/";                        // This one may not matter
+var mc;
+var NONE = 0;
+var CLUSTERING = 1;
+var MARKERS = 2;
+var mode = NONE;
+
+
+// subclass of Marker
+BMMarker.prototype = new google.maps.Marker();
+BMMarker.prototype.remove = function() { this.setMap(null); }
+
+function BMMarker(opts,lineNumber,radius) {
+    this.setValues(opts);
+    this.lineNumber = lineNumber;
+    this.radius = radius;
+}
+
+function  setKMLLayer(a) {
+    if (null != kmlLayer) {
+        kmlLayer.setMap(null);
+    }
+    kmlLayer = new google.maps.KmlLayer(a);
+    kmlLayer.setMap(map);
+}
 
 function initialize() {
     
@@ -19,23 +49,26 @@ function initialize() {
     // Set pointMode
     if (jQuery.url.param('tabfile')) {
         pointMode = true;
-    }
 
-    // Initialize Session
-    $.ajax({
-        url: "/berkeleymapper/v2/session?tabfile=" + jQuery.url.param('tabfile'),
-        async: false,
-        success: function(data) {
-            session = data;
-        },
-        statusCode: {
-            204: function() {
-                alert('Unable to set session on server.');
-                pointMode = false;
-            }
+        var configFile = "";
+        if (jQuery.url.param('configfile')) {
+                configFile += "&configfile=" + jQuery.url.param('configfile');
         }
-    });
-
+        // Initialize Session
+        $.ajax({
+            url: urlRoot + "session?tabfile=" + jQuery.url.param('tabfile') + configFile,
+            async: false,
+            success: function(data) {
+                session = data;
+            },
+            statusCode: {
+                204: function() {
+                    alert('Unable to set session on server.');
+                    pointMode = false;
+                }
+            }
+        });
+    }
     // Initialize Map
     map = getMap();
 
@@ -58,11 +91,14 @@ function initialize() {
     }                     
     
     // Drawing Options
-    initializeDrawingManager();       
+    initializeDrawingManager();
+
+    // Draw KML Layer (if exists)
+    setKMLLayer("http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml");
 }
 
 function setJSONPoints(session) {
-    var url = "/berkeleymapper/v2/allpoints?session=" + session;
+    var url = urlRoot + "allpoints?session=" + session;
     var bound = new google.maps.LatLngBounds();
     $.ajax({
         type: "GET",
@@ -82,22 +118,12 @@ function setJSONPoints(session) {
                 
                 var latlng = new google.maps.LatLng(lat,lng);
                     
-                
-                    
-                var marker = new google.maps.Marker({
-                    position: latlng, 
+                var marker = new BMMarker({
+                    position: latlng,
                     map: map,
-                    title:"Point Data"
-                });  
-                   
-                // Add circle overlay and bind to marker
-                //var circle = new google.maps.Circle({
-                //    map: map,
-                //    radius: radius,    
-                //    fillColor: '#AA0000'
-                //});
-                //circle.bindTo('center', marker, 'position');
-                
+                    title:"point"
+                },line,radius);
+
                 google.maps.event.addListener(marker, 'click', (function(marker,count) {
                     return function() {
                         var infowindow = new google.maps.InfoWindow();
@@ -105,14 +131,14 @@ function setJSONPoints(session) {
                         infowindow.open(map,marker);
                     }
                 })(marker,count));
-                
+
                 markers[count++]= marker;
                 bound.extend(marker.getPosition());
             }); 
             
             map.fitBounds(bound);
-            setMarkerClustererOn();
 
+            setMarkerClustererOn();
         }  
     }); 
 }
@@ -121,14 +147,16 @@ function fetchRecord(line) {
     var retStr = "";
     // Initialize Session
     $.ajax({
-        url: "/berkeleymapper/v2/records?session=" + session + "&line=" + line,
+        url: urlRoot +  "records?session=" + session + "&line=" + line,
         async: false,
         success: function(data) {
             // Loop through JSON elements to construct response
-            $.each(data, function() {                
+            $.each(data, function() {
+                retStr += "<ul>";
                 $.each(this, function(k, v) {
-                    retStr += k + "=" + v + "<br>";             
+                    retStr += "<li>" + k + ": " + v + "</li>";
                 });
+                retStr += "</ul>";
             });
         },
         statusCode: {
@@ -146,14 +174,16 @@ function fetchRecords(session, polygon) {
     $.ajax({
         type: "POST",
         data: "session=" +session + "&polygon=" + polygon,
-        url: "/berkeleymapper/v2/records",
+        url: urlRoot + "records",
         async: false,
         success: function(data) {
             // Loop through JSON elements to construct response
-            $.each(data, function() {                
+            $.each(data, function() {
+                retStr += "<ul>";
                 $.each(this, function(k, v) {
-                    retStr += k + "=" + v + "<br>";             
+                    retStr += "<li>" + k + ": " + v + "</li>";
                 });
+                retStr += "</ul>";
             });
         },
         statusCode: {
@@ -165,11 +195,49 @@ function fetchRecords(session, polygon) {
     return retStr;
 }
 
+// clears All markers
+function clearAllMarkers() {
+    if (mode == CLUSTERING) mc.clearMarkers();
+    if (mode == MARKERS) {
+        for (i in markers) {
+            markers[i].setMap(null);
+        }
+        for (i in circles) {
+            circles[i].setMap(null);
+        }
+    }
+    // clear Left Nav
+    $("#resultPoints").html("");
+}
+
+function setMarkersAndCirclesOn(drawRadius) {
+    clearAllMarkers();
+    mode = MARKERS;
+    if (markers) {
+        for (i in markers) {
+            markers[i].setMap(map);
+            // Add circle overlay and bind to marker
+            if (drawRadius && markers[i].radius > 0) {
+                var circle = new google.maps.Circle({
+                    map: map,
+                    radius: markers[i].radius,
+                    fillColor: '#AA0000'
+                });
+                circles[count++] = circle;
+                circle.bindTo('center', markers[i], 'position');
+            }
+        }
+    }
+}
+
 function setMarkerClustererOn() {
+    clearAllMarkers();
+    mode = CLUSTERING;
     var mcOptions = {
         gridSize:25, 
         averageCenter:true, 
         title:"multiple markers",
+        minimumClusterSize:1,
         zoomOnClick:false
     };
     mc = new MarkerClusterer(map,markers,mcOptions);
@@ -188,15 +256,8 @@ function setMarkerClustererOn() {
         lng2 = cb.getSouthWest().lng();
         polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
 
-
         $("#leftnav").show();
         $("#resultPoints").html(fetchRecords(session, polygon));
-    
-    //    var infowindow = new google.maps.InfoWindow();
-    //   infowindow.setContent(c.getSize() + ' locations<br>' + fetchRecords(session, polygon));
-    //   myLatlng = new google.maps.LatLng(c.getCenter());
-    //   infowindow.setPosition(c.getCenter());
-    //   infowindow.open(map);
     });
 } 
 

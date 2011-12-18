@@ -3,14 +3,9 @@ package Readers;
 import Core.BMLineStringReader;
 import Core.BMRow;
 import Core.BMSession;
-import Readers.BMFileReader;
-import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.io.*;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Reads tab delimited
@@ -20,19 +15,17 @@ import java.util.logging.Logger;
  * Time: 4:04 PM
  * To change this template use File | Settings | File Templates.
  */
-public class BMTabFileReader extends BMFileReader {
+public class BMTabFileReader extends BMSpatialFileReader {
 
     public BMTabFileReader(URL url) throws IOException {
-        super(url);
-        init();
+        super(url,null);
     }
 
-    public BMTabFileReader(BMSession session) throws FileNotFoundException, IOException {
+    public BMTabFileReader(BMSession session) throws IOException {
         super(session);
-        init();
     }
 
-    private void init() throws IOException {
+    public void exec() throws IOException {
         String strLine;
         //Read File Line By Line
         while ((strLine = reader.readLine()) != null) {
@@ -47,4 +40,6 @@ public class BMTabFileReader extends BMFileReader {
         //Close the input stream
         reader.close();
     }
+
+
 }

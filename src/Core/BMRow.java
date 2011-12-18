@@ -5,16 +5,18 @@ import java.util.Iterator;
 
 /**
  * Represents a row in a data file
+ *
  * @author jdeck
  */
 public class BMRow {
-  
+
 
     private BMCoordinate BMCoord;
 
     /**
      * Encapsulate knowledge of a row that has been passed in.  Stores all fields and has convenience
      * functions to get Latitude, Longitude, ErrorRadiusInMeters, and Datum
+     *
      * @param header
      * @param line
      */
@@ -40,14 +42,31 @@ public class BMRow {
             }
             if (title != null && value != null) {
                 // Assign application specific field names
+                // TODO: Log these errors when they occur
                 if (title.equalsIgnoreCase("Latitude")) {
-                    Latitude = round(Double.parseDouble(value), 5);
+                    try {
+                        Latitude = round(Double.parseDouble(value), 5);
+                    } catch (Exception e) {
+                        Latitude = 0;
+                    }
                 } else if (title.equalsIgnoreCase("Longitude")) {
-                    Longitude = round(Double.parseDouble(value), 5);
+                    try {
+                        Longitude = round(Double.parseDouble(value), 5);
+                    } catch (Exception e) {
+                        Longitude = 0;
+                    }
                 } else if (title.equalsIgnoreCase("ErrorRadiusInMeters")) {
-                    ErrorRadiusInMeters = Double.parseDouble(value);
+                    try {
+                        ErrorRadiusInMeters = Double.parseDouble(value);
+                    } catch (Exception e) {
+                        ErrorRadiusInMeters = 0;
+                    }
                 } else if (title.equalsIgnoreCase("Datum")) {
-                    Datum = value;
+                    try {
+                        Datum = value;
+                    } catch (Exception e) {
+                        Datum = "";
+                    }
                 }
                 fields.add(new BMField(title, value));
             }

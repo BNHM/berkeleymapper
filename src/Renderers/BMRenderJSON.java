@@ -7,9 +7,11 @@ package Renderers;
 import Core.BMCoordinate;
 import Core.BMField;
 import Core.BMRow;
-import Readers.BMSpatialDB;
+import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import org.json.simple.JSONObject;
+
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -25,7 +27,7 @@ public class BMRenderJSON implements BMRendererInterface {
      * Render a points File as JSON with the following fields:
      * line,lat,lng,radius*,datum*
      * "*" means this is optional
-     * @param ptsFile
+     * @param g
      * @return 
      */
     @Override
@@ -33,6 +35,7 @@ public class BMRenderJSON implements BMRendererInterface {
         // Get an iterator for all the rows in this set
         Iterator rows = Arrays.asList(g.getCoordinates()).iterator();
         json = "[\n";
+
         while (rows.hasNext()) {
             BMCoordinate coord = (BMCoordinate) rows.next();
             Iterator f = coord.fields.iterator();
@@ -46,7 +49,7 @@ public class BMRenderJSON implements BMRendererInterface {
                 json += ",\"radius\":" + coord.errorRadiusInMeters;
             }
             if (!coord.datum.equals("")) {
-                json += ",\"datum\":" + coord.datum;
+                json += ",\"datum\":\"" + JSONObject.escape(coord.datum)+"\"";
             }
             json += "}";
             if (rows.hasNext()) {
@@ -59,7 +62,7 @@ public class BMRenderJSON implements BMRendererInterface {
     }
 
     @Override
-    public String Record(int line, BMSpatialDB ptsFile) {
+    public String Record(int line, BMSpatialFileReader ptsFile) {
         BMRow r = ptsFile.getRowAt(line);
         BMCoordinate coord = r.getBMCoord();
         String json = "";
@@ -67,7 +70,7 @@ public class BMRenderJSON implements BMRendererInterface {
         json += "[\n{";
         while (fields.hasNext()) {
             BMField field = (BMField) fields.next();
-            json += "\"" + field.getTitle() + "\":\"" + field.getValue() + "\"";
+            json += "\"" + JSONObject.escape(field.getTitle()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
             if (fields.hasNext()) {
                 json += ",";
             }
@@ -77,7 +80,7 @@ public class BMRenderJSON implements BMRendererInterface {
     }
 
     @Override
-    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry polygon) {
+    public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
         Coordinate[] coords = subset.getCoordinates();
         String json = "[\n";
@@ -91,7 +94,7 @@ public class BMRenderJSON implements BMRendererInterface {
             json += "{";
             while (fields.hasNext()) {
                 BMField field = (BMField) fields.next();
-                json += "\"" + field.getTitle() + "\":\"" + field.getValue() + "\"";
+                json += "\"" + JSONObject.escape(field.getTitle()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
                 if (fields.hasNext()) {
                     json += ",";
                 }

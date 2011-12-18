@@ -69,7 +69,7 @@ function initializeDrawingManager() {
         "<br>Error Radius In Meters: <i>" + radius + "</i>" +
         "<br>Text: <i>Generated visually in BerkeleyMapper</i>" + 
         "<br>---------------" +
-        "<br><a href='#' id='callback' onclick='callbackPoint(" + index + ");'>Callback</a>" +
+        //"<br><a href='#' id='callback' onclick='callbackPoint(" + index + ");'>Callback</a>" +
         "<br><a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>" +
         "</div>";
     

@@ -2,7 +2,7 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
-import Readers.BMSpatialDB;
+import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.Arrays;
@@ -77,12 +77,12 @@ public class BMRenderKML implements BMRendererInterface {
     }
 
     @Override
-    public String Record(int line, BMSpatialDB ptsFile) {
+    public String Record(int line, BMSpatialFileReader ptsFile) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public String RecordsInPolygon(BMSpatialDB ptsFile, Geometry polygon) {
+    public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

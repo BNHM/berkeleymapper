@@ -23,12 +23,25 @@ html, body {
     margin: 0;
 }
 
+#resultPoints {
+    height:85%;
+    overflow:auto;
+}
+
+#styleOptions {
+    min-height:160px;
+    height:15%;
+    overflow:auto;
+}
+
 #leftnav {
     margin: 0;
     padding: 8px; 
     border-right: 1px solid gray;
     vertical-align: top;
     min-width: 300px;
+    height:100%;
+    overflow:scroll;
 }
 
 #resultContainer { 

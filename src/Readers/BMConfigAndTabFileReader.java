@@ -1,41 +1,55 @@
 package Readers;
 
+import Core.BMLineStringReader;
 import Core.BMRow;
 import Core.BMSession;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.io.*;
 import javax.xml.parsers.*;
+
 import org.w3c.dom.*;
 import org.xml.sax.*;
 
 /**
- * This class reads a BerkeleyMapper version 1 XML Configuration File.  It is
+ * This class reads a BerkeleyMapper version 1 XML Configuration File and associated
+ * Tab Delimited File. The Tab Delimited File is assumed NOT to have a header.  It is
  * not meant to replace all of the functionality of the previous XML configuration
  * file, but merely to replace essential functionality such as mapping column
- * headings to a TAB delimited text file without column headings.  
- * Certain features are hard-coded since the version 1 XML configuration file is 
+ * headings to a TAB delimited text file without column headings.
+ * Certain features are hard-coded since the version 1 XML configuration file is
  * deprecated and will never change.
+ *
  * @author jdeck
  */
-public class BMConfigAndTabFileReader extends BMFileReader {
+public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
-        super(url);
-        columns = initHeader(configURL);
-        init();
+        super(url, configURL);
+        if (configURL != null) {
+            columns = initHeader(configURL);
+            execConfig();
+        } else {
+            execTab();
+        }
     }
 
-    public BMConfigAndTabFileReader(BMSession session) throws FileNotFoundException, IOException {
+    public BMConfigAndTabFileReader(BMSession session) throws IOException {
         super(session);
-        columns = initHeader(new URL(session.getConfigFile().getAbsolutePath()));
-        init();
+        if (session.getMode() == session.CONFIG) {
+            columns = initHeader(new URL("file:///" + session.getConfigFile().getAbsolutePath()));
+            execConfig();
+        } else {
+            execTab();
+        }
     }
 
     /**
      * Populate columns[] Array from XML Configuration File
+     *
      * @param configURL
-     * @return 
+     * @return
      */
     private Object[] initHeader(URL configURL) {
         ArrayList columnArrayList = new ArrayList();
@@ -43,7 +57,7 @@ public class BMConfigAndTabFileReader extends BMFileReader {
         Document doc = parseXmlFile(configURL, false);
 
         NodeList nl = doc.getElementsByTagName("concept");
-        String alias, colorlist, datatype, order, viewlist;
+        String alias, colorlist, datatype, order, videwlist;
         for (int i = 0; i < nl.getLength(); i++) {
             NamedNodeMap nnm = nl.item(i).getAttributes();
             alias = "";
@@ -77,9 +91,14 @@ public class BMConfigAndTabFileReader extends BMFileReader {
         return columnArrayList.toArray();
     }
 
-    private void init() throws IOException {
+
+    /**
+     * execute the Config Option
+     *
+     * @throws IOException
+     */
+    private void execConfig() throws IOException {
         String strLine;
-        
         // This Reader assumes that the TAB Delimited data file starts on row
         // 1 with no header
         numRows = 1;
@@ -87,6 +106,27 @@ public class BMConfigAndTabFileReader extends BMFileReader {
             BMRow r = new BMRow(numRows, columns, strLine);
             rows.add(r);
             numRows++;
+        }
+        //Close the input stream
+        reader.close();
+    }
+
+    /**
+     * execute the Tab Only Options
+     *
+     * @throws IOException
+     */
+    private void execTab() throws IOException {
+        String strLine;
+        //Read File Line By Line
+        while ((strLine = reader.readLine()) != null) {
+            numRows++;
+            if (numRows == 1) {
+                columns = new BMLineStringReader(strLine).toArray();
+            } else {
+                BMRow r = new BMRow(numRows, columns, strLine);
+                rows.add(r);
+            }
         }
         //Close the input stream
         reader.close();
