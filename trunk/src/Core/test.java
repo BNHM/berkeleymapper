@@ -1,3 +1,6 @@
+package Core;
+
+import Readers.BMConfigAndTabFileReader;
 import Readers.BMTabFileReader;
 import Renderers.BMRenderJSON;
 import com.vividsolutions.jts.geom.*;
@@ -22,33 +25,40 @@ public class test {
         try {
             //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
+            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
             url = new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
         
-        URL configUrl = null;       
+        URL configUrl = null;
         try {
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
+            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
+             configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
-        
+
         // Load the File
-        BMTabFileReader f = null;
+        BMConfigAndTabFileReader f = null;
         try {
             //f = new BMTabFileReader(url,configUrl);
-            f = new BMTabFileReader(url);
+            f = new BMConfigAndTabFileReader(url,configUrl);
         } catch (IOException ex) {
             Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
         }
-                               
+
+        BMConfigAndTabFileReader fs = null;
+        try {
+             fs = new BMConfigAndTabFileReader(f.getSession());
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         // Adapt the postgres clustering fxn here to duplicate BerkeleyMapper functionality
         
         // Output points
-        BMRenderJSON json = new BMRenderJSON();
-        String output = json.AllPoints(f.getMultiPointGeometry());
-        String id = json.Record(2, f); 
+        String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry());
+        String id = new BMRenderJSON().Record(1, fs);
         // Perform a spatial operation
         //String output = new BMRenderJSON().renderPts(f.BMPointsInPolygon(createTestPolygon());
         

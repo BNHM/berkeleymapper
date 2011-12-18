@@ -1,45 +1,34 @@
 package Readers;
 
+import Core.BMCoordinate;
+import Core.BMRow;
 import Core.BMSession;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.MultiPoint;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 
 /**
- * Reads the file once the session has been set.
+ * Interface for all the File Reading Classes, expects a call to exec() to run
+ *
  * @author jdeck
  */
-public class BMFileReader extends BMSpatialDB {
+public interface BMFileReader {
 
-    protected BufferedReader reader = null;
-    BMSession session;
+    //void exec() throws IOException;
 
-    /**
-     * Pass in a URL (this is done the first time).  Sets the session.
-     */
-    public BMFileReader(URL url) throws IOException {
-        this.session = new BMSession(url);
-        setReader();
-    }
+    public BMRow getRowAt(int i);
 
-    /**
-     * Pass in a BMSession (when a session exists)
-     * @param file
-     * @throws FileNotFoundException 
-     */
-    public BMFileReader(BMSession session) throws FileNotFoundException {
-        this.session = session;
-        setReader();
-    }
+    public MultiPoint getMultiPointGeometry();
 
-    private void setReader() throws FileNotFoundException {
-        reader = new BufferedReader(
-                new FileReader(
-                session.getFile()));
-    }
-    public BMSession getSession() {
-        return session;
-    }
+    public Geometry BMPointsInPolygon(Geometry g);
+
+    public BMCoordinate[] expand(Geometry g);
+
 }

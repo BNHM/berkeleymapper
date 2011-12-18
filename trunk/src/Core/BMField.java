@@ -1,7 +1,7 @@
 package Core;
 
 /**
- * Represent a common field value
+ * Represent a common field value with a title and a value
  * @author jdeck
  */
 public class BMField {
