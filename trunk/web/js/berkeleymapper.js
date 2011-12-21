@@ -1,31 +1,48 @@
-
 var map;
-var overlays = []; // array of user-defined overlays
-var overlayMarkers = []; // array of markers for user-defined overlays
-var markers = [];   // array of markers
-var circles = [];   // array of circles
+var overlays = [];          // overlays that the User has drawn
+var overlayMarkers = [];    // markers to click on for the overlays that user has drawn
+var markers = [];           // Point markers
+var circles = [];           // Error radius circles for point markers
+var kmlLayers = [];         // KML Layers (defined by config file)
+var pointMode = false;      // pointMode = true draws special features for pointMapping                           
+var session = "";           // Session string for communicating w/ server
+var urlRoot = "v2/";        // URL Root to use for all calls
+var mc;                     // markerCluster control variable
 
 
-var query = $.parseQuery();
-var tabfile = query.tabfile;
-var pointMode = false;
-
-var kmlLayer;        // KML Layer
-var session = "";
-//var urlRoot = "/berkeleymapper/v2/";    // When deployment target is exposed
-//var urlRoot = "/v2/";                   // When this is proxied
-
-var urlRoot = "v2/";                        // This one may not matter
-var mc;
-var NONE = 0;
-var CLUSTERING = 1;
-var MARKERS = 2;
-var mode = NONE;
-
-
-// subclass of Marker
+// Subclass Marker so it can contain vital information to BM
 BMMarker.prototype = new google.maps.Marker();
-BMMarker.prototype.remove = function() { this.setMap(null); }
+BMMarker.prototype.remove = function() {
+    this.setMap(null);
+}
+
+// Adjust bounds to drawn polygon
+if (!google.maps.Polygon.prototype.getBounds) {
+    google.maps.Polygon.prototype.getBounds = function(latLng) {
+        var bounds = new google.maps.LatLngBounds();
+        var paths = this.getPaths();
+        var path;
+                
+        for (var p = 0; p < paths.getLength(); p++) {
+            path = paths.getAt(p);
+            for (var i = 0; i < path.getLength(); i++) {
+                bounds.extend(path.getAt(i));
+            }
+        }
+        return bounds;
+    }
+}
+
+// Adjust bounds for drawn polyline
+if (!google.maps.Polyline.prototype.getBounds) {
+    google.maps.Polyline.prototype.getBounds = function(latLng) {
+        var bounds = new google.maps.LatLngBounds();        
+        this.getPath().forEach(function(e) {
+            bounds.extend(e);
+        });
+        return bounds;                  
+    }
+}
 
 function BMMarker(opts,lineNumber,radius) {
     this.setValues(opts);
@@ -33,12 +50,117 @@ function BMMarker(opts,lineNumber,radius) {
     this.radius = radius;
 }
 
-function  setKMLLayer(a) {
-    if (null != kmlLayer) {
-        kmlLayer.setMap(null);
+// Initialize the Array of Available KML Layers
+function  setKMLLayers() {
+    if (!pointMode) {
+        return false;
     }
-    kmlLayer = new google.maps.KmlLayer(a);
-    kmlLayer.setMap(map);
+     
+    
+    // Populate kmlLayers Array (loop json
+    $.ajax({
+        url: urlRoot + "kmllayers?session=" + session,
+        async: false,
+        success: function(data){
+            count = 0;
+            $.each(data, function() {
+                var url, mode, title;
+
+                var kmlObj = new Object();
+                $.each(this, function(k, v) {
+                    if (k == "url") kmlObj.key = v;
+                    if (k == "visibility") kmlObj.visibility = v;   // visibile|hidden
+                    if (k == "zoom") kmlObj.zoom = v;               // expand|ignore
+                    if (k == "title") kmlObj.title = v;
+                });
+                // Set the google object
+                kmlObj.google = new google.maps.KmlLayer(kmlObj.key, {preserveViewport:true});
+                kmlLayers[count] = kmlObj;
+                count++;
+            });
+        },
+        error: function(result) {
+            alert("Error fetching KML");
+        },
+        statusCode: {
+            204: function() {
+            // fail quietly
+            }
+        }
+    });
+
+    // Loop through KML Layers Array and perform functions
+    for ( i =0; i < kmlLayers.length; i++) {
+        // default checbox state
+        var checked = false;
+        if (kmlLayers[i]['visibility'] == 'visible') {
+            checked = true;
+        }
+
+        // Create container
+        jQuery('<div/>', {
+            id: 'container' + i,
+            style: 'clear:both;'
+        }).appendTo('#layers');
+
+        // Create input checkbox
+        jQuery('<input />').change(function() {
+            toggleLayer(this);
+        }).attr({
+            id: 'layerinput'+i,
+            type: 'checkbox',
+            style: 'float: left;',
+            value: i,
+            checked: checked
+        }).appendTo('#container'+i);
+
+        // Create Text
+        jQuery('<div/>', {
+            id: 'layertext'+i,
+            style: 'float: left;',
+            html: kmlLayers[i]['title'],
+            onclick: 'kmlZoom('+i+');'
+        }).appendTo('#container'+i);
+        
+          // Create Zoom Option
+        jQuery('<div/>', {
+            id: 'zoomlayertext'+i,
+            style: 'float: left;',
+            html: '&nbsp;(zoom)'
+        }).appendTo('#container'+i);
+        $('#zoomlayertext' + i).bind("click", {param1: i}, function(event) {
+           kmlZoom(event.data.param1);
+        });
+        
+        // set initial visibility
+        if (kmlLayers[i]['visibility'] == 'visible') {
+            kmlLayers[i]['google'].setMap(map);
+        }
+    }
+}
+
+// toggle visibility
+function toggleLayer(cb) {
+    if (cb.checked) {
+        kmlLayers[cb.value]['google'].setMap(map);
+    } else {
+        kmlLayers[cb.value]['google'].setMap(null);
+    }
+}
+
+
+
+// Control display of points
+function pointDisplay(value) {   
+    if (value == "markers") {
+        setMarkersAndCirclesOn(false); 
+    } else if (value == "markersandcircles") {
+        setMarkersAndCirclesOn(true); 
+    } else if (value == "staticdots") {
+        alert('not yet implemented');
+    } else {
+        setMarkerClustererOn(); 
+    }                 
 }
 
 function initialize() {
@@ -52,7 +174,7 @@ function initialize() {
 
         var configFile = "";
         if (jQuery.url.param('configfile')) {
-                configFile += "&configfile=" + jQuery.url.param('configfile');
+            configFile += "&configfile=" + jQuery.url.param('configfile');
         }
         // Initialize Session
         $.ajax({
@@ -77,9 +199,14 @@ function initialize() {
         
     
     if (pointMode) {
-        setJSONPoints(session);
-        // Control Panel pops over from left side
         
+        // Draw KML Layers (lookup via service)
+        setKMLLayers();
+        
+        // Draw the Points
+        setJSONPoints(session);
+        
+        // Left Control Panel        
         var attControl = new PanelControl(document.createElement('DIV'), map);
         google.maps.event.addDomListener(attControl, 'click', function() {
             $("#leftnav").toggle("slide", {
@@ -87,37 +214,39 @@ function initialize() {
             }, 1000, function() {
                 google.maps.event.trigger(map, "resize");                        
             });                     
-        });     
+        });  
+        
+        zoomPoints();
     }                     
     
     // Drawing Options
-    initializeDrawingManager();
+    initializeDrawingManager();    
 
-    // Draw KML Layer (if exists)
-    setKMLLayer("http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml");
 }
+
 
 function setJSONPoints(session) {
     var url = urlRoot + "allpoints?session=" + session;
     var bound = new google.maps.LatLngBounds();
     $.ajax({
         type: "GET",
-        url: url,        
+        url: url,
+        async: true,
         dataType: "json",
         success: function(data, success){
             count = 0;
             $.each(data, function() {
                 var lat, lng, line, radius;
-                
+
                 $.each(this, function(k, v) {
                     if (k == "lat") lat = v;
                     if (k == "lng") lng = v;
                     if (k == "line") line = v;
-                    if (k == "radius") radius = v;                                       
+                    if (k == "radius") radius = v;
                 });
-                
+
                 var latlng = new google.maps.LatLng(lat,lng);
-                    
+
                 var marker = new BMMarker({
                     position: latlng,
                     map: map,
@@ -134,13 +263,27 @@ function setJSONPoints(session) {
 
                 markers[count++]= marker;
                 bound.extend(marker.getPosition());
-            }); 
-            
+            });
+
             map.fitBounds(bound);
 
             setMarkerClustererOn();
-        }  
-    }); 
+        }
+    });
+}
+
+// Zoom to KML Layer
+function kmlZoom(i) {
+    map.fitBounds(kmlLayers[i]['google'].getDefaultViewport());
+}
+
+// Zoom to this set of points
+function zoomPoints() {
+    var bound = new google.maps.LatLngBounds();
+    for (i in markers) {
+        bound.extend(markers[i].getPosition());
+    }            
+    map.fitBounds(bound);
 }
 
 function fetchRecord(line) {
@@ -197,22 +340,27 @@ function fetchRecords(session, polygon) {
 
 // clears All markers
 function clearAllMarkers() {
-    if (mode == CLUSTERING) mc.clearMarkers();
-    if (mode == MARKERS) {
-        for (i in markers) {
-            markers[i].setMap(null);
-        }
-        for (i in circles) {
-            circles[i].setMap(null);
-        }
+    //if (mode == CLUSTERING) 
+    try {
+        mc.clearMarkers();
+    }catch(err) {
+        
     }
+    // if (mode == MARKERS) {
+    for (i in markers) {
+        markers[i].setMap(null);
+    }
+    for (i in circles) {
+        circles[i].setMap(null);
+    }
+    //}
     // clear Left Nav
     $("#resultPoints").html("");
 }
 
 function setMarkersAndCirclesOn(drawRadius) {
     clearAllMarkers();
-    mode = MARKERS;
+    //mode = MARKERS;
     if (markers) {
         for (i in markers) {
             markers[i].setMap(map);
@@ -232,7 +380,7 @@ function setMarkersAndCirclesOn(drawRadius) {
 
 function setMarkerClustererOn() {
     clearAllMarkers();
-    mode = CLUSTERING;
+    //  mode = CLUSTERING;
     var mcOptions = {
         gridSize:25, 
         averageCenter:true, 
@@ -388,31 +536,7 @@ function NewControl(controlDiv, map, title, alt) {
     return controlUI;
 }
 
-if (!google.maps.Polygon.prototype.getBounds) {
-    google.maps.Polygon.prototype.getBounds = function(latLng) {
-        var bounds = new google.maps.LatLngBounds();
-        var paths = this.getPaths();
-        var path;
-                
-        for (var p = 0; p < paths.getLength(); p++) {
-            path = paths.getAt(p);
-            for (var i = 0; i < path.getLength(); i++) {
-                bounds.extend(path.getAt(i));
-            }
-        }
-        return bounds;
-    }
-}
 
-if (!google.maps.Polyline.prototype.getBounds) {
-    google.maps.Polyline.prototype.getBounds = function(latLng) {
-        var bounds = new google.maps.LatLngBounds();        
-        this.getPath().forEach(function(e) {
-            bounds.extend(e);
-        });
-        return bounds;                  
-    }
-}
 
 function removeOverlay(num) {
     overlays[num].setMap(null);

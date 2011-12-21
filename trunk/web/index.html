@@ -1,51 +1,51 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
-    <title>BerkeleyMapper</title>
-    <LINK REL=StyleSheet HREF="css/berkeleymapper.css">
-    <script type="text/javascript"
-            src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing,geometry"></script>
-    <script type="text/javascript" src="js/keydragzoom.js"></script>
-    <script type="text/javascript" src="js/jquery.min.js"></script>
-    <script type="text/javascript" src="js/jquery-ui.min.js"></script>
-    <script type="text/javascript" src="js/jquery.url.js"></script>
-    <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
-    <script type="text/javascript" src="js/berkeleymapper.js"></script>
-    <script type="text/javascript" src="js/drawingManager.js"></script>
-    <script type="text/javascript" src="js/markerclusterer.js"></script>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <title>BerkeleyMapper</title>
+        <LINK REL=StyleSheet HREF="css/berkeleymapper.css">
+        <script type="text/javascript"
+        src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing,geometry"></script>
+        <script type="text/javascript" src="js/keydragzoom.js"></script>
+        <script type="text/javascript" src="js/jquery.min.js"></script>
+        <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/jquery.url.js"></script>
+        <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
+        <script type="text/javascript" src="js/berkeleymapper.js"></script>
+        <script type="text/javascript" src="js/drawingManager.js"></script>
+        <script type="text/javascript" src="js/markerclusterer.js"></script>
 
-    <script>
+        <script>
 
-    </script>
-</head>
+        </script>
+    </head>
 
-<body onload="initialize()">
-<table id="wholePage">
-    <tr>
-        <td id="leftnav">
-            <div id="styleOptions">
-                <b>Point Styling</b>
-                <ul>
-                    <li><a href="#" onclick="setMarkerClustererOn();">MarkerClusterer</a></li>
-                    <li><a href="#" onclick="setMarkersAndCirclesOn(false);">Markers</a></li>
-                    <li><a href="#" onclick="setMarkersAndCirclesOn(true);">Markers and Error Radii (if available)</a>
-                    <li><a href="#" onclick="alert('not yet implemented');">Static dots</a></li>
-                </ul>
-                <b>KML Layers</b>
-                <ul>
-                <li>Layer 1 -- todo add KML Layers from Config File</li>
-                    </ul>
-            </div>
-            <div><b>Attributes</b></div>
-            <div id="resultPoints"></div>
-        </td>
-        <td id="resultContainer">
-            <div id="map"></div>
-        </td>
-    </tr>
-</table>
-</body>
+    <body onload="initialize()">
+        <table id="wholePage">
+            <tr>
+                <td id="leftnav">
+                    <div id="styleOptions">
+                        <div style="float:left"><b>Point Options</b></div><div style="float:left" onclick="zoomPoints();">&nbsp;(zoom)</div><br>
+                        <div style="clear:both"></div>
+                        <select onchange="pointDisplay(this.value);">
+                            <option value="markerclusteron">MarkerClusterer</option>
+                            <option value="markers">Markers</option>
+                            <option value="markersandcircles">Markers and Error Radii</option>
+                            <option value="staticdots">Static Points</option>
+                        </select>
+                        <br>
+                        <b>KML Layers</b>
+                        <div id="layers"></div>                
+                    </div>
+                    <div><b>Attributes</b></div>
+                    <div id="resultPoints"></div>
+                </td>
+                <td id="resultContainer">
+                    <div id="map"></div>
+                </td>
+            </tr>
+        </table>
+    </body>
 
 </html>
