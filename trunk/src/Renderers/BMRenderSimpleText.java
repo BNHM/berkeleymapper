@@ -2,6 +2,7 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
+import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
 import java.util.Arrays;
@@ -55,6 +56,11 @@ public class BMRenderSimpleText implements BMRendererInterface {
 
     @Override
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public String KMLLayers(BMFileReader f) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
    

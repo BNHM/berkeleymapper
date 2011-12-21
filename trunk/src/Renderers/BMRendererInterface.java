@@ -1,5 +1,6 @@
 package Renderers;
 
+import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -30,4 +31,12 @@ public interface BMRendererInterface {
      * @return 
      */
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon);
+    
+    /**
+     * Given a BMFileReader, figure out KMLLayers that user has specified
+     * This is only applicable really for cases where a config file is specified
+     * @param f
+     * @return 
+     */
+    public String KMLLayers(BMFileReader f);
 }

@@ -11,34 +11,25 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 /**
- * "allpoints" service returns a JSON representation of all of the points
- * present for the given session.  The JSON format returns the following fields:
- * <p/>
- * line,lat,lng,radius,datum
- * <p/>
- * Example:
- * <br>http://localhost/v2/allpoints?session=SESSION_STRING
- * <br>OR
- * <br>http://localhost:8080/berkeleymapper/v2/allpoints?session=SESSION_STRING
- * <p/>
- * An error returns an empty response with status code = 204
+ * "kmllayers" service returns a JSON representation of all of the KML Layers
+ * defined by a config file.
  *
  * @author jdeck
  */
-@Path("allpoints")
-public class allpoints {
+@Path("kmllayers")
+public class kmllayers {
     ResponseBuilder rb;
 
     @GET
     @Produces("application/json")
-    public Response getAllPoints(
+    public Response getKMLLayers(
             @QueryParam("session") String session) throws MalformedURLException {
 
         // Load the File
         BMSession sess = new BMSession(session);
         try {
-            BMFileReader f = new BMConfigAndTabFileReader(sess);
-            rb = Response.ok(new BMRenderJSON().AllPoints(f.getMultiPointGeometry()));
+            BMFileReader f = new BMConfigAndTabFileReader(sess);            
+            rb = Response.ok(new BMRenderJSON().KMLLayers(f));
         } catch (IOException e) {
             rb = Response.status(204);
             rb.header("Access-Control-Allow-Origin", "*");
@@ -48,3 +39,4 @@ public class allpoints {
         return rb.build();
     }
 }
+
