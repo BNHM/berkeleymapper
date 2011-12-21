@@ -7,9 +7,11 @@ package Renderers;
 import Core.BMCoordinate;
 import Core.BMField;
 import Core.BMRow;
+import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.MultiPoint;
 import org.json.simple.JSONObject;
 
 import java.util.Arrays;
@@ -49,7 +51,7 @@ public class BMRenderJSON implements BMRendererInterface {
                 json += ",\"radius\":" + coord.errorRadiusInMeters;
             }
             if (!coord.datum.equals("")) {
-                json += ",\"datum\":\"" + JSONObject.escape(coord.datum)+"\"";
+                json += ",\"datum\":\"" + JSONObject.escape(coord.datum) + "\"";
             }
             json += "}";
             if (rows.hasNext()) {
@@ -102,6 +104,31 @@ public class BMRenderJSON implements BMRendererInterface {
             json += "}";
         }
         json += "\n]";
+        return json;
+    }
+
+    @Override
+    public String KMLLayers(BMFileReader f) {
+        // "url":  URL of KML Layer
+        // "mode":  on|off sets default on/off
+        // "title": title for KML Layer
+        json = "[";
+        json += "{";
+        json += "\"url\":\"" + JSONObject.escape("http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml") + "\",";
+        json += "\"visibility\":\"visible\",";
+        json += "\"zoom\":\"ignore\",";
+        json += "\"title\":\"State Boundaries\"";
+        json += "}";
+
+        json += ",{";
+        json += "\"url\":\"" + JSONObject.escape("http://kml-samples.googlecode.com/svn/trunk/morekml/Lines_and_Paths/Line_Strings.Absolute.kml") + "\",";
+        json += "\"visibility\":\"hidden\",";
+        json += "\"zoom\":\"expand\",";
+        json += "\"title\":\"Line Strings Example\"";
+        json += "}";
+
+        json += "]";
+
         return json;
     }
 }
