@@ -8,7 +8,16 @@ var pointMode = false;      // pointMode = true draws special features for point
 var session = "";           // Session string for communicating w/ server
 var urlRoot = "v2/";        // URL Root to use for all calls
 var mc;                     // markerCluster control variable
-
+var flexme1Attributes = {
+                sortorder: "asc",
+                usepager: true,
+                title: "Attributes",
+                useRp: true,
+                rp: 20,
+                showTableToggleBtn: true,
+                width: 300,
+                height: "auto"
+                };
 
 // Subclass Marker so it can contain vital information to BM
 BMMarker.prototype = new google.maps.Marker();
@@ -80,7 +89,8 @@ function  setKMLLayers() {
             });
         },
         error: function(result) {
-            alert("Error fetching KML");
+            //alert("Error fetching KML");
+            return false;
         },
         statusCode: {
             204: function() {
@@ -320,14 +330,35 @@ function fetchRecords(session, polygon) {
         url: urlRoot + "records",
         async: false,
         success: function(data) {
+
+            retStr += "<table class=\"flexme1\">";
+		    retStr += "<thead><tr>";
+		    row = 1;
+		    $.each(data, function() {
+                if (row == 1) {
+                    $.each(this, function(k, v) {
+                        retStr += "<th width=80>" + k +  "</th>";
+                        row++;
+                    });
+                }
+            });
+            retStr += "</tr></thead>";
+
+            retStr += "<tbody>";
             // Loop through JSON elements to construct response
             $.each(data, function() {
-                retStr += "<ul>";
+                //retStr += "<ul>";
+                retStr += "<tr>";
                 $.each(this, function(k, v) {
-                    retStr += "<li>" + k + ": " + v + "</li>";
+                    //retStr += "<li>" + k + ": " + v + "</li>";
+                    retStr += "<td width=80>"  + v + "</td>";
                 });
-                retStr += "</ul>";
+                //retStr += "</ul>";
+                retStr += "</tr>";
             });
+            retStr += "</tbody></table>";
+
+
         },
         statusCode: {
             204: function() {
@@ -406,6 +437,8 @@ function setMarkerClustererOn() {
 
         $("#leftnav").show();
         $("#resultPoints").html(fetchRecords(session, polygon));
+        $(".flexme1").flexigrid(flexme1Attributes);
+
     });
 } 
 
@@ -561,6 +594,7 @@ function queryOverlay(num) {
     
     $("#leftnav").show();
     $("#resultPoints").html(fetchRecords(session, polygon));
+    $(".flexme1").flexigrid(flexme1Attributes);
 }
 
 function callbackPoint(num) {

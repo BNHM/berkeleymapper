@@ -142,7 +142,9 @@ public class BMSpatialFileReader implements BMFileReader {
             Iterator iRow = this.rows.iterator();
             while (iRow.hasNext()) {
                 BMRow r = (BMRow) iRow.next();
-                if (r.getBMCoord().equals(cu)) {
+//System.out.println("r.getBMCoord=" + r.getBMCoord().toString());
+//System.out.println("cu=" + cu.toString());
+                if (r.getBMCoord()!= null && r.getBMCoord().equals(cu)) {
                     BMCoordinates.add(r.getBMCoord());
                 }
             }

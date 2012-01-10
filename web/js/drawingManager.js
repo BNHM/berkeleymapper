@@ -1,3 +1,5 @@
+var drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
+
 function initializeDrawingManager() {
     // Drawing Manager/ Lines / Error Radii / Polygons
     var drawingManager = new google.maps.drawing.DrawingManager({
@@ -39,6 +41,7 @@ function initializeDrawingManager() {
         "</div>";
     
         var marker = new google.maps.Marker({
+            icon: drawnMarkerImage,
             position: l.getBounds().getCenter(), 
             map: map,
             title:"User Polyline"
@@ -74,6 +77,7 @@ function initializeDrawingManager() {
         "</div>";
     
         var marker = new google.maps.Marker({
+            icon: drawnMarkerImage,
             position: c.getBounds().getCenter(), 
             map: map,
             title:"User Point & Error Radius"
@@ -114,6 +118,7 @@ function initializeDrawingManager() {
         "</div>";        
 
         var marker = new google.maps.Marker({
+            icon: drawnMarkerImage,
             position: p.getBounds().getCenter(), 
             map: map,
             title:"User Polygon"

@@ -26,7 +26,8 @@ public class test {
             //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
             //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt");
+            //url = new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt");
+            url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.txt");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -34,7 +35,8 @@ public class test {
         URL configUrl = null;
         try {
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
-             configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
+             //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
+            configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -60,11 +62,11 @@ public class test {
         String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry());
         String id = new BMRenderJSON().Record(1, fs);
         // Perform a spatial operation
-        //String output = new BMRenderJSON().renderPts(f.BMPointsInPolygon(createTestPolygon());
-        
+         output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
+
         //String output = new BMRenderKML(subset).toString();
         System.out.println(output);
-        System.out.println(id);
+        //System.out.println(id);
     }
 
     /**
@@ -77,7 +79,7 @@ public class test {
         Polygon p = null;
         try {
             //p = (Polygon) r.read("POLYGON ((38 -120, 39 -120, 39 -119, 38 -119, 38 -120))");
-            p = (Polygon) r.read("POLYGON ((37.2523 -118.7987,37.2020 -118.2081,37.1122 -118.9305,37.2523 -118.7987))");
+            p = (Polygon) r.read("POLYGON ((67.2523 -108.7987,37.2020 -138.2081,37.1122 -138.9305,67.2523 -108.7987))");
         } catch (ParseException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

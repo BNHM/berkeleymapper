@@ -5,6 +5,8 @@
         <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
         <title>BerkeleyMapper</title>
         <LINK REL=StyleSheet HREF="css/berkeleymapper.css">
+        <LINK REL=StyleSheet HREF="css/flexigrid.pack.css">
+
         <script type="text/javascript"
         src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing,geometry"></script>
         <script type="text/javascript" src="js/keydragzoom.js"></script>
@@ -15,10 +17,8 @@
         <script type="text/javascript" src="js/berkeleymapper.js"></script>
         <script type="text/javascript" src="js/drawingManager.js"></script>
         <script type="text/javascript" src="js/markerclusterer.js"></script>
+        <script type="text/javascript" src="js/flexigrid.pack.js"></script>
 
-        <script>
-
-        </script>
     </head>
 
     <body onload="initialize()">
@@ -26,19 +26,16 @@
             <tr>
                 <td id="leftnav">
                     <div id="styleOptions">
-                        <div style="float:left"><b>Point Options</b></div><div style="float:left" onclick="zoomPoints();">&nbsp;(zoom)</div><br>
-                        <div style="clear:both"></div>
+                        <b>Display: </b>
                         <select onchange="pointDisplay(this.value);">
                             <option value="markerclusteron">MarkerClusterer</option>
                             <option value="markers">Markers</option>
                             <option value="markersandcircles">Markers and Error Radii</option>
                             <option value="staticdots">Static Points</option>
                         </select>
-                        <br>
-                        <b>KML Layers</b>
-                        <div id="layers"></div>                
                     </div>
-                    <div><b>Attributes</b></div>
+                    <div id="layers"></div>
+                    <br>
                     <div id="resultPoints"></div>
                 </td>
                 <td id="resultContainer">

@@ -29,8 +29,6 @@ html, body {
 }
 
 #styleOptions {
-    min-height:160px;
-    height:15%;
     overflow:auto;
 }
 
