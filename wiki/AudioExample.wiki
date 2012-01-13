@@ -6,4 +6,4 @@ Use HTML5 Audio tags to play content.  This can be embedded into Tab delimited t
 
 = Details =
 
-<a href="http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://code.google.com/p/berkeleymapper/downloads/detail?name=audiosample.txt&can=2&q=">http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://code.google.com/p/berkeleymapper/downloads/detail?name=audiosample.txt&can=2&q=</a>
+<a href="http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://berkeleymapper.googlecode.com/files/audiosample.txt">http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://berkeleymapper.googlecode.com/files/audiosample.txt</a>
