@@ -1,0 +1,361 @@
+#summary XML Specification for BerkeleyMapper 2 Configuration Files
+
+= Introduction =
+
+This file describes XML Syntax for BerkeleyMapper Configuration Files.
+
+= Details =
+
+<h1><center>Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
+<p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
+
+<p><b>Table of contents</b></p>
+<li><a href="#specialcharacters">A Note on Special Characters</a>
+<li><a href="#metadata">Metadata</a>
+<li><a href="#settings">Application Settings</a>
+<li><a href="#recordlinkback">Construct a 'Link Back' pointing to a source webpage</a>
+<li><a href="#themes">Themes to control grouping</a>
+<li><a href="#colors">Application colors and color scheme for default point attribute</a>
+<li><a href="#concepts">The structure of your tab-delimited data file</a>
+<li><a href="#gisdata">GIS data that can be passed to application</a>
+<li><a href="#join">Construct a join to a polygon shape file</a>
+<li><a href="#annotation">Annotation email address</a>
+<li><a href="#webservice">Web Services Call</a>
+
+<p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
+<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.  
+<p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
+<p><pre>&amp;amp;deg;C</pre>
+
+<p><b><font color='#0000ff'>1. Opening Tag</font></b></p>
+<pre>&lt;berkeleymapper&gt;</pre>
+
+<a name="metadata"><p><b><font color='#0000ff'>2. Metadata Section</font></b></p></a>
+<pre>&lt;metadata&gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;name&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>None</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;name&gt;MVZ Map Configuration File&lt;/name&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Description of what this configuration file is for.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;mapwiki&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>organization,email</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;mapwiki organization="Museum of Vertebrate Zoology" email="fredflintstone@aol.com" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Instruct mapwiki calls to fill in default organization and email.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;relatedinformation&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>None</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;relatedinformation&gt;http://mvz.berkeley.edu/&lt;/relatedinformation&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Link for more information on the group this mapping configuration applies to.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;abstract&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>None</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;abstract&gt;GIS configuration file for MVZ query interface&lt;/abstract&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>A more in-depth description of what the purpose of this application does for the group.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;datumshift&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>Value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;datumshift value="true"&gt;&lt;/datumshift&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Attempt to perform datum transformations where possible so points display in WGS84.  This currently only works with NAD27.  The field darwin_horizontaldatum must contain text indicating source datum for this transformation to occur.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;mapkeyword&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>keyword</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;mapkeyword keyword="specimens"&gt;&lt;/mapkeyword&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>This specifies what we are mapping.  By default is specimens but if you put another word here, it will refer to the points as this word.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;turnoffgooglelayers&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>Value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;turnoffgooglelayers value="true"&gt;&lt;/turnoffgooglelayers&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>If this value is set, the application will ONLY use user-defined layers.  This is only reccomended in cases where there is little or no Google data available, Example: islands in the South Pacific or other remote areas with no data, or only when looking at data that is zoomed in, like the UC Botanical Garden.  NOTE: setting this option will disable certain features, such as zoom by box since BerkeleyMapper needs Google base layers for certain features to function.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;turnoffiframe&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>iframe</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;turnoffiframe iframe="1"&gt;&lt;/turnoffiframe&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Default is to use iframes if browser allows it.  If you don't like iframes in your application you can turn them off be setting the iframe value to 1.  Setting to 0 or not putting this line it at all will allow iframes</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;header&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>location</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;header location="http://somewhere.my.header/"&gt;&lt;/header&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>You can use an image or a file.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;footer&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>location</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;footer location="http://somewhere.my.footer/"&gt;&lt;/footer&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>You can use an image or a file.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;linkbackheader&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>location</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;linkbackheader location="http://mvz.berkeley.edu/"&gt;&lt;/linkbackheader&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>URL link to attach to header image.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;charset&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>name</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;charset name="UTF-8"&gt;&lt;/charset&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Default charset is ISO-8859-1 (latin1).  If you want another character set to be the default then specify it here. For a list of character set names you can pass in, visit: http://www.iana.org/assignments/character-sets</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;units&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>key</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;units key="km"&gt;&lt;/units&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Default units are <b>mi</b> (miles).  Can specify <b>km</b> (kilometers) or <b>acres</b> using the example above to override this default and this will be used throughout the application. Both miles and kilometers will break down to meters and feet for distances less than 1/2 kilometer or 1/2 mile respectively.  If you specify acres, then linear distances will use feet and miles and areas will be in acres.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;extent&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;extent value="-122.240619692407 37.8719538523575 -122.234643165877 37.8759382033771"&gt;&lt;/extent&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Set the default extent to begin with for map application. value is in the form "xmin ymin xmax ymax"</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;bmzoom&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;bmzoom value="15" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Sets the starting Zoom scale for the map application.  lowest value available is 1 (the entire earth) and highest value is 17 (as far as google normally goes, unless special layers are used).</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;mingooglezoom&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;mingooglezoom value="22" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Minimum Google Zoom scale for application.  Use this in areas where you have an extremely detailed map and want to see greater detail than what is available normally (E.g. in the UC Botanical Garden).</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;maxgooglezoom&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;maxgooglezoom value="9" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Maximum Google Zoom for application.  Sets a custom number for how far the application can zoom in. Use this in areas where no Google Map data is known to exist below this scale, E.g. French Polynesia has no data below zoom level 9 as of March, 2006.</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;defaultscreensize&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td>value</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;defaultscreensize value="600" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Avalaible values are 800 (800x600), 600 (600x400), or 400 (400x300)</td></tr>
+</table>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;disclaimer&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;disclaimer&gt;&lt;![CDATA[Data records provided by ORNIS may be used by individual researchers or research groups, but they may not be repackaged, resold, or redistributed in any form without the express written consent of the original institution where those records are held.<p>Citations: ....(etc)]]&gt;&lt;/disclaimer&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.</td></tr>
+</table>
+<p>
+<p><pre>&lt;/metadata&gt;</pre>
+
+<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
+<pre>&lt;settings&gt;</pre>
+
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;setting&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>Yes</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;setting name="landsat" show="0"&gt;&lt;/setting&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.</td></tr>
+</table>
+<p>
+<table>
+<tr><td align=right valign=top><b>List of names:</b></td><td></td></tr>
+<tr><td width=100 align=right valign=top><b>screensize</b></td><td> (show the screensize drop down box)</td></tr>
+<tr><td width=100 align=right valign=top><b>landsat</b></td><td> (offer the landsat wms service as a background image option-- currently this layer has a 150 meter offset but the application does not allow a closer viewing than 1:65000 scale to obscure the error. JPL is working to rectify this.)</td></tr>
+<tr><td width=100 align=right valign=top><b>globe_bw</b></td><td> (black and white global elevation stored locally on server)</td></tr>
+<tr><td width=100 align=right valign=top><b>drg</b></td><td> (digital raster graphic from terraserver)</td></tr>
+<tr><td width=100 align=right valign=top><b>doq</b></td><td> (digital orthoquad from terraserver)</td></tr>
+<tr><td width=100 align=right valign=top><b>finerelief</b></td><td> (World relief image from CubeWerx)</td></tr>
+<tr><td width=100 align=right valign=top><b>slowcxn</b></td><td> (show checkbox to allow users to indicate if they are on a slow connection so images will be drawn in 8bit mode and background image option=auto will send less graphics)</td></tr>
+<tr><td width=100 align=right valign=top><b>maxerrorinmeters</b></td><td> (show the show precision symbols checkbox)</td></tr>
+<tr><td width=100 align=right valign=top><b>colorprecision</b></td><td> (show color by precision option in drop down list for color by)</td></tr>
+<tr><td width=100 align=right valign=top><b>coloryearcollected</b></td><td> (show color by year collected option in drop down list for color by)</td></tr>
+<tr><td width=100 align=right valign=top><b>label</b></td><td> (show label place names checkbox)</td></tr>
+<tr><td width=100 align=right valign=top><b>labelby</b></td><td> (show or not show drop down box to labelby feature)</td></tr>
+<tr><td width=100 align=right valign=top><b>opaque</b></td><td> (show the Dim Background Images checkbox)</td></tr>
+<tr><td width=100 align=right valign=top><b>units</b></td><td> (show the Distance & Area Measurements Drop-down box so user can pick their own units)</td></tr>
+<tr><td width=100 align=right valign=top><b>backgroundimage</b></td><td> (show or not show drop down list of background images)</td></tr>
+<tr><td width=100 align=right valign=top><b>embedscalebar</b></td><td> (show or not show embedscalebar checkbox.  Note-- if you you don't want to see this at all then you will need to pass in URL parameter setting this to 0 as well since it defaults to on)</td></tr>
+</table>
+
+<p><pre>&lt;/settings&gt;</pre>
+
+<a name="recordlinkback"><p><b><font color='#0000ff'>4. Record LinkBack Section</font></b></p></a>
+<pre>&lt;recordlinkback&gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;linkback&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>method</i>: how to linkback<br><i>linkurl</i>: url to use<br><i>text</i>: text to display inside href tag<br><i>fieldname</i>: name of field<br><i>key1</i>: Concept Alias<br><i>value1</i>: Concept Name<br><i>key2</i>: ...<br><i>value2</i>: ...<br><i>key5</i>:<br><i>value5</i></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example 1:</b></td><td>the linkurl attribute specifies a fully formed link(href tag) pointing to the concept element (see Concepts section, below) that stores this information, which comes from the tab delimited file.<p><pre>&lt;linkback method="entireurl" linkurl="RelatedInformation" fieldname="Link Back"&gt;&lt;/linkback&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Example 2:</b></td><td>the linkurl attribute specifieds a URL root and key/value pairs are passed in from file.  key/value pairs are specified as attributes (up to 5).  The key points to the conceptalias and the value points to the concept name.<p><pre>&lt;linkback method="root" linkurl="http://elib.cs.berkeley.edu/cgi-bin/mvz_query" text="View Details" fieldname="Link Back" key1="Coll_Object_id" value1="undefined_2"&gt;&lt;/linkback&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Example 3:</b></td><td>don't provide any linkback&lt;linkback&gt;method="none"&lt;/linkback&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>This application allows users to pass in either fully formed href tags or partial tags with specified key/value pairs passed from tab delimited file. Data must come from the tab delimited file specified in the tabfile URL parameters.</td></tr>
+</table>
+<p>
+<pre>&lt;/recordlinkback&gt;</pre>
+
+<a name="themes"><p><b><font color='#0000ff'>5. Themes Section</font></b></p></a>
+<pre>&lt;themes &gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;theme&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>method</i>: what theme ("coloryearcollected" "colorprecision" are the only values right now.)<br><i>fieldname</i>: The name of the field to map to containing data for the theme (year collected or precision in meters data)</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>yes</td></tr>
+<tr><td width=100 align=right valign=top><b>Examples:</b></td><td><pre>&lt;theme method="coloryearcollected" fieldname="darwin:yearcollected" /&gt;</pre><pre>&lt;theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" /&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Themes allow users to specify content themes for visualizing the data.  The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality.  Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.</td></tr>
+</table>
+
+<p>
+<pre>&lt;/themes&gt;</pre>
+
+<a name="colors"><p><b><font color='#0000ff'>6. Colors Section</font></b></p></a>
+<pre>&lt;colors method="field" fieldname="" label=""&gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;colors&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>method</i>: how colors are specified ("field" and "dynamicfield" are answers -- field requires color children whereas dynamic field searches in the contents of the fieldname specified, groups, and dynamically assigns colors)<br><i>fieldname</i>: The name of the field to map to<br><i>label</i>: Legend Label for point colors</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td><pre>&lt;colors method="field" fieldname="darwin:collectioncode" label="Key to Point Colors"&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>You can use a field in your tab delimited input file to control the colors displayed on the map.  This element tells us what field to use.  The children which are repeatable map the values in this field to particular rgb values.</td></tr>
+</table>
+
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;color&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>key</i>: value to map to<br><i>red</i>: 0-255<br><i>green</i>: 0-255<br><i>blue</i>: 0-255<br><i>label</i>: what this value means<br><i>symbol</i>: optional symbol type (1-tent, 2-star, 3-triangle, 4-square, 5-plus, 6-cross, 7-circle (default)<br><i>size</i>: 1-20 (1 is smallest)</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>Yes</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>&lt;color key="mamm" red="255" green="0" blue="0" label="Mammal Collection" /&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td> put in a color element for each value.</td></tr>
+</table>
+
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;dominantcolor&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>webcolor</i></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>&lt;dominantcolor webcolor="ffcc33" /&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Web color for dominant color scheme</td></tr>
+</table>
+
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;subdominantcolor&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>webcolor</i></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>&lt;subdominantcolor webcolor="ffcc33" /&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Web color for subdominant color scheme</td></tr>
+</table>
+
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;textdominantcolor&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>webcolor</i></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>&lt;textdominantcolor webcolor="ffffff" /&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Web color for text dominant color scheme.  Defaults to black if not set.</td></tr>
+</table>
+
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;rowselectcolor&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>webcolor</i></td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>&lt;rowselectcolor webcolor="ffff00" /&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>Web color to use for row select color. Defaults to yell if not set.</td></tr>
+</table>
+
+
+<p>
+<pre>&lt;/colors&gt;</pre>
+
+<a name="concepts"><p><b><font color='#0000ff'>7. Matching tab-delimited fields to Map schema</font></b></p></a>
+<pre>&lt;concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0"&gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td>&lt;concept&gt;</td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>viewlist</i>: 0 means do not show this field in query results.  1 means to show it.<br><i>colorlist</i>: 0 means do not add this as an option under 'Color By'.  1 means add this as an option to 'Color By', so the user can display unique colors for each unique value in this field.<br><i>datatype</i>: name of concept in <a href="/schemas/darwin2resultmapping.xsd">mapfile schema</a> or specification of new datatype.<br><i>alias</i>: Your name for this field which will also appear on column headings of query results.<br><i>order</i>: any number to designate what order this should be displayed in results table.</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>No</td></tr>
+<tr><td width=100 align=right valign=top><b>Example:</b></td><td>See following file:</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td> This section defines names of server-side-fields, aliases, and whether we want to view it.  If there are concepts outside the map schema, then they go into sequentially numbered, typed fields (char120:1-8,char255:1-8,longtext:1-4,int:1-4,float:1-4).  The order of the fields MUST match the order of the fields in the tab delimited file being passed to this application.</td></tr>
+</table>
+<p>
+<pre>
+&lt;concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" /&gt;
+&lt;concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" /&gt;
+&lt;concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="darwin:stateprovince" alias="StateProvince" order="3" /&gt;
+&lt;concept viewlist="1" colorlist="1" datatype="darwin:county" alias="County" order="4" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="char120:1" alias="id_modifier" order="11" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="char120:2" alias="Coll_Object_id" order="12" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="char120:3" alias="type_status" order="5" /&gt;
+&lt;concept viewlist="0" colorlist="1" datatype="char120:4" alias="class" order="5" /&gt;
+&lt;concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" /&gt;
+&lt;concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&gt;
+&lt;concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"	alias="DecimalLatitude" order="20" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&gt;
+&lt;concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" /&gt;
+&lt;concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"	alias="HorizontalDatum" order="23" /&gt;
+<p>&lt;/concepts&gt;
+</pre>
+
+<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
+<pre>&lt;gisdata&gt;</pre>
+<p>
+<table border=0>
+<tr><td width=100 align=right valign=top><b>Element:</b></td><td><pre>&lt;layer&gt;</pre></td></tr>
+<tr><td width=100 align=right valign=top><b>Attributes:</b></td><td><i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.</td></tr>
+<tr><td width=100 align=right valign=top><b>Repeatable:</b></td><td>yes</td></tr>
+<tr><td width=100 align=right valign=top><b>Examples:</b></td><td>
+<br>A particular shapefile (that is loaded on server):<pre>&lt;layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /&gt;</pre>
+<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre>&lt;layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/&gt;</pre>
+<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/&gt;</pre>
+<br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/&gt;</pre>
+</td></tr>
+<tr><td width=100 align=right valign=top><b>Description:</b></td><td>This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.</td></tr>
+</table>
+<p>
+<pre>&lt;/gisdata&gt;</pre>
