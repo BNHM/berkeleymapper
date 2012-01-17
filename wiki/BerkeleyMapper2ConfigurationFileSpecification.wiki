@@ -72,6 +72,7 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 
 <p>
 {{{
+<concepts>
 <concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" />
 <concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" />
 <concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" />
