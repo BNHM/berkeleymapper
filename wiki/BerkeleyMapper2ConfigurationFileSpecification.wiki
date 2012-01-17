@@ -9,7 +9,6 @@ This file describes XML Syntax for BerkeleyMapper Configuration Files.
 
 = Heading = Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
 
-<font size="11">
 <p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
 
 <p><b>Table of contents</b></p>
@@ -201,4 +200,3 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 
 <p>
 <pre></gisdata></pre>
-</font>
