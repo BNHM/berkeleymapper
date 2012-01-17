@@ -1,0 +1,19 @@
+#summary How to convert from BerkeleyMapper 1 to BerkeleyMapper 2
+
+= Introduction =
+
+You'll notice a very different look to BerkeleyMapper 2.0 from the previous version of BerkeleyMapper.  The change to the new version was implemented for many reasons: 
+<li>Leverage Google Maps API v3 code
+<li>Simplify Administration and Maintenance of BerkeleyMapper
+<li>Security
+<li>Bug Fixes
+<li>Performance Enhancements.
+
+= Details =
+
+Most applications calling BerkeleyMapper 1 should be able to instantly upgrade to BerkeleyMapper 2.  However, many advanced features that were coded for in the XML configuration file have been replaced by native functionality or are no longer supported.  To update functionality and see what is possible, please read the BerkeleyMapper2ConfigurationFileSpecification.
+
+
+
+
+
