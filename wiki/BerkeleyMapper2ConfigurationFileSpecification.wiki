@@ -1,3 +1,4 @@
+:0
 #summary XML Specification for BerkeleyMapper 2 Configuration Files
 
 = Introduction =
@@ -6,766 +7,6 @@ This file describes XML Syntax for BerkeleyMapper Configuration Files.
 
 = Details =
 
-Attributes: value
-Repeatable: No
-Example:
-<maxgooglezoom value="9" />
-Description:    Maximum Google Zoom for application. Sets a custom number for how far the application can zoom in. Use this in areas where no Google Map data is known to exist below this scale, E.g. French Polynesia has no data below zoom level 9 as of March, 2006.
-Element:
-<defaultscreensize>
-Attributes: value
-Repeatable: No
-Example:
-<defaultscreensize value="600" />
-Description:    Avalaible values are 800 (800x600), 600 (600x400), or 400 (400x300)
-Element:
-<disclaimer>
-Attributes:
-Repeatable: No
-Example:
-<disclaimer><![CDATA[Data records provided by ORNIS may be used by individual researchers or research groups, but they may not be repackaged, resold, or redistributed in any form without the express written consent of the original institution where those records are held.
-Citations: ....(etc)]]></disclaimer>
-
-Description:    This is a user-supplied disclaimer to display when users are downloading data. Make sure you use the CDATA syntax if you include HTML tags here.
-</metadata>
-3. Settings Section
-
- <settings>
-Element:
-<setting>
-Attributes: name: see following list of names
-show: 0 (false) or 1 (true)
-Repeatable: Yes
-/table
-<linkback method="entireurl" linkurl="RelatedInformation" fieldname="Link Back"></linkback>
-Example 2:  the linkurl attribute specifieds a URL root and key/value pairs are passed in from file. key/value pairs are specified as attributes (up to 5). The key points to the conceptalias and the value points to the concept name.
-<linkback method="root" linkurl="http://elib.cs.berkeley.edu/cgi-bin/mvz_query" text="View Details" fieldname="Link Back" key1="Coll_Object_id" value1="undefined_2"></linkback>
-Example 3:  don't provide any linkback<linkback>method="none"</linkback>
-Description:    This application allows users to pass in either fully formed href tags or partial tags with specified key/value pairs passed from tab delimited file. Data must come from the tab delimited file specified in the tabfile URL parameters.
-</recordlinkback>
-5. Themes Section
-
- <themes >
-Element:
-<theme>
-Attributes: method: what theme ("coloryearcollected" "colorprecision" are the only values right now.)
-fieldname: The name of the field to map to containing data for the theme (year collected or precision in meters data)
-Repeatable: yes
-Examples:
-<theme method="coloryearcollected" fieldname="darwin:yearcollected" />
-<theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" />
-Description:    Themes allow users to specify content themes for visualizing the data. The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality. Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.
-</themes>
-6. Colors Section
-
- <colors method="field" fieldname="" label="">
-Element:
-<colors>
-Attributes: method: how colors are specified ("field" and "dynamicfield" are answers -- field requires color children whereas dynamic field searches in the contents of the fieldname specified, groups, and dynamically assigns colors)
-fieldname: The name of the field to map to
-label: Legend Label for point colors
-Repeatable: No
-Example:
-<colors method="field" fieldname="darwin:collectioncode" label="Key to Point Colors">
-Description:    You can use a field in your tab delimited input file to control the colors displayed on the map. This element tells us what field to use. The children which are repeatable map the values in this field to particular rgb values.
-~                                                                                                                                 
-~                                                                                                                                 
-:0
-&lt;concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&gt;
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&gt;&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"    alias="DecimalLatitude" order="20" /&gt;&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&gt;&lt;concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" /&gt;&lt;concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"    alias="HorizontalDatum" order="23" /&gt;
-<p>&lt;/concepts&gt;
-</pre>
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a><pre>&lt;gisdata&gt;</pre><p>
-<table border=0>
-||<b>Element:</b>||<pre>&lt;layer&gt;</pre>
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.||<b>Repeatable:</b>||yes
-||<b>Examples:</b>||
-<br>A particular shapefile (that is loaded on server):<pre>&lt;layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /&gt;</pre><br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre>&lt;layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/&gt;</pre><br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/&gt;</pre><br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/&gt;</pre>||<b>Description:</b>||This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.</table> <p>
-search hit BOTTOM, continuing at TOP
-||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.
-</table>
-<p>
-<p><pre>&lt;/metadata&gt;</pre>
-
-<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
-<pre>&lt;settings&gt;</pre>
-
-<table border=0>
-||<b>Element:</b>||<pre>&lt;setting&gt;</pre>
-||<b>Attributes:</b>||<i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)
-||<b>Repeatable:</b>||Yes
-||<b>Example:</b>||<pre>&lt;setting name="landsat" show="0"&gt;&lt;/setting&gt;</pre>
-||<b>Description:</b>||This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.
-</table>
-<p>
-<table>
-||<b>List of names:</b>||
-||<b>screensize</b>|| (show the screensize drop down box)
-||<b>landsat</b>|| (offer the landsat wms service as a background image option-- currently this layer has a 150 meter offset but the application does not allow a closer viewing than 1:65000 scale to obscure the error. JPL is working to rectify this.)
-||<b>globe_bw</b>|| (black and white global elevation stored locally on server)
-||<b>drg</b>|| (digital raster graphic from terraserver)
-||<b>doq</b>|| (digital orthoquad from terraserver)
-||<b>finerelief</b>|| (World relief image from CubeWerx)
-||<b>slowcxn</b>|| (show checkbox to allow users to indicate if they are on a slow connection so images will be drawn in 8bit mode and background image option=auto will send less graphics)
-||<b>maxerrorinmeters</b>|| (show the show precision symbols checkbox)
-||<b>colorprecision</b>|| (show color by precision option in drop down list for color by)
-||<b>coloryearcollected</b>|| (show color by year collected option in drop down list for color by)
-||<b>label</b>|| (show label place names checkbox)
-||<b>labelby</b>|| (show or not show drop down box to labelby feature)
-||<b>opaque</b>|| (show the Dim Background Images checkbox)
-||<b>units</b>|| (show the Distance & Area Measurements Drop-down box so user can pick their own units)
-||<b>backgroundimage</b>|| (show or not show drop down list of background images)
-||<b>embedscalebar</b>|| (show or not show embedscalebar checkbox.  Note-- if you you don't want to see this at all then you will need to pass in URL parameter setting this to 0 as well since it defaults to on)
-</table>
-/td
-&lt;concept viewlist="0" colorlist="1" datatype="char120:4" alias="class" order="5" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&gt;
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"    alias="DecimalLatitude" order="20" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" /&gt; 
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"    alias="HorizontalDatum" order="23" /&gt;<p>&lt;/concepts&gt;
-</pre>
-
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
-<pre>&lt;gisdata&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;layer&gt;</pre>
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer. ||<b>Repeatable:</b>||yes||<b>Examples:</b>||
-<br>A particular shapefile (that is loaded on server):<pre>&lt;layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /&gt;</pre>
-<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre>&lt;layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/&gt;</pre>
-<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/&gt;</pre> <br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/&gt;</pre>||<b>Description:</b>||This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
-
-search hit BOTTOM, continuing at TOP
-Last login: Mon Jan 16 16:30:27 on ttys001
-Johns-MacBook-Air:~ jdeck$ vi foo
-Johns-MacBook-Air:~ jdeck$ cat foo
-<h1><center>Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
-<p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
-
-<p><b>Table of contents</b></p>
-<li><a href="#specialcharacters">A Note on Special Characters</a>
-<li><a href="#metadata">Metadata</a>
-<li><a href="#settings">Application Settings</a>
-<li><a href="#recordlinkback">Construct a 'Link Back' pointing to a source webpage</a>
-<li><a href="#themes">Themes to control grouping</a>
-<li><a href="#colors">Application colors and color scheme for default point attribute</a>
-<li><a href="#concepts">The structure of your tab-delimited data file</a>
-<li><a href="#gisdata">GIS data that can be passed to application</a>
-<li><a href="#join">Construct a join to a polygon shape file</a>
-<li><a href="#annotation">Annotation email address</a>
-<li><a href="#webservice">Web Services Call</a>
-
-<p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
-<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.  
-<p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
-<p><pre>&amp;amp;deg;C</pre>
-
-<p><b><font color='#0000ff'>1. Opening Tag</font></b></p>
-<pre>&lt;berkeleymapper&gt;</pre>
-
-<a name="metadata"><p><b><font color='#0000ff'>2. Metadata Section</font></b></p></a>
-<pre>&lt;metadata&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;name&gt;</pre>
-||<b>Attributes:</b>||None
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;name&gt;MVZ Map Configuration File&lt;/name&gt;</pre>
-||<b>Description:</b>||Description of what this configuration file is for.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;mapwiki&gt;</pre>
-||<b>Attributes:</b>||organization,email
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;mapwiki organization="Museum of Vertebrate Zoology" email="fredflintstone@aol.com" /&gt;</pre>
-||<b>Description:</b>||Instruct mapwiki calls to fill in default organization and email.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;relatedinformation&gt;</pre>
-||<b>Attributes:</b>||None
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;relatedinformation&gt;http://mvz.berkeley.edu/&lt;/relatedinformation&gt;</pre>
-||<b>Description:</b>||Link for more information on the group this mapping configuration applies to.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;abstract&gt;</pre>
-||<b>Attributes:</b>||None
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;abstract&gt;GIS configuration file for MVZ query interface&lt;/abstract&gt;</pre>
-||<b>Description:</b>||A more in-depth description of what the purpose of this application does for the group.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;datumshift&gt;</pre>
-||<b>Attributes:</b>||Value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;datumshift value="true"&gt;&lt;/datumshift&gt;</pre>
-||<b>Description:</b>||Attempt to perform datum transformations where possible so points display in WGS84.  This currently only works with NAD27.  The field darwin_horizontaldatum must contain text indicating source datum for this transformation to occur.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;mapkeyword&gt;</pre>
-||<b>Attributes:</b>||keyword
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;mapkeyword keyword="specimens"&gt;&lt;/mapkeyword&gt;</pre>
-||<b>Description:</b>||This specifies what we are mapping.  By default is specimens but if you put another word here, it will refer to the points as this word.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;turnoffgooglelayers&gt;</pre>
-||<b>Attributes:</b>||Value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;turnoffgooglelayers value="true"&gt;&lt;/turnoffgooglelayers&gt;</pre>
-||<b>Description:</b>||If this value is set, the application will ONLY use user-defined layers.  This is only reccomended in cases where there is little or no Google data available, Example: islands in the South Pacific or other remote areas with no data, or only when looking at data that is zoomed in, like the UC Botanical Garden.  NOTE: setting this option will disable certain features, such as zoom by box since BerkeleyMapper needs Google base layers for certain features to function.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;turnoffiframe&gt;</pre>
-||<b>Attributes:</b>||iframe
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;turnoffiframe iframe="1"&gt;&lt;/turnoffiframe&gt;</pre>
-||<b>Description:</b>||Default is to use iframes if browser allows it.  If you don't like iframes in your application you can turn them off be setting the iframe value to 1.  Setting to 0 or not putting this line it at all will allow iframes
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;header&gt;</pre>
-||<b>Attributes:</b>||location
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;header location="http://somewhere.my.header/"&gt;&lt;/header&gt;</pre>
-||<b>Description:</b>||You can use an image or a file.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;footer&gt;</pre>
-||<b>Attributes:</b>||location
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;footer location="http://somewhere.my.footer/"&gt;&lt;/footer&gt;</pre>
-||<b>Description:</b>||You can use an image or a file.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;linkbackheader&gt;</pre>
-||<b>Attributes:</b>||location
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;linkbackheader location="http://mvz.berkeley.edu/"&gt;&lt;/linkbackheader&gt;</pre>
-||<b>Description:</b>||URL link to attach to header image.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;charset&gt;</pre>
-||<b>Attributes:</b>||name
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;charset name="UTF-8"&gt;&lt;/charset&gt;</pre>
-||<b>Description:</b>||Default charset is ISO-8859-1 (latin1).  If you want another character set to be the default then specify it here. For a list of character set names you can pass in, visit: http://www.iana.org/assignments/character-sets
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;units&gt;</pre>
-||<b>Attributes:</b>||key
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;units key="km"&gt;&lt;/units&gt;</pre>
-||<b>Description:</b>||Default units are <b>mi</b> (miles).  Can specify <b>km</b> (kilometers) or <b>acres</b> using the example above to override this default and this will be used throughout the application. Both miles and kilometers will break down to meters and feet for distances less than 1/2 kilometer or 1/2 mile respectively.  If you specify acres, then linear distances will use feet and miles and areas will be in acres.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;extent&gt;</pre>
-||<b>Attributes:</b>||value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;extent value="-122.240619692407 37.8719538523575 -122.234643165877 37.8759382033771"&gt;&lt;/extent&gt;</pre>
-||<b>Description:</b>||Set the default extent to begin with for map application. value is in the form "xmin ymin xmax ymax"
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;bmzoom&gt;</pre>
-||<b>Attributes:</b>||value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;bmzoom value="15" /&gt;</pre>
-||<b>Description:</b>||Sets the starting Zoom scale for the map application.  lowest value available is 1 (the entire earth) and highest value is 17 (as far as google normally goes, unless special layers are used).
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;mingooglezoom&gt;</pre>
-||<b>Attributes:</b>||value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;mingooglezoom value="22" /&gt;</pre>
-||<b>Description:</b>||Minimum Google Zoom scale for application.  Use this in areas where you have an extremely detailed map and want to see greater detail than what is available normally (E.g. in the UC Botanical Garden).
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;maxgooglezoom&gt;</pre>
-||<b>Attributes:</b>||value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;maxgooglezoom value="9" /&gt;</pre>
-||<b>Description:</b>||Maximum Google Zoom for application.  Sets a custom number for how far the application can zoom in. Use this in areas where no Google Map data is known to exist below this scale, E.g. French Polynesia has no data below zoom level 9 as of March, 2006.
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;defaultscreensize&gt;</pre>
-||<b>Attributes:</b>||value
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;defaultscreensize value="600" /&gt;</pre>
-||<b>Description:</b>||Avalaible values are 800 (800x600), 600 (600x400), or 400 (400x300)
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;disclaimer&gt;</pre>
-||<b>Attributes:</b>||
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;disclaimer&gt;&lt;![CDATA[Data records provided by ORNIS may be used by individual researchers or research groups, but they may not be repackaged, resold, or redistributed in any form without the express written consent of the original institution where those records are held.<p>Citations: ....(etc)]]&gt;&lt;/disclaimer&gt;</pre>
-||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.
-
-<p>
-<p><pre>&lt;/metadata&gt;</pre>
-
-<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
-<pre>&lt;settings&gt;</pre>
-
-
-||<b>Element:</b>||<pre>&lt;setting&gt;</pre>
-||<b>Attributes:</b>||<i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)
-||<b>Repeatable:</b>||Yes
-||<b>Example:</b>||<pre>&lt;setting name="landsat" show="0"&gt;&lt;/setting&gt;</pre>
-||<b>Description:</b>||This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.
-
-<p>
-<table>
-||<b>List of names:</b>||
-||<b>screensize</b>|| (show the screensize drop down box)
-||<b>landsat</b>|| (offer the landsat wms service as a background image option-- currently this layer has a 150 meter offset but the application does not allow a closer viewing than 1:65000 scale to obscure the error. JPL is working to rectify this.)
-||<b>globe_bw</b>|| (black and white global elevation stored locally on server)
-||<b>drg</b>|| (digital raster graphic from terraserver)
-||<b>doq</b>|| (digital orthoquad from terraserver)
-||<b>finerelief</b>|| (World relief image from CubeWerx)
-||<b>slowcxn</b>|| (show checkbox to allow users to indicate if they are on a slow connection so images will be drawn in 8bit mode and background image option=auto will send less graphics)
-||<b>maxerrorinmeters</b>|| (show the show precision symbols checkbox)
-||<b>colorprecision</b>|| (show color by precision option in drop down list for color by)
-||<b>coloryearcollected</b>|| (show color by year collected option in drop down list for color by)
-||<b>label</b>|| (show label place names checkbox)
-||<b>labelby</b>|| (show or not show drop down box to labelby feature)
-||<b>opaque</b>|| (show the Dim Background Images checkbox)
-||<b>units</b>|| (show the Distance & Area Measurements Drop-down box so user can pick their own units)
-||<b>backgroundimage</b>|| (show or not show drop down list of background images)
-||<b>embedscalebar</b>|| (show or not show embedscalebar checkbox.  Note-- if you you don't want to see this at all then you will need to pass in URL parameter setting this to 0 as well since it defaults to on)
-
-
-<p><pre>&lt;/settings&gt;</pre>
-
-<a name="recordlinkback"><p><b><font color='#0000ff'>4. Record LinkBack Section</font></b></p></a>
-<pre>&lt;recordlinkback&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;linkback&gt;</pre>
-||<b>Attributes:</b>||<i>method</i>: how to linkback<br><i>linkurl</i>: url to use<br><i>text</i>: text to display inside href tag<br><i>fieldname</i>: name of field<br><i>key1</i>: Concept Alias<br><i>value1</i>: Concept Name<br><i>key2</i>: ...<br><i>value2</i>: ...<br><i>key5</i>:<br><i>value5</i>
-||<b>Repeatable:</b>||No
-||<b>Example 1:</b>||the linkurl attribute specifies a fully formed link(href tag) pointing to the concept element (see Concepts section, below) that stores this information, which comes from the tab delimited file.<p><pre>&lt;linkback method="entireurl" linkurl="RelatedInformation" fieldname="Link Back"&gt;&lt;/linkback&gt;</pre>
-||<b>Example 2:</b>||the linkurl attribute specifieds a URL root and key/value pairs are passed in from file.  key/value pairs are specified as attributes (up to 5).  The key points to the conceptalias and the value points to the concept name.<p><pre>&lt;linkback method="root" linkurl="http://elib.cs.berkeley.edu/cgi-bin/mvz_query" text="View Details" fieldname="Link Back" key1="Coll_Object_id" value1="undefined_2"&gt;&lt;/linkback&gt;</pre>
-||<b>Example 3:</b>||don't provide any linkback&lt;linkback&gt;method="none"&lt;/linkback&gt;
-||<b>Description:</b>||This application allows users to pass in either fully formed href tags or partial tags with specified key/value pairs passed from tab delimited file. Data must come from the tab delimited file specified in the tabfile URL parameters.
-
-<p>
-<pre>&lt;/recordlinkback&gt;</pre>
-
-<a name="themes"><p><b><font color='#0000ff'>5. Themes Section</font></b></p></a>
-<pre>&lt;themes &gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;theme&gt;</pre>
-||<b>Attributes:</b>||<i>method</i>: what theme ("coloryearcollected" "colorprecision" are the only values right now.)<br><i>fieldname</i>: The name of the field to map to containing data for the theme (year collected or precision in meters data)
-||<b>Repeatable:</b>||yes
-||<b>Examples:</b>||<pre>&lt;theme method="coloryearcollected" fieldname="darwin:yearcollected" /&gt;</pre><pre>&lt;theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" /&gt;</pre>
-||<b>Description:</b>||Themes allow users to specify content themes for visualizing the data.  The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality.  Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.
-
-
-<p>
-<pre>&lt;/themes&gt;</pre>
-
-<a name="colors"><p><b><font color='#0000ff'>6. Colors Section</font></b></p></a>
-<pre>&lt;colors method="field" fieldname="" label=""&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;colors&gt;</pre>
-||<b>Attributes:</b>||<i>method</i>: how colors are specified ("field" and "dynamicfield" are answers -- field requires color children whereas dynamic field searches in the contents of the fieldname specified, groups, and dynamically assigns colors)<br><i>fieldname</i>: The name of the field to map to<br><i>label</i>: Legend Label for point colors
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;colors method="field" fieldname="darwin:collectioncode" label="Key to Point Colors"&gt;</pre>
-||<b>Description:</b>||You can use a field in your tab delimited input file to control the colors displayed on the map.  This element tells us what field to use.  The children which are repeatable map the values in this field to particular rgb values.
-
-
-<p>
-
-||<b>Element:</b>||&lt;color&gt;
-||<b>Attributes:</b>||<i>key</i>: value to map to<br><i>red</i>: 0-255<br><i>green</i>: 0-255<br><i>blue</i>: 0-255<br><i>label</i>: what this value means<br><i>symbol</i>: optional symbol type (1-tent, 2-star, 3-triangle, 4-square, 5-plus, 6-cross, 7-circle (default)<br><i>size</i>: 1-20 (1 is smallest)
-||<b>Repeatable:</b>||Yes
-||<b>Example:</b>||&lt;color key="mamm" red="255" green="0" blue="0" label="Mammal Collection" /&gt;
-||<b>Description:</b>|| put in a color element for each value.
-
-
-<p>
-
-||<b>Element:</b>||&lt;dominantcolor&gt;
-||<b>Attributes:</b>||<i>webcolor</i>
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||&lt;dominantcolor webcolor="ffcc33" /&gt;
-||<b>Description:</b>||Web color for dominant color scheme
-
-
-<p>
-
-||<b>Element:</b>||&lt;subdominantcolor&gt;
-||<b>Attributes:</b>||<i>webcolor</i>
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||&lt;subdominantcolor webcolor="ffcc33" /&gt;
-||<b>Description:</b>||Web color for subdominant color scheme
-
-
-<p>
-
-||<b>Element:</b>||&lt;textdominantcolor&gt;
-||<b>Attributes:</b>||<i>webcolor</i>
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||&lt;textdominantcolor webcolor="ffffff" /&gt;
-||<b>Description:</b>||Web color for text dominant color scheme.  Defaults to black if not set.
-
-
-<p>
-
-||<b>Element:</b>||&lt;rowselectcolor&gt;
-||<b>Attributes:</b>||<i>webcolor</i>
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||&lt;rowselectcolor webcolor="ffff00" /&gt;
-||<b>Description:</b>||Web color to use for row select color. Defaults to yell if not set.
-
-
-
-<p>
-<pre>&lt;/colors&gt;</pre>
-
-<a name="concepts"><p><b><font color='#0000ff'>7. Matching tab-delimited fields to Map schema</font></b></p></a>
-<pre>&lt;concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0"&gt;</pre>
-<p>
-
-||<b>Element:</b>||&lt;concept&gt;
-||<b>Attributes:</b>||<i>viewlist</i>: 0 means do not show this field in query results.  1 means to show it.<br><i>colorlist</i>: 0 means do not add this as an option under 'Color By'.  1 means add this as an option to 'Color By', so the user can display unique colors for each unique value in this field.<br><i>datatype</i>: name of concept in <a href="/schemas/darwin2resultmapping.xsd">mapfile schema</a> or specification of new datatype.<br><i>alias</i>: Your name for this field which will also appear on column headings of query results.<br><i>order</i>: any number to designate what order this should be displayed in results table.
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||See following file:
-||<b>Description:</b>|| This section defines names of server-side-fields, aliases, and whether we want to view it.  If there are concepts outside the map schema, then they go into sequentially numbered, typed fields (char120:1-8,char255:1-8,longtext:1-4,int:1-4,float:1-4).  The order of the fields MUST match the order of the fields in the tab delimited file being passed to this application.
-
-<p>
-<pre>
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" /&gt;
-&lt;concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:stateprovince" alias="StateProvince" order="3" /&gt;
-&lt;concept viewlist="1" colorlist="1" datatype="darwin:county" alias="County" order="4" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:1" alias="id_modifier" order="11" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:2" alias="Coll_Object_id" order="12" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:3" alias="type_status" order="5" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:4" alias="class" order="5" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" /&gt;
-<h1><center>Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
-<p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
-
-<p><b>Table of contents</b></p>
-<li><a href="#specialcharacters">A Note on Special Characters</a>
-<li><a href="#metadata">Metadata</a>
-<li><a href="#settings">Application Settings</a>
-<li><a href="#recordlinkback">Construct a 'Link Back' pointing to a source webpage</a>
-<li><a href="#themes">Themes to control grouping</a>
-<li><a href="#colors">Application colors and color scheme for default point attribute</a>
-<li><a href="#concepts">The structure of your tab-delimited data file</a>
-<li><a href="#gisdata">GIS data that can be passed to application</a>
-<li><a href="#join">Construct a join to a polygon shape file</a>
-<li><a href="#annotation">Annotation email address</a>
-<li><a href="#webservice">Web Services Call</a>
-
-<p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
-<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.
-<p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
-<p><pre>&amp;amp;deg;C</pre>
-
-<p><b><font color='#0000ff'>1. Opening Tag</font></b></p>
-<pre>&lt;berkeleymapper&gt;</pre>
-
-<a name="metadata"><p><b><font color='#0000ff'>2. Metadata Section</font></b></p></a>
-<pre>&lt;metadata&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;name&gt;</pre>
-||<b>Attributes:</b>||None
-||<b>Repeatable:</b>||No
-||<b>Example:</b>||<pre>&lt;name&gt;MVZ Map Configuration File&lt;/name&gt;</pre>
-||<b>Description:</b>||Description of what this configuration file is for.
-
-<p>
-
-/Attempt to perform da
-&lt;concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&gt;
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"	alias="DecimalLatitude" order="20" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" /&gt;
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"	alias="HorizontalDatum" order="23" /&gt;
-<p>&lt;/concepts&gt;
-</pre>
-
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
-<pre>&lt;gisdata&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;layer&gt;</pre>
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.
-||<b>Repeatable:</b>||yes
-||<b>Examples:</b>||
-<br>A particular shapefile (that is loaded on server):<pre>&lt;layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /&gt;</pre>
-<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre>&lt;layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/&gt;</pre>
-<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/&gt;</pre>
-<br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre>&lt;layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/&gt;</pre>
-
-||<b>Description:</b>||This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
-
-<p>
-<pre>&lt;/gisdata&gt;</pre>
-Johns-MacBook-Air:~ jdeck$ vi foo
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ 
-Johns-MacBook-Air:~ jdeck$ cat foo
-<h1><center>Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
-<p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
-
-<p><b>Table of contents</b></p>
-<li><a href="#specialcharacters">A Note on Special Characters</a>
-<li><a href="#metadata">Metadata</a>
-<li><a href="#settings">Application Settings</a>
-<li><a href="#recordlinkback">Construct a 'Link Back' pointing to a source webpage</a>
-<li><a href="#themes">Themes to control grouping</a>
-<li><a href="#colors">Application colors and color scheme for default point attribute</a>
-<li><a href="#concepts">The structure of your tab-delimited data file</a>
-<li><a href="#gisdata">GIS data that can be passed to application</a>
-<li><a href="#join">Construct a join to a polygon shape file</a>
-<li><a href="#annotation">Annotation email address</a>
-<li><a href="#webservice">Web Services Call</a>
-
-<p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
-<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.  
-<p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
-<p><pre>&amp;amp;deg;C</pre>
-
-<p><b><font color='#0000ff'>1. Opening Tag</font></b></p>
-<pre>&lt;berkeleymapper&gt;</pre>
-
-<a name="metadata"><p><b><font color='#0000ff'>2. Metadata Section</font></b></p></a>
-<pre>&lt;metadata&gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;name&gt;</pre>||
-||<b>Attributes:</b>||None||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;name&gt;MVZ Map Configuration File&lt;/name&gt;</pre>||
-||<b>Description:</b>||Description of what this configuration file is for.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;mapwiki&gt;</pre>||
-||<b>Attributes:</b>||organization,email||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;mapwiki organization="Museum of Vertebrate Zoology" email="fredflintstone@aol.com" /&gt;</pre>||
-||<b>Description:</b>||Instruct mapwiki calls to fill in default organization and email.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;relatedinformation&gt;</pre>||
-||<b>Attributes:</b>||None||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;relatedinformation&gt;http://mvz.berkeley.edu/&lt;/relatedinformation&gt;</pre>||
-||<b>Description:</b>||Link for more information on the group this mapping configuration applies to.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;abstract&gt;</pre>||
-||<b>Attributes:</b>||None||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;abstract&gt;GIS configuration file for MVZ query interface&lt;/abstract&gt;</pre>||
-||<b>Description:</b>||A more in-depth description of what the purpose of this application does for the group.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;mapkeyword&gt;</pre>||
-||<b>Attributes:</b>||keyword||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;mapkeyword keyword="specimens"&gt;&lt;/mapkeyword&gt;</pre>||
-||<b>Description:</b>||This specifies what we are mapping.  By default is specimens but if you put another word here, it will refer to the points as this word.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;charset&gt;</pre>||
-||<b>Attributes:</b>||name||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;charset name="UTF-8"&gt;&lt;/charset&gt;</pre>||
-||<b>Description:</b>||Default charset is ISO-8859-1 (latin1).  If you want another character set to be the default then specify it here. For a list of character set names you can pass in, visit: http://www.iana.org/assignments/character-sets||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;units&gt;</pre>||
-||<b>Attributes:</b>||key||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;units key="km"&gt;&lt;/units&gt;</pre>||
-||<b>Description:</b>||Default units are <b>mi</b> (miles).  Can specify <b>km</b> (kilometers) or <b>acres</b> using the example above to override this default and this will be used throughout the application. Both miles and kilometers will break down to meters and feet for distances less than 1/2 kilometer or 1/2 mile respectively.  If you specify acres, then linear distances will use feet and miles and areas will be in acres.||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;extent&gt;</pre>||
-||<b>Attributes:</b>||value||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;extent value="-122.240619692407 37.8719538523575 -122.234643165877 37.8759382033771"&gt;&lt;/extent&gt;</pre>||
-||<b>Description:</b>||Set the default extent to begin with for map application. value is in the form "xmin ymin xmax ymax"||
-
-<p>
-
-||<b>Element:</b>||<pre>&lt;disclaimer&gt;</pre>||
-||<b>Attributes:</b>||||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre>&lt;disclaimer&gt;&lt;![CDATA[Data records provided by ORNIS may be used by individual researchers or research groups, but they may not be repackaged, resold, or redistributed in any form without the express written consent of the original institution where those records are held.<p>Citations: ....(etc)]]&gt;&lt;/disclaimer&gt;</pre>||
-||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.||
-
-<p>
-<p><pre>&lt;/metadata&gt;</pre>
-
-<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
-<pre>&lt;settings&gt;</pre>
-
-
-||<b>Element:</b>||<pre>&lt;setting&gt;</pre>||
-||<b>Attributes:</b>||<i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)||
-||<b>Repeatable:</b>||Yes||
-||<b>Example:</b>||<pre>&lt;setting name="landsat" show="0"&gt;&lt;/setting&gt;</pre>||
-||<b>Description:</b>||This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.||
-
-<p><pre>&lt;/settings&gt;</pre>
-
-<a name="recordlinkback"><p><b><font color='#0000ff'>4. Record LinkBack Section</font></b></p></a>
-<pre>&lt;recordlinkback&gt;</pre>
-<p>
-Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application.
-<p>
-<a href="someurl">12345</a>
-<p>
-<pre>&lt;/recordlinkback&gt;</pre>
-
-<a name="themes"><p><b><font color='#0000ff'>5. Themes Section</font></b></p></a>
-<pre>&lt;themes &gt;</pre>
-<p>
-
-||<b>Element:</b>||<pre>&lt;theme&gt;</pre>||
-||<b>Attributes:</b>||<i>method</i>: what theme ("coloryearcollected" "colorprecision" are the only values right now.)<br><i>fieldname</i>: The name of the field to map to containing data for the theme (year collected or precision in meters data)||
-||<b>Repeatable:</b>||yes||
-||<b>Examples:</b>||<pre>&lt;theme method="coloryearcollected" fieldname="darwin:yearcollected" /&gt;</pre><pre>&lt;theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" /&gt;</pre>||
-||<b>Description:</b>||Themes allow users to specify content themes for visualizing the data.  The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality.  Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.||
-
-
-<p>
-<pre>&lt;/themes&gt;</pre>
-
-<a name="colors"><p><b><font color='#0000ff'>6. Colors Section</font></b></p></a>
-<pre>&lt;colors method="field" fieldname="" label=""&gt;</pre>
-<p>
-
-<a name="concepts"><p><b><font color='#0000ff'>7. Matching tab-delimited fields to Map schema</font></b></p></a>
-<pre>&lt;concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0"&gt;</pre>
-<p>
-
-||<b>Element:</b>||&lt;concept&gt;||
-||<b>Attributes:</b>||<i>viewlist</i>: 0 means do not show this field in query results.  1 means to show it.<br><i>colorlist</i>: 0 means do not add this as an option under 'Color By'.  1 means add this as an option to 'Color By', so the user can display unique colors for each unique value in this field.<br><i>datatype</i>: name of concept in <a href="/schemas/darwin2resultmapping.xsd">mapfile schema</a> or specification of new datatype.<br><i>alias</i>: Your name for this field which will also appear on column headings of query results.<br><i>order</i>: any number to designate what order this should be displayed in results table.||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||See following file:||
-||<b>Description:</b>|| This section defines names of server-side-fields, aliases, and whether we want to view it.  If there are concepts outside the map schema, then they go into sequentially numbered, typed fields (char120:1-8,char255:1-8,longtext:1-4,int:1-4,float:1-4).  The order of the fields MUST match the order of the fields in the tab delimited file being passed to this application.||
-
-<p>
-<pre>
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" /&gt;
-&lt;concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:stateprovince" alias="StateProvince" order="3" /&gt;
-&lt;concept viewlist="1" colorlist="1" datatype="darwin:county" alias="County" order="4" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:1" alias="id_modifier" order="11" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:2" alias="Coll_Object_id" order="12" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:3" alias="type_status" order="5" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:4" alias="class" order="5" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" /&gt;
-&lt;concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&gt;
-&lt;concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"	alias="DecimalLatitude" order="20" /&gt;
-&lt;concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&gt;
-&<concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /&>
-&<concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /&>&<concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"  alias="DecimalLatitude" order="20" /&> &<concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" /&>
-&<concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" /&>
-&<concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"  alias="HorizontalDatum" order="23" /&> 
-<p>&</concepts&>
-</pre> 
-
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
-<pre>&<gisdata&></pre>
-<p>
-
-||<b>Element:</b>||<pre>&<layer&></pre>||
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.||||<b>Repeatable:</b>||yes||||<b>Examples:</b>|||| 
-<br>A particular shapefile (that is loaded on server):<pre>&<layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /&></pre>||
-<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre>&<layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/&></pre>
-<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre>&<layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/&></pre>
-<br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre>&<layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/&></pre>
-
-
-<b>Description:</b> This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
-
-<p>
-<pre>&</gisdata&></pre>
-search hit BOTTOM, continuing at TOP
-<concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" /><concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" /><concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"   alias="DecimalLatitude" order="20" />
-<concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" />
-<concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" />
-<concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"   alias="HorizontalDatum" order="23" />
-<p></concepts>
-</pre> 
-
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
-<pre><gisdata></pre>
-<p>
-
-||<b>Element:</b>||<pre><layer></pre>||
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.||||<b>Repeatable:</b>||yes||||<b>Examples:</b>||||
-
-<br>A particular shapefile (that is loaded on server):<pre><layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /></pre>||
-<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre><layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/></pre>
-<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre><layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/></pre>
-<br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre><layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/></pre>
-
-
-<b>Description:</b> This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
-
-<p>
-<pre></gisdata></pre>
-:0
 = Heading = Editing the XML Configuration File<br>for BerkeleyMapper</center></h1>
 
 <font size="11px">
@@ -785,7 +26,7 @@ search hit BOTTOM, continuing at TOP
 <li><a href="#webservice">Web Services Call</a>
 
 <p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
-<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.
+<p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.  
 <p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
 <p><pre>&amp;amp;deg;C</pre>
 
@@ -801,11 +42,143 @@ search hit BOTTOM, continuing at TOP
 ||<b>Repeatable:</b>||No||
 ||<b>Example:</b>||<pre><name>MVZ Map Configuration File</name></pre>||
 ||<b>Description:</b>||Description of what this configuration file is for.||
+
+<p>
+
+||<b>Element:</b>||<pre><mapwiki></pre>||
+||<b>Attributes:</b>||organization,email||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><mapwiki organization="Museum of Vertebrate Zoology" email="fredflintstone@aol.com" /></pre>||
+||<b>Description:</b>||Instruct mapwiki calls to fill in default organization and email.||
+
+<p>
+
+||<b>Element:</b>||<pre><relatedinformation></pre>||
+||<b>Attributes:</b>||None||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><relatedinformation>http://mvz.berkeley.edu/</relatedinformation></pre>||
+||<b>Description:</b>||Link for more information on the group this mapping configuration applies to.||
+
+<p>
+
+||<b>Element:</b>||<pre><abstract></pre>||
+||<b>Attributes:</b>||None||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><abstract>GIS configuration file for MVZ query interface</abstract></pre>||
+||<b>Description:</b>||A more in-depth description of what the purpose of this application does for the group.||
+
+<p>
+
+||<b>Element:</b>||<pre><mapkeyword></pre>||
+||<b>Attributes:</b>||keyword||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><mapkeyword keyword="specimens"></mapkeyword></pre>||
+||<b>Description:</b>||This specifies what we are mapping.  By default is specimens but if you put another word here, it will refer to the points as this word.||
+
+<p>
+
+||<b>Element:</b>||<pre><charset></pre>||
+||<b>Attributes:</b>||name||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><charset name="UTF-8"></charset></pre>||
+||<b>Description:</b>||Default charset is ISO-8859-1 (latin1).  If you want another character set to be the default then specify it here. For a list of character set names you can pass in, visit: http://www.iana.org/assignments/character-sets||
+
+<p>
+
+||<b>Element:</b>||<pre><units></pre>||
+||<b>Attributes:</b>||key||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><units key="km"></units></pre>||
+||<b>Description:</b>||Default units are <b>mi</b> (miles).  Can specify <b>km</b> (kilometers) or <b>acres</b> using the example above to override this default and this will be used throughout the application. Both miles and kilometers will break down to meters and feet for distances less than 1/2 kilometer or 1/2 mile respectively.  If you specify acres, then linear distances will use feet and miles and areas will be in acres.||
+
+<p>
+
+||<b>Element:</b>||<pre><extent></pre>||
+||<b>Attributes:</b>||value||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><extent value="-122.240619692407 37.8719538523575 -122.234643165877 37.8759382033771"></extent></pre>||
+||<b>Description:</b>||Set the default extent to begin with for map application. value is in the form "xmin ymin xmax ymax"||
+
+<p>
+
+||<b>Element:</b>||<pre><disclaimer></pre>||
+||<b>Attributes:</b>||||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||<pre><disclaimer><![CDATA[Data records provided by ORNIS may be used by individual researchers or research groups, but they may not be repackaged, resold, or redistributed in any form without the express written consent of the original institution where those records are held.<p>Citations: ....(etc)]]></disclaimer></pre>||
+||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.||
+
+<p>
+<p><pre></metadata></pre>
+
+<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
+<pre><settings></pre>
+
+
+||<b>Element:</b>||<pre><setting></pre>||
+||<b>Attributes:</b>||<i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)||
+||<b>Repeatable:</b>||Yes||
+||<b>Example:</b>||<pre><setting name="landsat" show="0"></setting></pre>||
+||<b>Description:</b>||This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.||
+
+<p><pre></settings></pre>
+
+<a name="recordlinkback"><p><b><font color='#0000ff'>4. Record LinkBack Section</font></b></p></a>
+<pre><recordlinkback></pre>
+<p>
+Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application.
+<p>
+<a href="someurl">12345</a>
+<p>
+<pre></recordlinkback></pre>
+
+<a name="themes"><p><b><font color='#0000ff'>5. Themes Section</font></b></p></a>
+<pre><themes ></pre>
+<p>
+
+||<b>Element:</b>||<pre><theme></pre>||
+||<b>Attributes:</b>||<i>method</i>: what theme ("coloryearcollected" "colorprecision" are the only values right now.)<br><i>fieldname</i>: The name of the field to map to containing data for the theme (year collected or precision in meters data)||
+||<b>Repeatable:</b>||yes||
+||<b>Examples:</b>||<pre><theme method="coloryearcollected" fieldname="darwin:yearcollected" /></pre><pre><theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" /></pre>||
+||<b>Description:</b>||Themes allow users to specify content themes for visualizing the data.  The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality.  Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.||
+
+
+<p>
+<pre></themes></pre>
+
+<a name="colors"><p><b><font color='#0000ff'>6. Colors Section</font></b></p></a>
+<pre><colors method="field" fieldname="" label=""></pre>
+<p>
+
+<a name="concepts"><p><b><font color='#0000ff'>7. Matching tab-delimited fields to Map schema</font></b></p></a>
+<pre><concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0"></pre>
+<p>
+
+||<b>Element:</b>||<concept>||
+||<b>Attributes:</b>||<i>viewlist</i>: 0 means do not show this field in query results.  1 means to show it.<br><i>colorlist</i>: 0 means do not add this as an option under 'Color By'.  1 means add this as an option to 'Color By', so the user can display unique colors for each unique value in this field.<br><i>datatype</i>: name of concept in <a href="/schemas/darwin2resultmapping.xsd">mapfile schema</a> or specification of new datatype.<br><i>alias</i>: Your name for this field which will also appear on column headings of query results.<br><i>order</i>: any number to designate what order this should be displayed in results table.||
+||<b>Repeatable:</b>||No||
+||<b>Example:</b>||See following file:||
+||<b>Description:</b>|| This section defines names of server-side-fields, aliases, and whether we want to view it.  If there are concepts outside the map schema, then they go into sequentially numbered, typed fields (char120:1-8,char255:1-8,longtext:1-4,int:1-4,float:1-4).  The order of the fields MUST match the order of the fields in the tab delimited file being passed to this application.||
+
+<p>
+<pre>
+<concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" />
+<concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" />
+<concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" />
+<concept viewlist="0" colorlist="0" datatype="darwin:stateprovince" alias="StateProvince" order="3" />
+<concept viewlist="1" colorlist="1" datatype="darwin:county" alias="County" order="4" />
+<concept viewlist="0" colorlist="0" datatype="char120:1" alias="id_modifier" order="11" />
+<concept viewlist="0" colorlist="0" datatype="char120:2" alias="Coll_Object_id" order="12" />
+<concept viewlist="0" colorlist="0" datatype="char120:3" alias="type_status" order="5" />
+<concept viewlist="0" colorlist="1" datatype="char120:4" alias="class" order="5" />
+<concept viewlist="0" colorlist="1" datatype="char120:5" alias="order" order="50" />
+<concept viewlist="0" colorlist="1" datatype="char120:6" alias="family" order="10" />
+<concept viewlist="0" colorlist="0" datatype="char120:7" alias="tissues" order="19" />
+<concept viewlist="0" colorlist="0" datatype="char120:8" alias="sex_cde" order="20" />
 <concept viewlist="1" colorlist="0" datatype="darwin:collectioncode" alias="CollectionCode" order="1" />
-<concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"   alias="DecimalLatitude" order="20" />
+<concept viewlist="0" colorlist="0" datatype="darwin:decimallatitude"	alias="DecimalLatitude" order="20" />
 <concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" />
 <concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" />
-<concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"   alias="HorizontalDatum" order="23" />
+<concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"	alias="HorizontalDatum" order="23" />
 <p></concepts>
 </pre>
 
@@ -829,4 +202,3 @@ search hit BOTTOM, continuing at TOP
 <p>
 <pre></gisdata></pre>
 </font>
-"foo" 195L, 13262C written
