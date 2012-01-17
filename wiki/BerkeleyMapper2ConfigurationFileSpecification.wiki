@@ -1,48 +1,20 @@
-:0
 #summary XML Specification for BerkeleyMapper 2 Configuration Files
+
+
+<wiki:toc max_depth="1" />
 
 = Introduction =
 
-This file describes XML Syntax for BerkeleyMapper Configuration Files.
+This file is specified in the calling URL by setting configfile=<some location>.  You may put this file on any URL.  Please validate your XML before putting a configfile into place and testing it.  If you have any questions you may contact the administrator for assistance.
 
-= Details =
-
-= Heading = 
-
-Editing the XML Configuration File<br>for BerkeleyMapper
-
-<p>This file is specified by the URL key=configvalue.  It is best to locate this file on the BerkeleyMapper for faster performance.  However, you may put this file on any server and insert a URL string as the value.  Speak to the system administrator to put this file on the BerkeleyMapper.
-
-<p><b>Table of contents</b></p>
-<li><a href="#specialcharacters">A Note on Special Characters</a>
-<li><a href="#metadata">Metadata</a>
-<li><a href="#settings">Application Settings</a>
-<li><a href="#recordlinkback">Construct a 'Link Back' pointing to a source webpage</a>
-<li><a href="#themes">Themes to control grouping</a>
-<li><a href="#colors">Application colors and color scheme for default point attribute</a>
-<li><a href="#concepts">The structure of your tab-delimited data file</a>
-<li><a href="#gisdata">GIS data that can be passed to application</a>
-<li><a href="#join">Construct a join to a polygon shape file</a>
-<li><a href="#annotation">Annotation email address</a>
-<li><a href="#webservice">Web Services Call</a>
-
-<p><b><font color='#0000ff'>i. A Note on Special Characters</font></b></p>
+= A Note on Special Characters =
 <p>Since data is passed using XML documents, embedded in databases, and sometimes coming from text documents, care should be taken in using special characters.  It is reccomended to use the named entity references (see, for example <a href="http://home.earthlink.net/~bobbau/platforms/specialchars/">http://home.earthlink.net/~bobbau/platforms/specialchars/</a>).  In addition, any & symbol should be entered as a named reference, even when used in identify named references.  
-<p>As an example, suppose you wanted to use &deg;C as a label.  It would take the following form in your XML configuration file:
-<p><pre>&amp;amp;deg;C</pre>
 
-<p><b><font color='#0000ff'>1. Opening Tag</font></b></p>
-<pre><berkeleymapper></pre>
+= Opening Tag =
+{{{<berkeleymapper>}}}
 
-<a name="metadata"><p><b><font color='#0000ff'>2. Metadata Section</font></b></p></a>
-<pre><metadata></pre>
-<p>
-
-||<b>Element:</b>||<pre><name></pre>||
-||<b>Attributes:</b>||None||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre><name>MVZ Map Configuration File</name></pre>||
-||<b>Description:</b>||Description of what this configuration file is for.||
+= Metadata Section =
+{{{<metadata}}}
 
 <p>
 
@@ -51,14 +23,6 @@ Editing the XML Configuration File<br>for BerkeleyMapper
 ||<b>Repeatable:</b>||No||
 ||<b>Example:</b>||<pre><mapwiki organization="Museum of Vertebrate Zoology" email="fredflintstone@aol.com" /></pre>||
 ||<b>Description:</b>||Instruct mapwiki calls to fill in default organization and email.||
-
-<p>
-
-||<b>Element:</b>||<pre><relatedinformation></pre>||
-||<b>Attributes:</b>||None||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre><relatedinformation>http://mvz.berkeley.edu/</relatedinformation></pre>||
-||<b>Description:</b>||Link for more information on the group this mapping configuration applies to.||
 
 <p>
 
@@ -78,30 +42,6 @@ Editing the XML Configuration File<br>for BerkeleyMapper
 
 <p>
 
-||<b>Element:</b>||<pre><charset></pre>||
-||<b>Attributes:</b>||name||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre><charset name="UTF-8"></charset></pre>||
-||<b>Description:</b>||Default charset is ISO-8859-1 (latin1).  If you want another character set to be the default then specify it here. For a list of character set names you can pass in, visit: http://www.iana.org/assignments/character-sets||
-
-<p>
-
-||<b>Element:</b>||<pre><units></pre>||
-||<b>Attributes:</b>||key||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre><units key="km"></units></pre>||
-||<b>Description:</b>||Default units are <b>mi</b> (miles).  Can specify <b>km</b> (kilometers) or <b>acres</b> using the example above to override this default and this will be used throughout the application. Both miles and kilometers will break down to meters and feet for distances less than 1/2 kilometer or 1/2 mile respectively.  If you specify acres, then linear distances will use feet and miles and areas will be in acres.||
-
-<p>
-
-||<b>Element:</b>||<pre><extent></pre>||
-||<b>Attributes:</b>||value||
-||<b>Repeatable:</b>||No||
-||<b>Example:</b>||<pre><extent value="-122.240619692407 37.8719538523575 -122.234643165877 37.8759382033771"></extent></pre>||
-||<b>Description:</b>||Set the default extent to begin with for map application. value is in the form "xmin ymin xmax ymax"||
-
-<p>
-
 ||<b>Element:</b>||<pre><disclaimer></pre>||
 ||<b>Attributes:</b>||||
 ||<b>Repeatable:</b>||No||
@@ -109,49 +49,19 @@ Editing the XML Configuration File<br>for BerkeleyMapper
 ||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.||
 
 <p>
-<p><pre></metadata></pre>
+{{{</metadata>}}}
 
-<a name="settings"><p><b><font color='#0000ff'>3. Settings Section</font></b></p></a>
-<pre><settings></pre>
-
-
-||<b>Element:</b>||<pre><setting></pre>||
-||<b>Attributes:</b>||<i>name</i>: see following list of names<br><i>show</i>: 0 (false) or 1 (true)||
-||<b>Repeatable:</b>||Yes||
-||<b>Example:</b>||<pre><setting name="landsat" show="0"></setting></pre>||
-||<b>Description:</b>||This is where persistent settings go that form the shape of the application for the user.  More dynamic settings should go into the URL string and you should consult the appropriate documentation for that.  All settings default to true so it is safe to only specify settings you want to turn off.||
-
-<p><pre></settings></pre>
-
-<a name="recordlinkback"><p><b><font color='#0000ff'>4. Record LinkBack Section</font></b></p></a>
-<pre><recordlinkback></pre>
+= Record LinkBack =
+{{{<recordlinkback>}}}
 <p>
 Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application.
 <p>
-<a href="someurl">12345</a>
+{{{<a href="someurl">12345</a>}}}
 <p>
-<pre></recordlinkback></pre>
+{{{</recordlinkback>}}}
 
-<a name="themes"><p><b><font color='#0000ff'>5. Themes Section</font></b></p></a>
-<pre><themes ></pre>
-<p>
-
-||<b>Element:</b>||<pre><theme></pre>||
-||<b>Attributes:</b>||<i>method</i>: what theme ("coloryearcollected" "colorprecision" are the only values right now.)<br><i>fieldname</i>: The name of the field to map to containing data for the theme (year collected or precision in meters data)||
-||<b>Repeatable:</b>||yes||
-||<b>Examples:</b>||<pre><theme method="coloryearcollected" fieldname="darwin:yearcollected" /></pre><pre><theme method="colorprecision" fieldname="darwin:coordinateuncertaintyinmeters" /></pre>||
-||<b>Description:</b>||Themes allow users to specify content themes for visualizing the data.  The application controls value ranges and colors, but the user can specify in this section what data should be used for a particular theme and by specifying it in this file, it means they choose to turn on that functionality.  Themes require some custom coding so make a request to the programmer if you want an additional theme for your data.||
-
-
-<p>
-<pre></themes></pre>
-
-<a name="colors"><p><b><font color='#0000ff'>6. Colors Section</font></b></p></a>
-<pre><colors method="field" fieldname="" label=""></pre>
-<p>
-
-<a name="concepts"><p><b><font color='#0000ff'>7. Matching tab-delimited fields to Map schema</font></b></p></a>
-<pre><concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0"></pre>
+= Matching tab-delimited fields to Map schema =
+{{{<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">}}}
 <p>
 
 ||<b>Element:</b>||<concept>||
@@ -161,7 +71,7 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 ||<b>Description:</b>|| This section defines names of server-side-fields, aliases, and whether we want to view it.  If there are concepts outside the map schema, then they go into sequentially numbered, typed fields (char120:1-8,char255:1-8,longtext:1-4,int:1-4,float:1-4).  The order of the fields MUST match the order of the fields in the tab delimited file being passed to this application.||
 
 <p>
-<pre>
+{{{
 <concept viewlist="1" colorlist="0" datatype="darwin:catalognumbertext" alias="CatalogNumber" order="1" />
 <concept viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="ScientificName" order="2" />
 <concept viewlist="0" colorlist="1" datatype="darwin:country" alias="Country" order="9" />
@@ -180,11 +90,11 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 <concept viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="DecimalLongitude" order="21" />
 <concept viewlist="0" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="CoordinateUncertaintyInMeters" order="22" />
 <concept viewlist="1" colorlist="0" datatype="darwin:horizontaldatum"	alias="HorizontalDatum" order="23" />
-<p></concepts>
-</pre>
+</concepts>
+}}}
 
-<a name="gisdata"><p><b><font color='#0000ff'>8. GIS Data Section</font></b></p></a>
-<pre><gisdata></pre>
+= GIS Data Section (KML) =
+{{{<gisdata>}}}
 <p>
 
 ||<b>Element:</b>||<pre><layer></pre>||
@@ -201,4 +111,7 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 <b>Description:</b> This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
 
 <p>
-<pre></gisdata></pre>
+{{{</gisdata>}}}
+
+= Closing Tag =
+{{{</berkeleymapper>}}}
