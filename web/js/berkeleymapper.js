@@ -2,22 +2,49 @@ var map;
 var overlays = [];          // overlays that the User has drawn
 var overlayMarkers = [];    // markers to click on for the overlays that user has drawn
 var markers = [];           // Point markers
+//var highlightMarkers = [];  // Highlight this area markers
 var circles = [];           // Error radius circles for point markers
 var kmlLayers = [];         // KML Layers (defined by config file)
 var pointMode = false;      // pointMode = true draws special features for pointMapping                           
 var session = "";           // Session string for communicating w/ server
 var urlRoot = "v2/";        // URL Root to use for all calls
 var mc;                     // markerCluster control variable
-var flexme1Attributes = {
-                sortorder: "asc",
-                usepager: true,
-                title: "Attributes",
-                useRp: true,
-                rp: 20,
-                showTableToggleBtn: true,
-                width: 300,
-                height: "auto"
-                };
+
+var jqGridAttributes = {
+    multiselect: true,
+    multiboxonly: true,
+    emptyrecords: "No records to view",
+    altRows: true,
+    loadtext: "Loading...",
+    scroll: true,
+    height: "100%" ,
+    onSelectRow: function(id){
+        var lat = $('#flexme1').getCell(id, 'Latitude');
+        var lng = $('#flexme1').getCell(id, 'Longitude');
+
+        var latlng = new google.maps.LatLng(lat,lng);
+
+        alert('this function zoom to a particular row? not sure how i want to highlight marker');
+        //highlightMarkers[id] = new Marker({
+        //    position: latlng,
+        //    map: map
+        //highlightMarkers[id].setMap(map);
+
+   // });
+   }
+ };
+
+$().ready(function() {
+    $("#wholePage").splitter({
+        type: "v",
+        outline: true,
+        minLeft: 0, sizeLeft: 250, minRight: 100,
+        resizeToWidth: true,
+        cookie: "vsplitter",
+        accessKey: 'I'
+    });
+});
+
 
 // Subclass Marker so it can contain vital information to BM
 BMMarker.prototype = new google.maps.Marker();
@@ -176,7 +203,7 @@ function pointDisplay(value) {
 function initialize() {
     
     // Hide Left Panel
-    $("#leftnav").hide();
+    //$("#leftnav").hide();
 
     // Set pointMode
     if (jQuery.url.param('tabfile')) {
@@ -195,7 +222,7 @@ function initialize() {
             },
             statusCode: {
                 204: function() {
-                    alert('Unable to set session on server.');
+                    alert('Unable to set session on server.  Ensure tabfile & configfile locations are accessible.');
                     pointMode = false;
                 }
             }
@@ -217,14 +244,14 @@ function initialize() {
         setJSONPoints(session);
         
         // Left Control Panel        
-        var attControl = new PanelControl(document.createElement('DIV'), map);
-        google.maps.event.addDomListener(attControl, 'click', function() {
-            $("#leftnav").toggle("slide", {
-                direction: "left"
-            }, 1000, function() {
-                google.maps.event.trigger(map, "resize");                        
-            });                     
-        });  
+        //var attControl = new PanelControl(document.createElement('DIV'), map);
+        //google.maps.event.addDomListener(attControl, 'click', function() {
+        //    $("#leftnav").toggle("slide", {
+        //        direction: "left"
+        //    }, 1000, function() {
+        //        google.maps.event.trigger(map, "resize");
+        //    });
+        //});
         
         zoomPoints();
     }                     
@@ -331,7 +358,7 @@ function fetchRecords(session, polygon) {
         async: false,
         success: function(data) {
 
-            retStr += "<table class=\"flexme1\">";
+            retStr += "<table id=\"flexme1\">";
 		    retStr += "<thead><tr>";
 		    row = 1;
 		    $.each(data, function() {
@@ -365,8 +392,15 @@ function fetchRecords(session, polygon) {
                 return "unable to fetch results for polygon";
             }
         }
-    }); 
-    return retStr;
+    });
+
+    $("#resultPoints").html(retStr);
+    setLeftWidth();
+    $(function () {
+        tableToGrid("#flexme1", jqGridAttributes );
+    });
+
+    return true;
 }
 
 // clears All markers
@@ -435,10 +469,16 @@ function setMarkerClustererOn() {
         lng2 = cb.getSouthWest().lng();
         polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
 
-        $("#leftnav").show();
-        $("#resultPoints").html(fetchRecords(session, polygon));
-        $(".flexme1").flexigrid(flexme1Attributes);
-
+        fetchRecords(session, polygon);
+        //$("#resultPoints").html(fetchRecords(session, polygon));
+        //setLeftWidth();
+        //$(function () {
+        //    tableToGrid("#flexme1", { scroll:true, height:"100%" });
+        //});
+        //$(".flexme1").flexigrid(flexme1Attributes);
+        //$(document).ready(function() {
+	//			$('#flexme1').dataTable();
+	//		} );
     });
 } 
 
@@ -591,12 +631,25 @@ function queryOverlay(num) {
         polygon += ",";
     }
     polygon += firstPoint + "))";
-    
-    $("#leftnav").show();
-    $("#resultPoints").html(fetchRecords(session, polygon));
-    $(".flexme1").flexigrid(flexme1Attributes);
+
+    fetchRecords(session, polygon);
+    //$("#resultPoints").html(fetchRecords(session, polygon));
+    //setLeftWidth();
+    ////$(".flexme1").flexigrid(flexme1Attributes);
+    //$(document).ready(function() {
+//				$('#flexme1').dataTable();
+//			} );
 }
 
 function callbackPoint(num) {
     alert("possible to send this data back to some calling application??");      
+}
+
+// Set the width of the left pane when its needed to show records
+function setLeftWidth() {
+    var curr_width = $("#leftnav").width();
+    if (curr_width < 250) {
+        $("#leftnav").css("width", "250px");
+        $("#wholePage").trigger("resize");
+    }
 }
