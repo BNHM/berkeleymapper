@@ -99,7 +99,7 @@ The following is an example of structuring references to KML layers that you wis
 {{{
 <gisdata>
 <layer title="IUCN Bufo bufo Distribution" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/54596/0"><![CDATA[http://amphibiaweb.org/cgi/amphib_ws_shapefile?genus=Bufo&species=canorus]]></layer>
-<layer title="NE Status" legend="1" active="1" url="http://www.google.com/"><![CDATA[http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml]]></layer>
+<layer title="NE Status" legend="1" active="1" url="http://detailsaboutthisresource.com/"><![CDATA[http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml]]></layer>
 </gisdata>
 }}}
 
