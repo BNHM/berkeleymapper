@@ -95,24 +95,11 @@ Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from t
 }}}
 
 = GIS Data Section (KML) =
-{{{<gisdata>}}}
-<p>
-
-||<b>Element:</b>||<pre><layer></pre>||
-||<b>Attributes:</b>||<i>title</i>: Title of this layer as it appears in legend and to the user<br><i>name</i>: Internal name for this layer (corresponds to Mapserver Name used in Layer definition)<br><i>location</i>: Location of Mapserver Layer Definition.  Can exist anywhere that is web-accessible<br><i>legend</i>: Value of 1 means to include in legend and 0 means to leave it out.<br><i>active</i>: Value of 1 means to make this layer active by default. Value of 0 will display this layer to the user but box will not be checked by default.<br><i>url</i>: URL that points to more information about the source of this layer.||
-||<b>Repeatable:</b>||yes||
-||<b>Examples:</b>||||
-
-<br>A particular shapefile (that is loaded on server):<pre><layer title="Plant Bed Layers" name="plant_bed_areas" location="/data/ucbg/plant_bed_areas.lyr" legend="1" active="1" url="http://someurl.com/" /></pre>||
-<br>Global Amphibian Assessment (must dynamically construct config file for each species):<pre><layer title="GAA Bufo canorus Distribution" name="gaa" location="Bufo canorus" legend="1" active="1" url="http://www.iucnredlist.org/amphibians"/></pre>
-<br>NatureServe North American Bird Ranges (must dynamically construct config file for each species):<pre><layer title="NatureServe North American Bird Distribution" name="birds" location="Lagopus lagopus" legend="1" active="1" url="http://www.natureserve.org/getData/birdMaps.jsp"/></pre>
-<br>NatureServe North American Mammal Ranges (must dynamically construct config file for each species):<pre><layer title="NatureServe North American Mammal Distribution" name="mamm" location="Lynx rufus" legend="1" active="1" url="http://www.natureserve.org/getData/mammalMaps.jsp"/></pre>
-
-
-<b>Description:</b> This option allows users to pass in multiple layers that are custom to their application.  Layer definitions must be in the form of <a href='http://mapserver.gis.umn.edu/'>Mapserv</a> Mapfile format. Layers can be shapefiles, loaded in Postgres, or accessible via WMS.  See <a href='mailto:bnhm@berkeley.edu'>admin</a> for assistance.
-
-<p>
-{{{</gisdata>}}}
+The following is an example of structuring references to KML layers that you wish to be included as background layers:
+{{{<gisdata>
+<layer title="IUCN Bufo bufo Distribution" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/54596/0"><![CDATA[http://amphibiaweb.org/cgi/amphib_ws_shapefile?genus=Bufo&species=canorus]]></layer>
+<layer title="NE Status" legend="1" active="1" url="http://www.google.com/"><![CDATA[http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml]]></layer>
+</gisdata>}}}
 
 = Closing Tag =
 {{{</berkeleymapper>}}}
