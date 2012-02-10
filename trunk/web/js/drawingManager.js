@@ -1,4 +1,3 @@
-var drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
 
 function initializeDrawingManager() {
     // Drawing Manager/ Lines / Error Radii / Polygons
@@ -22,11 +21,11 @@ function initializeDrawingManager() {
             zIndex: 1
         }
     });
-    drawingManager.setMap(map);
+    drawingManager.setMap(bm2.map);
     
     google.maps.event.addDomListener(drawingManager, 'polylinecomplete', function(l) {
-        overlays.push(l);
-        index = overlays.length - 1;
+        bm2.overlays.push(l);
+        index = bm2.overlays.length - 1;
         
         var lengthInMeters = Math.round(google.maps.geometry.spherical.computeLength(l.getPath()));
         var lengthInFeet = Math.round(lengthInMeters*3.2808399);
@@ -41,27 +40,27 @@ function initializeDrawingManager() {
         "</div>";
     
         var marker = new google.maps.Marker({
-            icon: drawnMarkerImage,
+            icon: bm2.drawnMarkerImage,
             position: l.getBounds().getCenter(), 
-            map: map,
+            map: bm2.map,
             title:"User Polyline"
         }); 
         var infowindow = new google.maps.InfoWindow({            
             content: contentString
         });
             
-        infowindow.open(map,marker);
+        infowindow.open(bm2.map,marker);
         google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
+            infowindow.open(bm2.map,marker);
         });
         
         drawingManager.setDrawingMode(null); // revert to normal map mode
         
-        overlayMarkers.push(marker); 
+        bm2.overlayMarkers.push(marker);
     });
     
     google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
-        overlays.push(c);
+        bm2.overlays.push(c);
         index = overlays.length - 1;
         // use 5 decimal places for approx 1 meter accuracy
         var lat = c.getCenter().lat().toFixed(5);
@@ -77,28 +76,28 @@ function initializeDrawingManager() {
         "</div>";
     
         var marker = new google.maps.Marker({
-            icon: drawnMarkerImage,
+            icon: bm2.drawnMarkerImage,
             position: c.getBounds().getCenter(), 
-            map: map,
+            map: bm2.map,
             title:"User Point & Error Radius"
         }); 
         var infowindow = new google.maps.InfoWindow({            
             content: contentString
         });
             
-        infowindow.open(map,marker);
+        infowindow.open(bm2.map,marker);
         google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
+            infowindow.open(bm2.map,marker);
         });
         
         drawingManager.setDrawingMode(null); // revert to normal map mode
         
-        overlayMarkers.push(marker); 
+        bm2.overlayMarkers.push(marker);
     });
         
     google.maps.event.addDomListener(drawingManager, 'polygoncomplete', function(p) {        
-        overlays.push(p);        
-        index = overlays.length - 1;
+        bm2.overlays.push(p);
+        index = bm2.overlays.length - 1;
         
         var areaInSqMeters = Math.round(google.maps.geometry.spherical.computeArea(p.getPath()));
         var areaInAcres = Math.round(areaInSqMeters/4046.85642);
@@ -110,7 +109,7 @@ function initializeDrawingManager() {
         "<br>Sq Miles = " + areaInSqMiles +
         "<br>---------------";
         
-        if (pointMode) {
+        if (bm2.pointMode) {
             contentString += "<br><a href='#' id='query' onclick='queryOverlay(" + index  + ");'>Query Points Inside</a>";
         }
         
@@ -118,23 +117,23 @@ function initializeDrawingManager() {
         "</div>";        
 
         var marker = new google.maps.Marker({
-            icon: drawnMarkerImage,
+            icon: bm2.drawnMarkerImage,
             position: p.getBounds().getCenter(), 
-            map: map,
+            map: bm2.map,
             title:"User Polygon"
         }); 
         var infowindow = new google.maps.InfoWindow({            
             content: contentString
         });
             
-        infowindow.open(map,marker);
+        infowindow.open(bm2.map,marker);
         google.maps.event.addListener(marker, 'click', function() {            
-            infowindow.open(map,marker);
+            infowindow.open(bm2.map,marker);
         });
         
         drawingManager.setDrawingMode(null); // revert to normal map mode
         
-        overlayMarkers.push(marker);        
+        bm2.overlayMarkers.push(marker);
     });
 
 }

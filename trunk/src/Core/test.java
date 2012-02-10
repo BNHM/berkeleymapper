@@ -26,8 +26,8 @@ public class test {
             //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
             //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt");
-            url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
+            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.txt");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -36,7 +36,8 @@ public class test {
         try {
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
              //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
-            configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
+            //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
+            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.xml");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -65,7 +66,7 @@ public class test {
          output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
 
         //String output = new BMRenderKML(subset).toString();
-        System.out.println(output);
+        System.out.println(new BMRenderJSON().KMLLayers(fs));
         //System.out.println(id);
     }
 

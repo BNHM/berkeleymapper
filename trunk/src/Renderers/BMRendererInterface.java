@@ -1,5 +1,6 @@
 package Renderers;
 
+import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
@@ -38,5 +39,5 @@ public interface BMRendererInterface {
      * @param f
      * @return 
      */
-    public String KMLLayers(BMFileReader f);
+    public String KMLLayers(BMConfigAndTabFileReader f);
 }

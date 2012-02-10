@@ -11,7 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 /**
- * "kmllayers" service returns a JSON representation of all of the KML Layers
+ * "kmllayers" service returns a JSON representation of all of the KML BMLayers
  * defined by a config file.
  *
  * @author jdeck
@@ -28,7 +28,7 @@ public class kmllayers {
         // Load the File
         BMSession sess = new BMSession(session);
         try {
-            BMFileReader f = new BMConfigAndTabFileReader(sess);
+            BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
             rb = Response.ok(new BMRenderJSON().KMLLayers(f));
         } catch (IOException e) {
             rb = Response.status(204);

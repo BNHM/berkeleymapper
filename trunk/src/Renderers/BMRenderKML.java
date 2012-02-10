@@ -2,6 +2,7 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
+import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
@@ -87,10 +88,10 @@ public class BMRenderKML implements BMRendererInterface {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public String KMLLayers(BMFileReader f) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public String KMLLayers(BMConfigAndTabFileReader f) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
 
  
 }
