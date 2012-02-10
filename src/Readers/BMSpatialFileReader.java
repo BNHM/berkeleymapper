@@ -24,25 +24,13 @@ import java.util.Iterator;
  */
 public class BMSpatialFileReader implements BMFileReader {
     protected BufferedReader reader = null;
-    BMSession session;
+    private BMSession session;
 
     public int numRows = 0;
     protected Object[] columns;
     protected ArrayList rows = new ArrayList();
     protected GeometryFactory geometryFactory;
 
-    //public BMSpatialFileReader() {
-    //    this.geometryFactory = new GeometryFactory();
-    //}
-
-    /**
-     * Pass in a file URL (this is done the first time).  Sets the session.
-     */
-    //public BMSpatialFileReader(URL url) throws IOException {
-   //     this.geometryFactory = new GeometryFactory();
-   //     this.session = new BMSession(url);
-   //     setReader();
-   // }
 
     /**
      * Pass in a file URL and configURL (this is done the first time).  Sets the session.

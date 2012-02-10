@@ -1,5 +1,6 @@
 package Readers;
 
+import Core.BMLayers;
 import Core.BMLineStringReader;
 import Core.BMRow;
 import Core.BMSession;
@@ -25,10 +26,13 @@ import org.xml.sax.*;
  */
 public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
+    private URL configURL;
+
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
         super(url, configURL);
+        this.configURL = configURL;
         if (configURL != null) {
-            columns = initHeader(configURL);
+            columns = initHeader();
             execConfig();
         } else {
             execTab();
@@ -38,20 +42,24 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     public BMConfigAndTabFileReader(BMSession session) throws IOException {
         super(session);
         if (session.getMode() == session.CONFIG) {
-            columns = initHeader(new URL("file:///" + session.getConfigFile().getAbsolutePath()));
+            this.configURL = new URL("file:///" + session.getConfigFile().getAbsolutePath());
+            columns = initHeader();
             execConfig();
         } else {
             execTab();
         }
     }
 
+    public URL getConfigURL() {
+        return configURL;
+    }
+
     /**
      * Populate columns[] Array from XML Configuration File
      *
-     * @param configURL
      * @return
      */
-    private Object[] initHeader(URL configURL) {
+    private Object[] initHeader() {
         ArrayList columnArrayList = new ArrayList();
 
         Document doc = parseXmlFile(configURL, false);
@@ -91,6 +99,45 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         return columnArrayList.toArray();
     }
 
+    /**
+     * get The Specified KML BMLayers from this File
+     *
+     * @return
+     */
+    public Object[] getLayers() {
+        ArrayList layerArrayList = new ArrayList();
+
+        Document doc = parseXmlFile(configURL, false);
+        String title, legend, active, url, location;
+        NodeList nl = doc.getElementsByTagName("layer");
+        for (int i = 0; i < nl.getLength(); i++) {
+            NamedNodeMap nnm = nl.item(i).getAttributes();
+            BMLayers l = new BMLayers();
+            title = "";
+            legend = "";
+            active = "";
+            url = "";
+            location = "";
+            if (nnm != null) {
+                for (int j = 0; j < nnm.getLength(); j++) {
+                    Node attribute = nnm.item(j);
+                    if (attribute.getNodeName().equalsIgnoreCase("title")) {
+                        l.setTitle(attribute.getNodeValue());
+                    } else if (attribute.getNodeName().equalsIgnoreCase("legend")) {
+                        l.setLegend(attribute.getNodeValue());
+                    } else if (attribute.getNodeName().equalsIgnoreCase("active")) {
+                        l.setVisible(attribute.getNodeValue());
+                    } else if (attribute.getNodeName().equalsIgnoreCase("url")) {
+                        l.setUrl(attribute.getNodeValue());
+                    }
+                }
+                l.setLocation(nl.item(i).getTextContent());
+                layerArrayList.add(l);
+            }
+        }
+        // Return an Array of data that i can parse...
+        return layerArrayList.toArray();
+    }
 
     /**
      * execute the Config Option

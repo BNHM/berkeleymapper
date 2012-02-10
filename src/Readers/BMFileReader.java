@@ -31,4 +31,6 @@ public interface BMFileReader {
 
     public BMCoordinate[] expand(Geometry g);
 
+    public BMSession getSession();
+
 }

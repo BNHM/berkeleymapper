@@ -6,14 +6,20 @@ package Renderers;
 
 import Core.BMCoordinate;
 import Core.BMField;
+import Core.BMLayers;
 import Core.BMRow;
+import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.MultiPoint;
 import org.json.simple.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -107,27 +113,44 @@ public class BMRenderJSON implements BMRendererInterface {
         return json;
     }
 
+    /**
+     * JSON representation of Layers
+     * @param f
+     * @return
+     */
     @Override
-    public String KMLLayers(BMFileReader f) {
-        // "url":  URL of KML Layer
-        // "mode":  on|off sets default on/off
-        // "title": title for KML Layer
+    public String KMLLayers(BMConfigAndTabFileReader f) {
+        f.getSession();
+        Object[] layers = f.getLayers();
+
+        json = "[\n";
+        for (int i = 0; i < layers.length; i++) {
+            BMLayers layer = (BMLayers)layers[i];
+            if (i > 0) {
+                json += ",";
+            }
+            json += "{\n";
+            json += "\"link\":\"" + JSONObject.escape(layer.getUrl()) + "\",\n";
+            json += "\"url\":\"" + JSONObject.escape(layer.getLocation()) + "\",\n";
+            json += "\"title\":\"" + JSONObject.escape(layer.getTitle()) + "\",\n";
+            json += "\"visibility\":\"" + layer.getVisible() + "\",\n";
+            json += "\"zoom\":\"expand\"\n";
+            json += "}\n";
+        }
+        json += "]\n";
+
+        /*
+        // A sample JSON FILE
         json = "[";
         json += "{";
         json += "\"url\":\"" + JSONObject.escape("http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml") + "\",";
+        json += "\"link\":\"" + JSONObject.escape("http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml") + "\",";
         json += "\"visibility\":\"visible\",";
         json += "\"zoom\":\"ignore\",";
         json += "\"title\":\"State Boundaries\"";
         json += "}";
-
-        json += ",{";
-        json += "\"url\":\"" + JSONObject.escape("http://kml-samples.googlecode.com/svn/trunk/morekml/Lines_and_Paths/Line_Strings.Absolute.kml") + "\",";
-        json += "\"visibility\":\"hidden\",";
-        json += "\"zoom\":\"expand\",";
-        json += "\"title\":\"Line Strings Example\"";
-        json += "}";
-
         json += "]";
+        */
 
         return json;
     }
