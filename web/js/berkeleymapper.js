@@ -424,7 +424,12 @@ function setMarkersAndCirclesOn(drawRadius) {
                 var circle = new google.maps.Circle({
                     map: bm2.map,
                     radius: bm2.markers[i].radius,
-                    fillColor: '#AA0000'
+                    fillColor: '#AA0000',
+                    fillOpacity: 0.05,
+                    strokeOpacity: 0.5,
+                    strokeWidth: 1,
+                    strokeColor: '#AA0000',
+                    clickable: false
                 });
                 bm2.circles[count++] = circle;
                 circle.bindTo('center', bm2.markers[i], 'position');
