@@ -8,5 +8,5 @@ http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://darwin.berkeley.edu/u
 
 = Details =
 
--Need to add in KML Layers (there are 5 or 6 of them, see ucjeps.xml configuration file)
+-Need to add in KML Layers (there are 5 or 6 of them, see ucjeps.xml configuration file)<br>
 -Lots of data in file, more important to put split pane on bottom.
