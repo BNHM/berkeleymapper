@@ -2,6 +2,7 @@ package Core;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Represents a row in a data file
@@ -20,7 +21,7 @@ public class BMRow {
      * @param header
      * @param line
      */
-    public BMRow(int line, Object[] header, String lineStr) {
+    public BMRow(int line, Object[] header, Object[] headerAlias, String lineStr) {
         double Latitude = 0;
         double Longitude = 0;
         double ErrorRadiusInMeters = 0;
@@ -31,15 +32,31 @@ public class BMRow {
 
         Iterator lsri = lsr.iterator();
 
-        int fieldNum = 0;
-        while (lsri.hasNext()) {
-            String value = (String) lsri.next();
-            String title = null;
+        //int fieldNum = 0;
+        for (int i = 0; i < header.length; i++) {
+            //while (lsri.hasNext()) {
+            //System.out.println(header[i]);
+            String title = "";
+            String value = "";
+            String titleAlias = "";
             try {
-                title = (String) header[fieldNum++];
+                value = (String) lsri.next();
+            } catch (NoSuchElementException e) {
+                value = "";
+            }
+            try {
+                title = (String) header[i];
             } catch (ArrayIndexOutOfBoundsException e) {
+                title = "column" + i;
                 System.err.println("Title Elements out of bounds");
             }
+            try {
+                titleAlias = (String) headerAlias[i];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                titleAlias = "column" + i;
+                System.err.println("Title Elements out of bounds");
+            }
+
             if (title != null && value != null) {
                 // Assign application specific field names
                 // TODO: Log these errors when they occur
@@ -68,8 +85,9 @@ public class BMRow {
                         Datum = "";
                     }
                 }
-                fields.add(new BMField(title, value));
             }
+
+            fields.add(new BMField(title, titleAlias, value));
         }
         if (Latitude != 0 && Longitude != 0) {
             this.BMCoord = new BMCoordinate(line, Latitude, Longitude, ErrorRadiusInMeters, Datum, fields);

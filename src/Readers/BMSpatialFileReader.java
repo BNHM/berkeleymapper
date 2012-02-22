@@ -28,6 +28,7 @@ public class BMSpatialFileReader implements BMFileReader {
 
     public int numRows = 0;
     protected Object[] columns;
+    protected Object[] columnsAlias;
     protected ArrayList rows = new ArrayList();
     protected GeometryFactory geometryFactory;
 

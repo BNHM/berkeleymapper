@@ -15,7 +15,7 @@ public interface BMRendererInterface {
      * @param g
      * @return 
      */
-    public String AllPoints(Geometry g);
+    public String AllPoints(Geometry g, BMConfigAndTabFileReader f);
     /**
      * Given a line number and a BMSpatialFileReader file, return a representation
      * of the fields.
@@ -40,4 +40,12 @@ public interface BMRendererInterface {
      * @return 
      */
     public String KMLLayers(BMConfigAndTabFileReader f);
+
+    /**
+     * Given a BMFileReader, get specification for marker colors
+     * This is only applicable really for cases where a config file is specified
+     * @param f
+     * @return
+     */
+    public String Colors(BMConfigAndTabFileReader f);
 }

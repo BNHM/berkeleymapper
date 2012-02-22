@@ -16,8 +16,7 @@ import java.util.Iterator;
  */
 public class BMRenderKML implements BMRendererInterface {
 
-    @Override
-    public String AllPoints(Geometry g) {
+    public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
 
         String kml = "";
         kml += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -78,12 +77,10 @@ public class BMRenderKML implements BMRendererInterface {
         return kml;
     }
 
-    @Override
     public String Record(int line, BMSpatialFileReader ptsFile) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -91,7 +88,9 @@ public class BMRenderKML implements BMRendererInterface {
     public String KMLLayers(BMConfigAndTabFileReader f) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
-
+     public String Colors(BMConfigAndTabFileReader f) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
  
 }

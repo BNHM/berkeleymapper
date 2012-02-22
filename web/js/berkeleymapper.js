@@ -11,6 +11,7 @@ bm2.urlRoot = "v2/";        // URL Root to use for all calls
 bm2.mc = null;                     // markerCluster control variable
 bm2.iw = null;
 bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
+bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -43,22 +44,21 @@ bm2.jqGridAttributes = {
  };
 
 $().ready(function() {
-    $("#wholePage").splitter({
-        type: "v",
+    $("#bigContainer").splitter({
+        splitHorizontal: true,
         outline: true,
-        minLeft: 0, sizeLeft: 250, minRight: 100,
         resizeToWidth: true,
-        cookie: "vsplitter",
-        accessKey: 'I'
+        cookie: "vsplitter"
+    });
+
+    // Horizontal splitter, nested in the right pane of the vertical splitter.
+    $("#topContainer").splitter({
+        splitVertical: true,
+        outline: true
     });
 });
 
 
-// Subclass Marker so it can contain vital information to BM
-BMMarker.prototype = new google.maps.Marker();
-BMMarker.prototype.remove = function() {
-    this.setMap(null);
-}
 
 // Adjust bounds to drawn polygon
 if (!google.maps.Polygon.prototype.getBounds) {
@@ -88,12 +88,6 @@ if (!google.maps.Polyline.prototype.getBounds) {
     }
 }
 
-function BMMarker(opts,lineNumber,radius) {
-    this.setValues(opts);
-    this.lineNumber = lineNumber;
-    this.radius = radius;
-}
-
 // Initialize the Array of Available KML Layers
 function  setKMLLayers() {
     if (!bm2.pointMode) {
@@ -119,7 +113,7 @@ function  setKMLLayers() {
                 });
                 // Set the google object
                 kmlObj.google = new google.maps.KmlLayer(kmlObj.key, {preserveViewport:true});
-                kmlLayers[count] = kmlObj;
+                bm2.kmlLayers[count] = kmlObj;
                 count++;
             });
         },
@@ -198,17 +192,27 @@ function toggleLayer(cb) {
 // Control display of points
 function pointDisplay(value) {   
     if (value == "markers") {
-        setMarkersAndCirclesOn(false); 
+        setMarkersAndCirclesOn(false);
+        $("#myColors").html("");
+        setColors();
     } else if (value == "markersandcircles") {
+        $("#myColors").html("");
+        setColors();
         setMarkersAndCirclesOn(true); 
     } else if (value == "staticdots") {
         alert('not yet implemented');
     } else {
+        $("#myColors").html("");
         setMarkerClustererOn(); 
     }                 
 }
 
 function initialize() {
+
+    // pre-load cursor image so cursor doesn't appear on Mac Chrome
+    imageObj = new Image();
+    imageObj.src='http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
+
     // Set pointMode
     if (jQuery.url.param('tabfile')) {
         bm2.pointMode = true;
@@ -251,6 +255,39 @@ function initialize() {
     initializeDrawingManager();
 }
 
+// Display a legend of colors
+function setColors() {
+    $("#myColors").append("<br>&nbsp;<br><b style='font-size:11px;'>Marker Colors</b><br>");
+
+    var url = bm2.urlRoot + "colors?session=" + bm2.session;
+    $.ajax({
+        type: "GET",
+        url: url,
+        async: true,
+        dataType: "json",
+        success: function(data, success){
+            count = 0;
+            $.each(data, function() {
+                var key, label, color = "";
+
+                $.each(this, function(k, v) {
+                    if (k == "key") key = v;
+                    if (k == "label") label = v;
+                    if (k == "color") color = v;
+                });
+
+                if (color == "") color = "#FF0000";
+
+                $("#myColors").append("<div class='markerImgDiv'><img id=\"markerImg\" src=\"img/marker-t.png\" " +
+                    "style=\"background-color:" + color + ";height:20px;\"></div>");
+                $("#myColors").append("<div class='markerText'>" + label +"</div>");
+                $("#myColors").append("<div style='clear:left;'>");
+
+            });
+        }
+    });
+}
+
 
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
@@ -263,22 +300,29 @@ function setJSONPoints() {
         success: function(data, success){
             count = 0;
             $.each(data, function() {
-                var lat, lng, line, radius;
+                var lat, lng, line, radius, markercolor = "";
 
                 $.each(this, function(k, v) {
                     if (k == "lat") lat = v;
                     if (k == "lng") lng = v;
                     if (k == "line") line = v;
                     if (k == "radius") radius = v;
+                    if (k == "color") markercolor = v;
                 });
 
                 var latlng = new google.maps.LatLng(lat,lng);
 
-                var marker = new BMMarker({
+                if (markercolor == "") markercolor = "#FF0000";
+
+                var marker = new StyledMarker({
+                    styleIcon:  new StyledIcon(StyledIconTypes.MARKER,{color:markercolor}),
                     position: latlng,
                     map: bm2.map,
                     title:"point"
-                },line,radius);
+                });
+                marker.line = line;
+                marker.radius = radius;
+                marker.color =  markercolor;
 
                 google.maps.event.addListener(marker, 'click', (function(marker,count) {
                     return function() {
@@ -348,6 +392,7 @@ function fetchRecords(polygon) {
         async: false,
         success: function(data) {
 
+            // Header elements
             retStr += "<table id=\"flexme1\">";
 		    retStr += "<thead><tr>";
 		    row = 1;
@@ -361,6 +406,7 @@ function fetchRecords(polygon) {
             });
             retStr += "</tr></thead>";
 
+            // Body elements
             retStr += "<tbody>";
             // Loop through JSON elements to construct response
             $.each(data, function() {
@@ -368,7 +414,7 @@ function fetchRecords(polygon) {
                 retStr += "<tr>";
                 $.each(this, function(k, v) {
                     //retStr += "<li>" + k + ": " + v + "</li>";
-                    retStr += "<td width=80>"  + v + "</td>";
+                    retStr += "<td width=80>"  + htmlEntities(v) + "</td>";
                 });
                 //retStr += "</ul>";
                 retStr += "</tr>";
@@ -384,11 +430,15 @@ function fetchRecords(polygon) {
         }
     });
 
-    $("#resultPoints").html(retStr);
-    setLeftWidth();
+    $("#bottomContainer").html(retStr);
+    setHorizontalPane();
     $(function () {
         tableToGrid("#flexme1", bm2.jqGridAttributes );
     });
+
+    // fixes header when scrolling
+    $('#flexme1').closest(".ui-jqgrid-bdiv").css({"overflow-y" : "scroll"});
+
 
     return true;
 }
@@ -401,21 +451,18 @@ function clearAllMarkers() {
     }catch(err) {
         
     }
-    // if (mode == MARKERS) {
     for (i in bm2.markers) {
         bm2.markers[i].setMap(null);
     }
     for (i in bm2.circles) {
         bm2.circles[i].setMap(null);
     }
-    //}
-    // clear Left Nav
-    $("#resultPoints").html("");
+    // clear Container
+    $("#bottomContainer").html(bm2.bottomContainerText);
 }
 
 function setMarkersAndCirclesOn(drawRadius) {
     clearAllMarkers();
-    //mode = MARKERS;
     if (bm2.markers) {
         for (i in bm2.markers) {
             bm2.markers[i].setMap(bm2.map);
@@ -424,11 +471,11 @@ function setMarkersAndCirclesOn(drawRadius) {
                 var circle = new google.maps.Circle({
                     map: bm2.map,
                     radius: bm2.markers[i].radius,
-                    fillColor: '#AA0000',
+                    fillColor: bm2.markers[i].color,
                     fillOpacity: 0.05,
                     strokeOpacity: 0.5,
                     strokeWidth: 1,
-                    strokeColor: '#AA0000',
+                    strokeColor: bm2.markers[i].color,
                     clickable: false
                 });
                 bm2.circles[count++] = circle;
@@ -625,11 +672,15 @@ function callbackPoint(num) {
     alert("possible to send this data back to some calling application??");      
 }
 
-// Set the width of the left pane when its needed to show records
-function setLeftWidth() {
-    var curr_width = $("#leftnav").width();
-    if (curr_width < 250) {
-        $("#leftnav").css("width", "250px");
-        $("#wholePage").trigger("resize");
+function setHorizontalPane() {
+    var curr_height= $("#bottomContainer").height();
+    if (curr_height < 200) {
+        $("#bottomContainer").css("height", "200px");
+        //$("#mapContainer").css("height", "80%");
     }
+}
+
+function htmlEntities(str) {
+    //return escape(str);
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

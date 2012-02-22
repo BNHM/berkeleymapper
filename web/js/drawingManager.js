@@ -61,7 +61,7 @@ function initializeDrawingManager() {
     
     google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
         bm2.overlays.push(c);
-        index = overlays.length - 1;
+        index = bm2.overlays.length - 1;
         // use 5 decimal places for approx 1 meter accuracy
         var lat = c.getCenter().lat().toFixed(5);
         var lng = c.getCenter().lng().toFixed(5);

@@ -15,8 +15,7 @@ import java.util.Iterator;
  */
 public class BMRenderSimpleText implements BMRendererInterface {
     
-     @Override
-    public String AllPoints(Geometry g) {
+    public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
         String strRet = "";
         // Print Header
         Iterator i = Arrays.asList(g.getCoordinates()).iterator();
@@ -50,17 +49,19 @@ public class BMRenderSimpleText implements BMRendererInterface {
         return strRet;
     }
 
-    @Override
     public String Record(int line, BMSpatialFileReader ptsFile) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public String KMLLayers(BMConfigAndTabFileReader f) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+     public String Colors(BMConfigAndTabFileReader f) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
