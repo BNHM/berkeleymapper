@@ -1,6 +1,7 @@
 package Core;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.StringTokenizer;
 
 /**
@@ -9,10 +10,9 @@ import java.util.StringTokenizer;
  */
 public class BMLineStringReader extends ArrayList {
     public BMLineStringReader(String line) {
-        StringTokenizer st = new StringTokenizer(line,"\t",false);
-        while (st.hasMoreTokens()) {
-            String t = st.nextToken().toString();
-            this.add(t);
+        String output[] = line.split("[\t]");
+        for (int i = 0; i < output.length; i++) {
+            this.add(output[i]);
         }
     }
 }

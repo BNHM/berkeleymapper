@@ -3,7 +3,9 @@ package Rest;
 import Core.BMSession;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
+import Readers.BMSpatialFileReader;
 import Renderers.BMRenderJSON;
+
 import java.net.MalformedURLException;
 import javax.ws.rs.*;
 import java.io.IOException;
@@ -37,8 +39,13 @@ public class allpoints {
         // Load the File
         BMSession sess = new BMSession(session);
         try {
-            BMFileReader f = new BMConfigAndTabFileReader(sess);
-            rb = Response.ok(new BMRenderJSON().AllPoints(f.getMultiPointGeometry()));
+            if (sess.getMode() == sess.CONFIG) {
+                BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
+                rb = Response.ok(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), f));
+            } else {
+                BMFileReader f = new BMSpatialFileReader(sess);
+                rb = Response.ok(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null));
+            }
         } catch (IOException e) {
             rb = Response.status(204);
             rb.header("Access-Control-Allow-Origin", "*");

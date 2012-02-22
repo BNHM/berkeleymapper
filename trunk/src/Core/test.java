@@ -26,8 +26,10 @@ public class test {
             //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
             //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
-            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.txt");
+            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
+            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.txt");
+
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -37,7 +39,9 @@ public class test {
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
              //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
             //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.xml");
+            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.xml");
+            //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.xml");
+            configUrl = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.xml");
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -60,13 +64,16 @@ public class test {
         // Adapt the postgres clustering fxn here to duplicate BerkeleyMapper functionality
         
         // Output points
-        String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry());
-        String id = new BMRenderJSON().Record(1, fs);
+        String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(),fs);
+        System.out.println(output);
+//        String id = new BMRenderJSON().Record(1, fs);
         // Perform a spatial operation
-         output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
+         //output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
 
         //String output = new BMRenderKML(subset).toString();
-        System.out.println(new BMRenderJSON().KMLLayers(fs));
+        //System.out.println(new BMRenderJSON().KMLLayers(fs));
+        System.out.println(new BMRenderJSON().Colors(fs));
+
         //System.out.println(id);
     }
 

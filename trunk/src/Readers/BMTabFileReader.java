@@ -33,7 +33,7 @@ public class BMTabFileReader extends BMSpatialFileReader {
             if (numRows == 1) {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
-                BMRow r = new BMRow(numRows, columns, strLine);
+                BMRow r = new BMRow(numRows, columns, columns, strLine);
                 rows.add(r);
             }
         }

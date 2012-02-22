@@ -7,11 +7,13 @@ package Core;
 public class BMField {
 
     protected String title;
+    protected String titleAlias;
     protected String value;
 
-    public BMField(String title, String value) {
+    public BMField(String title, String titleAlias, String value) {
         this.title = title;
         this.value = value;
+        this.titleAlias = titleAlias;
     }
 
     public String getTitle() {
@@ -22,5 +24,8 @@ public class BMField {
         return value;
     }
 
+    public String getTitleAlias() {
+        return titleAlias;
+    }
    
 }

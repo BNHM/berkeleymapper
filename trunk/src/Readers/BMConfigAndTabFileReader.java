@@ -1,9 +1,6 @@
 package Readers;
 
-import Core.BMLayers;
-import Core.BMLineStringReader;
-import Core.BMRow;
-import Core.BMSession;
+import Core.*;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,7 +29,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         super(url, configURL);
         this.configURL = configURL;
         if (configURL != null) {
-            columns = initHeader();
+            initHeader();
             execConfig();
         } else {
             execTab();
@@ -43,7 +40,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         super(session);
         if (session.getMode() == session.CONFIG) {
             this.configURL = new URL("file:///" + session.getConfigFile().getAbsolutePath());
-            columns = initHeader();
+            initHeader();
             execConfig();
         } else {
             execTab();
@@ -55,12 +52,13 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     /**
-     * Populate columns[] Array from XML Configuration File
+     * Populate columns and columnsAlias Array from XML Configuration File
      *
      * @return
      */
-    private Object[] initHeader() {
+    private void initHeader() {
         ArrayList columnArrayList = new ArrayList();
+        ArrayList columnAliasArrayList = new ArrayList();
 
         Document doc = parseXmlFile(configURL, false);
 
@@ -82,21 +80,27 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                 // Match Hardcoded DataTypes from BM1 specification to BM2
                 if (datatype.equalsIgnoreCase("darwin:decimallatitude")) {
                     columnArrayList.add("Latitude");
+                    columnAliasArrayList.add("Latitude");
                 } else if (datatype.equalsIgnoreCase("darwin:decimallongitude")) {
                     columnArrayList.add("Longitude");
+                    columnAliasArrayList.add("Longitude");
                 } else if (datatype.equalsIgnoreCase("darwin:horizontaldatum")) {
                     columnArrayList.add("Datum");
+                    columnAliasArrayList.add("Datum");
                 } else if (datatype.equalsIgnoreCase("darwin:CoordinateUncertaintyInMeters")) {
                     columnArrayList.add("ErrorRadiusInMeters");
+                    columnAliasArrayList.add("ErrorRadiusInMeters");
                 } else {
-                    columnArrayList.add(alias);
+                    columnArrayList.add(datatype);
+                    columnAliasArrayList.add(alias);
                 }
-                //System.out.println("datatype=" + datatype + "/alias=" + alias);
 
             }
         }
 
-        return columnArrayList.toArray();
+        //columnArrayList.add("color");
+        columns = columnArrayList.toArray();
+        columnsAlias = columnAliasArrayList.toArray();
     }
 
     /**
@@ -140,18 +144,91 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     /**
+     * get The Specified KML BMLayers from this File
+     *
+     * @return
+     */
+    public BMColors getColors() {
+
+        BMColors c = new BMColors();
+        Document doc = parseXmlFile(configURL, false);
+        NodeList nl = doc.getElementsByTagName("colors");
+        for (int i = 0; i < nl.getLength(); i++) {
+            NamedNodeMap nnm = nl.item(i).getAttributes();
+
+            if (nnm != null) {
+
+                for (int j = 0; j < nnm.getLength(); j++) {
+
+                    Node attribute = nnm.item(j);
+                    if (attribute.getNodeName().equalsIgnoreCase("method")) {
+                        c.setMethod(attribute.getNodeValue());
+                    } else if (attribute.getNodeName().equalsIgnoreCase("fieldname")) {
+                        c.setFieldname(attribute.getNodeValue());
+                    } else if (attribute.getNodeName().equalsIgnoreCase("label")) {
+                        c.setLabel(attribute.getNodeValue());
+                    }
+                }
+            }
+            // Fetch colors nodes
+            NodeList colors = nl.item(i).getChildNodes();
+            for (int k = 0; k < colors.getLength(); k++) {
+                Node n = colors.item(k);
+                if (n != null && n.getNodeName().equalsIgnoreCase("color")) {
+                    NamedNodeMap nnmColors = n.getAttributes();
+                    String key = "", label = "";
+                    int red = 0, green = 0, blue = 0;
+
+                    if (nnmColors != null) {
+
+                        for (int l = 0; l < nnmColors.getLength(); l++) {
+
+                            Node attribute = nnmColors.item(l);
+                            if (attribute.getNodeName().equalsIgnoreCase("key")) {
+                                key = attribute.getNodeValue();
+                            } else if (attribute.getNodeName().equalsIgnoreCase("label")) {
+                                label = attribute.getNodeValue();
+                            } else if (attribute.getNodeName().equalsIgnoreCase("red")) {
+                                red = Integer.valueOf(attribute.getNodeValue());
+                            } else if (attribute.getNodeName().equalsIgnoreCase("green")) {
+                                green = Integer.valueOf(attribute.getNodeValue());
+                            } else if (attribute.getNodeName().equalsIgnoreCase("blue")) {
+                                blue = Integer.valueOf(attribute.getNodeValue());
+                            }
+                        }
+                        BMColor bmc = new BMColor(key, label, red, green, blue);
+                        //System.out.println("adding a color");
+                        c.addColor(bmc);
+                    }
+                }
+            }
+        }
+        return c;
+    }
+
+    /**
      * execute the Config Option
      *
      * @throws IOException
      */
     private void execConfig() throws IOException {
+        // Figure out
+       // BMColors colors = this.getColors();
+       // // determine that this is the FIELD based color method
+       //  if (colors == null || colors.method.equals(colors.FIELD)) {
+      //
+      //  }
+
+
         String strLine;
         // This Reader assumes that the TAB Delimited data file starts on row
         // 1 with no header
         numRows = 1;
         while ((strLine = reader.readLine()) != null) {
-            BMRow r = new BMRow(numRows, columns, strLine);
+            BMRow r = new BMRow(numRows, columns, columnsAlias, strLine);
             rows.add(r);
+            // get the last column (is color)
+            //System.out.println(columns[columns.length - 1]);
             numRows++;
         }
         //Close the input stream
@@ -171,7 +248,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (numRows == 1) {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
-                BMRow r = new BMRow(numRows, columns, strLine);
+                BMRow r = new BMRow(numRows, columns, columns, strLine);
                 rows.add(r);
             }
         }
