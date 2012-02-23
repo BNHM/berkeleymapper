@@ -5,16 +5,20 @@ import Core.BMField;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
+import org.json.simple.JSONObject;
+
 import java.util.Arrays;
 import java.util.Iterator;
 
 /**
  * Render output results as Simple Text.  Useful for testing.
+ *
  * @author jdeck
  */
 public class BMRenderSimpleText implements BMRendererInterface {
-    
+
     public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
         String strRet = "";
         // Print Header
@@ -24,24 +28,24 @@ public class BMRenderSimpleText implements BMRendererInterface {
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
-                strRet += field.getTitle() + "   ";
+                strRet += field.getTitleAlias() + "\t";
             }
             break;
         }
         strRet += "\n";
-        
+
         // Print Rows
         Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
         while (i2.hasNext()) {
             try {
-            BMCoordinate coord = (BMCoordinate) i2.next();
+                BMCoordinate coord = (BMCoordinate) i2.next();
 
-            Iterator f = coord.fields.iterator();
-            while (f.hasNext()) {
-                BMField field = (BMField) f.next();
-                strRet += field.getValue() + "   ";
-            }
-            strRet += "\n";
+                Iterator f = coord.fields.iterator();
+                while (f.hasNext()) {
+                    BMField field = (BMField) f.next();
+                    strRet += field.getValue() + "\t";
+                }
+                strRet += "\n";
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -54,17 +58,50 @@ public class BMRenderSimpleText implements BMRendererInterface {
     }
 
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        String tabtext = "";
+        Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+         
+        // Print Header
+        Iterator headIt = Arrays.asList(subset.getCoordinates()).iterator();
+        while (headIt.hasNext()) {
+            BMCoordinate coord = (BMCoordinate) headIt.next();
+            Iterator f = coord.fields.iterator();
+            while (f.hasNext()) {
+                BMField field = (BMField) f.next();
+                tabtext += field.getTitleAlias() + "\t";
+            }
+            break;
+        }
+        tabtext += "\n";
+        
+        Coordinate[] coords = subset.getCoordinates();
+        for (int i = 0; i < coords.length; i++) {
+            BMCoordinate coord = (BMCoordinate) coords[i];
+            //if (i != 0) {
+            //    tabtext += "\t";
+            //}         
+            
+            Iterator fields = coord.fields.iterator();
+            // data fields
+            while (fields.hasNext()) {
+                BMField field = (BMField) fields.next();
+                tabtext += field.getValue();
+                if (fields.hasNext()) {
+                    tabtext += "\t";
+                }
+            }
+            tabtext += "\n";
+        }
+        return tabtext;
     }
 
     public String KMLLayers(BMConfigAndTabFileReader f) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-     public String Colors(BMConfigAndTabFileReader f) {
+    public String Colors(BMConfigAndTabFileReader f) {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-   
- 
+
 }

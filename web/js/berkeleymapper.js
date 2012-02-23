@@ -12,6 +12,7 @@ bm2.mc = null;                     // markerCluster control variable
 bm2.iw = null;
 bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
 bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
+bm2.polygon = "";           // A variable to hold a polygon defined by the user
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -289,6 +290,23 @@ function setColors() {
 }
 
 
+// download links from bm2 service
+function downloadAll() {
+     var url = bm2.urlRoot + "download?session=" + bm2.session;
+     window.open(url);
+}
+
+// download the spatial subselect
+function downloadSpatial() {
+    if (bm2.polygon == "") {
+        alert ("Must first define a polygon.  You can also just download all records.")
+    } else {
+        var url = bm2.urlRoot + "downloadSpatial?session=" +bm2.session + "&polygon=" + bm2.polygon;
+        window.open(url);
+    }
+
+}
+
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
     var bound = new google.maps.LatLngBounds();
@@ -382,12 +400,12 @@ function fetchRecord(line) {
     return retStr;
 }
 
-function fetchRecords(polygon) {
+function fetchRecords() {
     var retStr = "";
     // Initialize Session
     $.ajax({
         type: "POST",
-        data: "session=" +bm2.session + "&polygon=" + polygon,
+        data: "session=" +bm2.session + "&polygon=" + bm2.polygon,
         url: bm2.urlRoot + "records",
         async: false,
         success: function(data) {
@@ -509,9 +527,9 @@ function setMarkerClustererOn() {
         lng1 = cb.getNorthEast().lng();
         lat2 = cb.getSouthWest().lat();
         lng2 = cb.getSouthWest().lng();
-        polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
+        bm2.polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
 
-        fetchRecords(polygon);
+        fetchRecords();
     });
 } 
 
@@ -582,8 +600,12 @@ function setMapTypes(pmap) {
     };
 
     var topo = new google.maps.ImageMapType(topoMapOptions);
-
     pmap.mapTypes.set('topo', topo);
+        http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&BBOX=-72,45.35,-71.85,45.5&WIDTH=800&HEIGHT=600&FORMAT=image/png&LAYERS=vegetation,builtup_areas,hydrography
+
+
+    var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names",2,15,0.7,true,'Canadian Topo');
+    pmap.mapTypes.set('cantopo', cantopo);
 
     pmap.setOptions({
         mapTypeControl: true,
@@ -593,9 +615,48 @@ function setMapTypes(pmap) {
             google.maps.MapTypeId.SATELLITE,
             google.maps.MapTypeId.HYBRID,
             google.maps.MapTypeId.TERRAIN,
-            'topo']
+            'topo',
+            'cantopo']
         }
     });
+}
+
+function WMSTileOverlay(urlWMS,minZ,maxZ,opacity,isPng,name) {
+    var overlayOptions = {
+	    getTileUrl:
+	    function WMS_GetTileUrl(coord, zoom) {
+            //var overlay = new MyOverlay(map);
+	        var projection = bm2.map.getProjection();
+		    var zpow = Math.pow(2, zoom);
+		    var lULP = new google.maps.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
+		    var lLRP = new google.maps.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
+		    var lULg = projection.fromPointToLatLng(lULP);
+		    var lLRg = projection.fromPointToLatLng(lLRP);
+		    var lULg_Longitude = lULg.lng();
+		    var lULg_Latitude = lULg.lat();
+		    var lLRg_Longitude = lLRg.lng();
+		    var lLRg_Latitude = lLRg.lat();
+
+	    	// There seems to be a bug when crossing the -180 longitude border (tile does not render) - this check seems to fix it...
+	    	if (lLRg_Longitude < lULg_Longitude) {
+	         lLRg_Longitude = Math.abs(lLRg_Longitude);
+	    	}
+
+    		// Create the Bounding Box string
+    		var bbox = "&bbox=" + lULg_Longitude + "," + lULg_Latitude + "," + lLRg_Longitude + "," + lLRg_Latitude;
+    		var urlResult = urlWMS + bbox;
+
+	    	return urlResult;
+	    },
+
+    	tileSize: new google.maps.Size(256, 256),
+    	minZoom: minZ,
+    	maxZoom: maxZ,
+    	opacity: opacity,
+    	name: name,
+    	isPng: isPng};
+
+    return new google.maps.ImageMapType(overlayOptions);
 }
 
 function PanelControl(controlDiv, pmap) {
@@ -664,8 +725,9 @@ function queryOverlay(num) {
         polygon += ",";
     }
     polygon += firstPoint + "))";
+    bm2.polygon = polygon;
 
-    fetchRecords(polygon);
+    fetchRecords();
 }
 
 function callbackPoint(num) {
