@@ -241,7 +241,7 @@ function initialize() {
     // Initialize Map
     bm2.map = getMap();
     // Setup Map type Options (add KML overlays to this??)
-    setMapTypes(bm2.map);
+    setMapTypes();
     if (bm2.pointMode) {
         // Draw KML Layers (lookup via service)
         if (configFile != "") {
@@ -249,8 +249,7 @@ function initialize() {
         }
         // Draw the Points
         setJSONPoints();
-        zoomPoints();
-    }                     
+    }
     
     // Drawing Options
     initializeDrawingManager();
@@ -317,7 +316,8 @@ function setJSONPoints() {
         dataType: "json",
         success: function(data, success){
             count = 0;
-            $.each(data, function() {
+            if (data) {
+                $.each(data, function() {
                 var lat, lng, line, radius, markercolor = "";
 
                 $.each(this, function(k, v) {
@@ -352,11 +352,16 @@ function setJSONPoints() {
 
                 bm2.markers[count++]= marker;
                 bound.extend(marker.getPosition());
-            });
-
-            bm2.map.fitBounds(bound);
-
-            setMarkerClustererOn();
+                });
+                bm2.map.fitBounds(bound);
+                setMarkerClustererOn();
+                zoomPoints();
+            }  else {
+                // set to global view if nothing to map!
+                bm2.map.setZoom(1);
+                bm2.map.setCenter(new google.maps.LatLng(0,0));
+                alert("nothing to map! Does the data have a latitude/longitude?");
+            }
         }
     });
 }
@@ -539,20 +544,22 @@ function getMap() {
     var myOptions;
     // Don't zoom/center if pointMode is true
     if (bm2.pointMode) {
-        myOptions = {            
+        myOptions = {
+            zoom: 1,
             mapTypeId: google.maps.MapTypeId.ROADMAP,        
             panControl: true,
             panControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
             },
             zoomControl: true,
+            scrollwheel: false,
             zoomControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
             }
         };
     } else {
         myOptions = {
-            zoom: 2,
+            zoom: 1,
             center: new google.maps.LatLng(0,0),
             mapTypeId: google.maps.MapTypeId.ROADMAP,        
             panControl: true,
@@ -560,6 +567,7 @@ function getMap() {
                 position: google.maps.ControlPosition.LEFT_TOP
             },
             zoomControl: true,
+            scrollwheel: false,
             zoomControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
             }
@@ -580,12 +588,12 @@ function getMap() {
             on: "Turn off"
         }
     });
-    
+
     return lmap;
 }
 
 // mapTypes DropDown
-function setMapTypes(pmap) {
+function setMapTypes() {
 
     //TODO: call terraserver for topos and add DOQ
     var topoMapOptions = {
@@ -600,14 +608,14 @@ function setMapTypes(pmap) {
     };
 
     var topo = new google.maps.ImageMapType(topoMapOptions);
-    pmap.mapTypes.set('topo', topo);
+    bm2.map.mapTypes.set('topo', topo);
         http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&BBOX=-72,45.35,-71.85,45.5&WIDTH=800&HEIGHT=600&FORMAT=image/png&LAYERS=vegetation,builtup_areas,hydrography
 
 
     var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names",2,15,0.7,true,'Canadian Topo');
-    pmap.mapTypes.set('cantopo', cantopo);
+    bm2.map.mapTypes.set('cantopo', cantopo);
 
-    pmap.setOptions({
+    bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
