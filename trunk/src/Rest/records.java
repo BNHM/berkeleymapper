@@ -72,7 +72,7 @@ public class records {
         BMSession sess = new BMSession(session);
         try {
             BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
-            rb = Response.ok(new BMRenderJSON().RecordsInPolygon(f, createPolygon(polygon)));
+            rb = Response.ok(new BMRenderJSON().RecordsInPolygon(f, new polygon().create(polygon)));
         } catch (IOException e) {
             ResponseBuilder rb = Response.status(204);
             return rb.build();
@@ -80,20 +80,5 @@ public class records {
 
         rb.header("Access-Control-Allow-Origin", "*");
         return rb.build();
-    }
-
-    /**
-     * Create a polygon for testing
-     *
-     * @return
-     */
-    private static Polygon createPolygon(String polyString) {
-        WKTReader r = new WKTReader(new GeometryFactory());
-        Polygon p = null;
-        try {
-            p = (Polygon) r.read(polyString);
-        } catch (ParseException e) {
-        }
-        return p;
     }
 }

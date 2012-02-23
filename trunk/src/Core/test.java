@@ -3,6 +3,7 @@ package Core;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMTabFileReader;
 import Renderers.BMRenderJSON;
+import Renderers.BMRenderSimpleText;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -64,7 +65,7 @@ public class test {
         // Adapt the postgres clustering fxn here to duplicate BerkeleyMapper functionality
         
         // Output points
-        String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(),fs);
+        String output = new BMRenderSimpleText().AllPoints(fs.getMultiPointGeometry(),fs);
         System.out.println(output);
 //        String id = new BMRenderJSON().Record(1, fs);
         // Perform a spatial operation
@@ -72,7 +73,7 @@ public class test {
 
         //String output = new BMRenderKML(subset).toString();
         //System.out.println(new BMRenderJSON().KMLLayers(fs));
-        System.out.println(new BMRenderJSON().Colors(fs));
+        //System.out.println(new BMRenderJSON().Colors(fs));
 
         //System.out.println(id);
     }

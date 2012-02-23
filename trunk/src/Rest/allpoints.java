@@ -54,4 +54,6 @@ public class allpoints {
         rb.header("Access-Control-Allow-Origin", "*");
         return rb.build();
     }
+
+
 }

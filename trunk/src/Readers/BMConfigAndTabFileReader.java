@@ -92,7 +92,11 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     columnAliasArrayList.add("ErrorRadiusInMeters");
                 } else {
                     columnArrayList.add(datatype);
-                    columnAliasArrayList.add(alias);
+                    if (alias != null && !alias.equals("")) {
+                        columnAliasArrayList.add(alias);
+                    }   else {
+                        columnAliasArrayList.add(datatype);
+                    }
                 }
 
             }
