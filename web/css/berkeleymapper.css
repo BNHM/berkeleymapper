@@ -45,8 +45,8 @@ html, body, #map {
 
 #leftContainer {
     padding: 8px;
-    width: 150px;
-    max-width: 300px;
+    width: 200px;
+    max-width: 200px;
 }
 
 #bottomContainer {
