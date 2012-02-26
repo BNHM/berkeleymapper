@@ -9,7 +9,7 @@
     <LINK REL=StyleSheet HREF="css/jquery-ui-1.8.17.custom.css">
 
     <script type="text/javascript"
-            src="http://maps.google.com/maps/api/js?sensor=false&libraries=drawing,geometry"></script>
+            src="http://maps.google.com/maps/api/js?sensor=true&libraries=drawing,geometry"></script>
     <script type="text/javascript" src="js/keydragzoom.js"></script>
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/jquery-ui.min.js"></script>
@@ -38,9 +38,12 @@
             <div id="leftContent">
                 <a href="http://code.google.com/p/berkeleymapper"><img width=150 src='img/bm_logo.gif'><img></a><br>
 
-                <a href="http://code.google.com/p/berkeleymapper/wiki/ConvertingFromBerkeleyMapper1">Conversion guide
-                    from
-                    previous BerkeleyMapper</a>
+                <a href="http://code.google.com/p/berkeleymapper">Linking guide</a>
+
+                <div id="addressControl">
+                    <input id="address" type="textbox" value="Junction City, OR">
+                    <input id="addressbutton" type="button" value="Geocode" onclick="codeAddress()">
+                </div>
 
                 <div id="styleOptions">
                     <b>Display: </b>
@@ -56,6 +59,7 @@
                     <a href="#" onclick='downloadAll();'>Download All</a><br>
                     <a href="#" onclick='downloadSpatial();'>Download Subset</a>
                 </div>
+
                 <div id="layers"></div>
                 <div style="float:clear;"></div>
                 <div id="myColors"></div>

@@ -51,9 +51,9 @@ html, body, #map {
 
 #bottomContainer {
     padding-top: 8px;
-    height: 150px;
+    height: 100px;
     max-height: 400px;
-    min-height: 50px;
+    min-height: 0px;
     overflow:auto;
 }
 
@@ -67,6 +67,12 @@ select {
 }
 
 #content {
+    font-size:11px;
+}
+#address {
+    font-size:11px;
+}
+#addressbutton {
     font-size:11px;
 }
 

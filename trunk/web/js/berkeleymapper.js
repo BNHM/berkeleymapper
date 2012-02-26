@@ -22,17 +22,17 @@ bm2.jqGridAttributes = {
     altRows: true,
     scroll: true,
     height: "100%" ,
-    onSelectRow: function(id){
+    onSelectRow: function(id) {
         var lat = $('#flexme1').getCell(id, 'Latitude');
         var lng = $('#flexme1').getCell(id, 'Longitude');
 
-        var latlng = new google.maps.LatLng(lat,lng);
+        var latlng = new google.maps.LatLng(lat, lng);
         if (bm2.iw) {
             bm2.iw.close();
         }
-        var columnNames = $("#flexme1").jqGrid('getGridParam','colNames');
+        var columnNames = $("#flexme1").jqGrid('getGridParam', 'colNames');
         var rowData = "<div id='content'>";
-        for (i=0; i < columnNames.length; i++) {
+        for (i = 0; i < columnNames.length; i++) {
             cell = $("#flexme1").getCell(id, i);
             rowData += columnNames[i] + ":" + cell + "<br>";
         }
@@ -41,15 +41,15 @@ bm2.jqGridAttributes = {
         bm2.iw.setContent(rowData);
         bm2.iw.setPosition(latlng);
         bm2.iw.open(bm2.map);
-   }
- };
+    }
+};
 
 $().ready(function() {
     $("#bigContainer").splitter({
         splitHorizontal: true,
         outline: true,
         resizeToWidth: true,
-        cookie: "vsplitter"
+        sizeBottom: true
     });
 
     // Horizontal splitter, nested in the right pane of the vertical splitter.
@@ -60,14 +60,13 @@ $().ready(function() {
 });
 
 
-
 // Adjust bounds to drawn polygon
 if (!google.maps.Polygon.prototype.getBounds) {
     google.maps.Polygon.prototype.getBounds = function(latLng) {
         var bounds = new google.maps.LatLngBounds();
         var paths = this.getPaths();
         var path;
-                
+
         for (var p = 0; p < paths.getLength(); p++) {
             path = paths.getAt(p);
             for (var i = 0; i < path.getLength(); i++) {
@@ -81,26 +80,26 @@ if (!google.maps.Polygon.prototype.getBounds) {
 // Adjust bounds for drawn polyline
 if (!google.maps.Polyline.prototype.getBounds) {
     google.maps.Polyline.prototype.getBounds = function(latLng) {
-        var bounds = new google.maps.LatLngBounds();        
+        var bounds = new google.maps.LatLngBounds();
         this.getPath().forEach(function(e) {
             bounds.extend(e);
         });
-        return bounds;                  
+        return bounds;
     }
 }
 
 // Initialize the Array of Available KML Layers
-function  setKMLLayers() {
+function setKMLLayers() {
     if (!bm2.pointMode) {
         return false;
     }
-     
-    
+
+
     // Populate kmlLayers Array (loop json
     $.ajax({
         url: bm2.urlRoot + "kmllayers?session=" + bm2.session,
         async: false,
-        success: function(data){
+        success: function(data) {
             count = 0;
             $.each(data, function() {
                 var url, mode, title;
@@ -124,13 +123,13 @@ function  setKMLLayers() {
         },
         statusCode: {
             204: function() {
-            // fail quietly
+                // fail quietly
             }
         }
     });
 
     // Loop through KML Layers Array and perform functions
-    for ( i =0; i < bm2.kmlLayers.length; i++) {
+    for (i = 0; i < bm2.kmlLayers.length; i++) {
         // default checbox state
         var checked = false;
         if (bm2.kmlLayers[i]['visibility'] == 'visible') {
@@ -144,34 +143,35 @@ function  setKMLLayers() {
         }).appendTo('#layers');
 
         // Create input checkbox
-        jQuery('<input />').change(function() {
-            toggleLayer(this);
-        }).attr({
-            id: 'layerinput'+i,
-            type: 'checkbox',
-            style: 'float: left;',
-            value: i,
-            checked: checked
-        }).appendTo('#container'+i);
+        jQuery('<input />').change(
+            function() {
+                toggleLayer(this);
+            }).attr({
+                id: 'layerinput' + i,
+                type: 'checkbox',
+                style: 'float: left;',
+                value: i,
+                checked: checked
+            }).appendTo('#container' + i);
 
         // Create Text
         jQuery('<div/>', {
-            id: 'layertext'+i,
+            id: 'layertext' + i,
             style: 'float: left;',
             html: bm2.kmlLayers[i]['title'],
-            onclick: 'kmlZoom('+i+');'
-        }).appendTo('#container'+i);
-        
-          // Create Zoom Option
+            onclick: 'kmlZoom(' + i + ');'
+        }).appendTo('#container' + i);
+
+        // Create Zoom Option
         jQuery('<div/>', {
-            id: 'zoomlayertext'+i,
+            id: 'zoomlayertext' + i,
             style: 'float: left;',
             html: '&nbsp;(zoom)'
-        }).appendTo('#container'+i);
+        }).appendTo('#container' + i);
         $('#zoomlayertext' + i).bind("click", {param1: i}, function(event) {
-           kmlZoom(event.data.param1);
+            kmlZoom(event.data.param1);
         });
-        
+
         // set initial visibility
         if (bm2.kmlLayers[i]['visibility'] == 'visible') {
             bm2.kmlLayers[i]['google'].setMap(bm2.map);
@@ -189,9 +189,8 @@ function toggleLayer(cb) {
 }
 
 
-
 // Control display of points
-function pointDisplay(value) {   
+function pointDisplay(value) {
     if (value == "markers") {
         setMarkersAndCirclesOn(false);
         $("#myColors").html("");
@@ -199,23 +198,25 @@ function pointDisplay(value) {
     } else if (value == "markersandcircles") {
         $("#myColors").html("");
         setColors();
-        setMarkersAndCirclesOn(true); 
+        setMarkersAndCirclesOn(true);
     } else if (value == "staticdots") {
         alert('not yet implemented');
     } else {
         $("#myColors").html("");
-        setMarkerClustererOn(); 
-    }                 
+        setMarkerClustererOn();
+    }
 }
 
 function initialize() {
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
     imageObj = new Image();
-    imageObj.src='http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
+    imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
 
     // Set pointMode
     if (jQuery.url.param('tabfile')) {
+        $("#addressControl").hide();
+
         bm2.pointMode = true;
 
         var configFile = "";
@@ -243,16 +244,57 @@ function initialize() {
     // Setup Map type Options (add KML overlays to this??)
     setMapTypes();
     if (bm2.pointMode) {
+
         // Draw KML Layers (lookup via service)
         if (configFile != "") {
             setKMLLayers();
         }
         // Draw the Points
         setJSONPoints();
+    }   else {
+        $("#bottomContainer").html("Instructions for geocoding ...");
+
+        // Hide bottom container
+        $("#myColors").hide();
+        $("#layers").hide();
+        $("#download").hide();
+        $("#styleOptions").hide();
+
+        // Show Geocoder tool
+        $("#addressControl").show();
+
+        // Try HTML5 geolocation
+        if(navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var pos = new google.maps.LatLng(position.coords.latitude,
+                                             position.coords.longitude);
+
+            alert ("location found using HTML5 " + position.coords.latitude + "/"+position.coords.longitude);
+
+            bm2.map.setCenter(pos);
+            bm2.map.setZoom(10);
+          }, function() {
+            handleNoGeolocation(true);
+          });
+        } else {
+          // Browser doesn't support Geolocation
+          handleNoGeolocation(false);
+        }
+
     }
-    
+
     // Drawing Options
     initializeDrawingManager();
+}
+
+function handleNoGeolocation(errorFlag) {
+    var content = "";
+    if (errorFlag) {
+        content = 'Error: The Geolocation service failed.';
+    } else {
+        content = 'Error: Your browser doesn\'t support geolocation.';
+    }
+    alert(content);
 }
 
 // Display a legend of colors
@@ -265,7 +307,7 @@ function setColors() {
         url: url,
         async: true,
         dataType: "json",
-        success: function(data, success){
+        success: function(data, success) {
             count = 0;
             $.each(data, function() {
                 var key, label, color = "";
@@ -280,7 +322,7 @@ function setColors() {
 
                 $("#myColors").append("<div class='markerImgDiv'><img id=\"markerImg\" src=\"img/marker-t.png\" " +
                     "style=\"background-color:" + color + ";height:20px;\"></div>");
-                $("#myColors").append("<div class='markerText'>" + label +"</div>");
+                $("#myColors").append("<div class='markerText'>" + label + "</div>");
                 $("#myColors").append("<div style='clear:left;'>");
 
             });
@@ -291,16 +333,16 @@ function setColors() {
 
 // download links from bm2 service
 function downloadAll() {
-     var url = bm2.urlRoot + "download?session=" + bm2.session;
-     window.open(url);
+    var url = bm2.urlRoot + "download?session=" + bm2.session;
+    window.open(url);
 }
 
 // download the spatial subselect
 function downloadSpatial() {
     if (bm2.polygon == "") {
-        alert ("Must first define a polygon.  You can also just download all records.")
+        alert("Must first define a polygon.  You can also just download all records.")
     } else {
-        var url = bm2.urlRoot + "downloadSpatial?session=" +bm2.session + "&polygon=" + bm2.polygon;
+        var url = bm2.urlRoot + "downloadSpatial?session=" + bm2.session + "&polygon=" + bm2.polygon;
         window.open(url);
     }
 
@@ -314,52 +356,52 @@ function setJSONPoints() {
         url: url,
         async: true,
         dataType: "json",
-        success: function(data, success){
+        success: function(data, success) {
             count = 0;
             if (data) {
                 $.each(data, function() {
-                var lat, lng, line, radius, markercolor = "";
+                    var lat, lng, line, radius, markercolor = "";
 
-                $.each(this, function(k, v) {
-                    if (k == "lat") lat = v;
-                    if (k == "lng") lng = v;
-                    if (k == "line") line = v;
-                    if (k == "radius") radius = v;
-                    if (k == "color") markercolor = v;
-                });
+                    $.each(this, function(k, v) {
+                        if (k == "lat") lat = v;
+                        if (k == "lng") lng = v;
+                        if (k == "line") line = v;
+                        if (k == "radius") radius = v;
+                        if (k == "color") markercolor = v;
+                    });
 
-                var latlng = new google.maps.LatLng(lat,lng);
+                    var latlng = new google.maps.LatLng(lat, lng);
 
-                if (markercolor == "") markercolor = "#FF0000";
+                    if (markercolor == "") markercolor = "#FF0000";
 
-                var marker = new StyledMarker({
-                    styleIcon:  new StyledIcon(StyledIconTypes.MARKER,{color:markercolor}),
-                    position: latlng,
-                    map: bm2.map,
-                    title:"point"
-                });
-                marker.line = line;
-                marker.radius = radius;
-                marker.color =  markercolor;
+                    var marker = new StyledMarker({
+                        styleIcon:  new StyledIcon(StyledIconTypes.MARKER, {color:markercolor}),
+                        position: latlng,
+                        map: bm2.map,
+                        title:"point"
+                    });
+                    marker.line = line;
+                    marker.radius = radius;
+                    marker.color = markercolor;
 
-                google.maps.event.addListener(marker, 'click', (function(marker,count) {
-                    return function() {
-                        var infowindow = new google.maps.InfoWindow();
-                        infowindow.setContent(fetchRecord(line));
-                        infowindow.open(bm2.map,marker);
-                    }
-                })(marker,count));
+                    google.maps.event.addListener(marker, 'click', (function(marker, count) {
+                        return function() {
+                            var infowindow = new google.maps.InfoWindow();
+                            infowindow.setContent(fetchRecord(line));
+                            infowindow.open(bm2.map, marker);
+                        }
+                    })(marker, count));
 
-                bm2.markers[count++]= marker;
-                bound.extend(marker.getPosition());
+                    bm2.markers[count++] = marker;
+                    bound.extend(marker.getPosition());
                 });
                 bm2.map.fitBounds(bound);
                 setMarkerClustererOn();
                 zoomPoints();
-            }  else {
+            } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
-                bm2.map.setCenter(new google.maps.LatLng(0,0));
+                bm2.map.setCenter(new google.maps.LatLng(0, 0));
                 alert("nothing to map! Does the data have a latitude/longitude?");
             }
         }
@@ -376,7 +418,7 @@ function zoomPoints() {
     var bound = new google.maps.LatLngBounds();
     for (i in bm2.markers) {
         bound.extend(bm2.markers[i].getPosition());
-    }            
+    }
     bm2.map.fitBounds(bound);
 }
 
@@ -384,24 +426,24 @@ function fetchRecord(line) {
     var retStr = "";
     // Initialize Session
     $.ajax({
-        url: bm2.urlRoot +  "records?session=" + bm2.session + "&line=" + line,
+        url: bm2.urlRoot + "records?session=" + bm2.session + "&line=" + line,
         async: false,
         success: function(data) {
             // Loop through JSON elements to construct response
             $.each(data, function() {
                 retStr += "<div id='content'>";
                 $.each(this, function(k, v) {
-                    retStr +=  k + ": " + v + "<br>";
+                    retStr += k + ": " + v + "<br>";
                 });
                 retStr += "</div>";
             });
         },
         statusCode: {
             204: function() {
-                return "unable to fetch results for line "+ line;
+                return "unable to fetch results for line " + line;
             }
         }
-    }); 
+    });
     return retStr;
 }
 
@@ -410,19 +452,19 @@ function fetchRecords() {
     // Initialize Session
     $.ajax({
         type: "POST",
-        data: "session=" +bm2.session + "&polygon=" + bm2.polygon,
+        data: "session=" + bm2.session + "&polygon=" + bm2.polygon,
         url: bm2.urlRoot + "records",
         async: false,
         success: function(data) {
 
             // Header elements
             retStr += "<table id=\"flexme1\">";
-		    retStr += "<thead><tr>";
-		    row = 1;
-		    $.each(data, function() {
+            retStr += "<thead><tr>";
+            row = 1;
+            $.each(data, function() {
                 if (row == 1) {
                     $.each(this, function(k, v) {
-                        retStr += "<th width=80>" + k +  "</th>";
+                        retStr += "<th width=80>" + k + "</th>";
                         row++;
                     });
                 }
@@ -437,7 +479,7 @@ function fetchRecords() {
                 retStr += "<tr>";
                 $.each(this, function(k, v) {
                     //retStr += "<li>" + k + ": " + v + "</li>";
-                    retStr += "<td width=80>"  + htmlEntities(v) + "</td>";
+                    retStr += "<td width=80>" + htmlEntities(v) + "</td>";
                 });
                 //retStr += "</ul>";
                 retStr += "</tr>";
@@ -456,7 +498,7 @@ function fetchRecords() {
     $("#bottomContainer").html(retStr);
     setHorizontalPane();
     $(function () {
-        tableToGrid("#flexme1", bm2.jqGridAttributes );
+        tableToGrid("#flexme1", bm2.jqGridAttributes);
     });
 
     // fixes header when scrolling
@@ -471,8 +513,8 @@ function clearAllMarkers() {
     //if (mode == CLUSTERING) 
     try {
         bm2.mc.clearMarkers();
-    }catch(err) {
-        
+    } catch(err) {
+
     }
     for (i in bm2.markers) {
         bm2.markers[i].setMap(null);
@@ -512,21 +554,21 @@ function setMarkerClustererOn() {
     clearAllMarkers();
     //  mode = CLUSTERING;
     var mcOptions = {
-        gridSize:25, 
-        averageCenter:true, 
+        gridSize:25,
+        averageCenter:true,
         title:"multiple markers",
         minimumClusterSize:1,
         zoomOnClick:false
     };
-    bm2.mc = new MarkerClusterer(bm2.map,bm2.markers,mcOptions);
-            
+    bm2.mc = new MarkerClusterer(bm2.map, bm2.markers, mcOptions);
+
     google.maps.event.addListener(bm2.mc, 'click', function (c) {
         var cb = new google.maps.LatLngBounds();
         var m = c.getMarkers();
-        for (var i = 0; i < m.length; i++) {                    
+        for (var i = 0; i < m.length; i++) {
             ll = m[i].getPosition();
             cb.extend(m[i].getPosition());
-        }                
+        }
         // Create a WKT polygon from this bounding box
         lat1 = cb.getNorthEast().lat();
         lng1 = cb.getNorthEast().lng();
@@ -536,7 +578,7 @@ function setMarkerClustererOn() {
 
         fetchRecords();
     });
-} 
+}
 
 
 // Set the initial Map
@@ -546,7 +588,7 @@ function getMap() {
     if (bm2.pointMode) {
         myOptions = {
             zoom: 1,
-            mapTypeId: google.maps.MapTypeId.ROADMAP,        
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
             panControl: true,
             panControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
@@ -560,8 +602,8 @@ function getMap() {
     } else {
         myOptions = {
             zoom: 1,
-            center: new google.maps.LatLng(0,0),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,        
+            center: new google.maps.LatLng(0, 0),
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
             panControl: true,
             panControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
@@ -571,11 +613,11 @@ function getMap() {
             zoomControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
             }
-        };  
+        };
     }
-    
+
     lmap = new google.maps.Map(document.getElementById('map'), myOptions);
-    
+
     lmap.enableKeyDragZoom({
         visualEnabled: true,
         visualPosition: google.maps.ControlPosition.LEFT,
@@ -609,10 +651,10 @@ function setMapTypes() {
 
     var topo = new google.maps.ImageMapType(topoMapOptions);
     bm2.map.mapTypes.set('topo', topo);
-        http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&BBOX=-72,45.35,-71.85,45.5&WIDTH=800&HEIGHT=600&FORMAT=image/png&LAYERS=vegetation,builtup_areas,hydrography
+    http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&BBOX=-72,45.35,-71.85,45.5&WIDTH=800&HEIGHT=600&FORMAT=image/png&LAYERS=vegetation,builtup_areas,hydrography
 
 
-    var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names",2,15,0.7,true,'Canadian Topo');
+        var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
     bm2.map.mapTypes.set('cantopo', cantopo);
 
     bm2.map.setOptions({
@@ -620,49 +662,49 @@ function setMapTypes() {
         mapTypeControlOptions: {
             style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: [google.maps.MapTypeId.ROADMAP,
-            google.maps.MapTypeId.SATELLITE,
-            google.maps.MapTypeId.HYBRID,
-            google.maps.MapTypeId.TERRAIN,
-            'topo',
-            'cantopo']
+                google.maps.MapTypeId.SATELLITE,
+                google.maps.MapTypeId.HYBRID,
+                google.maps.MapTypeId.TERRAIN,
+                'topo',
+                'cantopo']
         }
     });
 }
 
-function WMSTileOverlay(urlWMS,minZ,maxZ,opacity,isPng,name) {
+function WMSTileOverlay(urlWMS, minZ, maxZ, opacity, isPng, name) {
     var overlayOptions = {
-	    getTileUrl:
-	    function WMS_GetTileUrl(coord, zoom) {
-            //var overlay = new MyOverlay(map);
-	        var projection = bm2.map.getProjection();
-		    var zpow = Math.pow(2, zoom);
-		    var lULP = new google.maps.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
-		    var lLRP = new google.maps.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
-		    var lULg = projection.fromPointToLatLng(lULP);
-		    var lLRg = projection.fromPointToLatLng(lLRP);
-		    var lULg_Longitude = lULg.lng();
-		    var lULg_Latitude = lULg.lat();
-		    var lLRg_Longitude = lLRg.lng();
-		    var lLRg_Latitude = lLRg.lat();
+        getTileUrl:
+            function WMS_GetTileUrl(coord, zoom) {
+                //var overlay = new MyOverlay(map);
+                var projection = bm2.map.getProjection();
+                var zpow = Math.pow(2, zoom);
+                var lULP = new google.maps.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
+                var lLRP = new google.maps.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
+                var lULg = projection.fromPointToLatLng(lULP);
+                var lLRg = projection.fromPointToLatLng(lLRP);
+                var lULg_Longitude = lULg.lng();
+                var lULg_Latitude = lULg.lat();
+                var lLRg_Longitude = lLRg.lng();
+                var lLRg_Latitude = lLRg.lat();
 
-	    	// There seems to be a bug when crossing the -180 longitude border (tile does not render) - this check seems to fix it...
-	    	if (lLRg_Longitude < lULg_Longitude) {
-	         lLRg_Longitude = Math.abs(lLRg_Longitude);
-	    	}
+                // There seems to be a bug when crossing the -180 longitude border (tile does not render) - this check seems to fix it...
+                if (lLRg_Longitude < lULg_Longitude) {
+                    lLRg_Longitude = Math.abs(lLRg_Longitude);
+                }
 
-    		// Create the Bounding Box string
-    		var bbox = "&bbox=" + lULg_Longitude + "," + lULg_Latitude + "," + lLRg_Longitude + "," + lLRg_Latitude;
-    		var urlResult = urlWMS + bbox;
+                // Create the Bounding Box string
+                var bbox = "&bbox=" + lULg_Longitude + "," + lULg_Latitude + "," + lLRg_Longitude + "," + lLRg_Latitude;
+                var urlResult = urlWMS + bbox;
 
-	    	return urlResult;
-	    },
+                return urlResult;
+            },
 
-    	tileSize: new google.maps.Size(256, 256),
-    	minZoom: minZ,
-    	maxZoom: maxZ,
-    	opacity: opacity,
-    	name: name,
-    	isPng: isPng};
+        tileSize: new google.maps.Size(256, 256),
+        minZoom: minZ,
+        maxZoom: maxZ,
+        opacity: opacity,
+        name: name,
+        isPng: isPng};
 
     return new google.maps.ImageMapType(overlayOptions);
 }
@@ -675,15 +717,15 @@ function PanelControl(controlDiv, pmap) {
     controlUI.style.backgroundImage = 'url(img/left-right.gif)';
     controlUI.title = 'Show/Hide Panel';
     controlUI.style.width = '29px';
-    controlUI.style.height = '20px'; 
-    
+    controlUI.style.height = '20px';
+
     controlDiv.appendChild(controlUI);
-    
+
     return controlUI;
 }
 
 function NewControl(controlDiv, pmap, title, alt) {
-   
+
     controlDiv.style.padding = '5px';
     controlDiv.index = 1;
     pmap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
@@ -707,10 +749,9 @@ function NewControl(controlDiv, pmap, title, alt) {
     controlText.style.paddingRight = '4px';
     controlText.innerHTML = '<b>' + title + '</b>';
     controlUI.appendChild(controlText);
-  
+
     return controlUI;
 }
-
 
 
 function removeOverlay(num) {
@@ -728,7 +769,7 @@ function queryOverlay(num) {
         var lng = point.lng().toFixed(5);
         if (i == 0) {
             firstPoint += lat + " " + lng;
-        }        
+        }
         polygon += lat + " " + lng;
         polygon += ",";
     }
@@ -739,15 +780,32 @@ function queryOverlay(num) {
 }
 
 function callbackPoint(num) {
-    alert("possible to send this data back to some calling application??");      
+    alert("possible to send this data back to some calling application??");
 }
 
 function setHorizontalPane() {
-    var curr_height= $("#bottomContainer").height();
+    var curr_height = $("#bottomContainer").height();
     if (curr_height < 200) {
         $("#bottomContainer").css("height", "200px");
         //$("#mapContainer").css("height", "80%");
     }
+}
+
+function codeAddress() {
+    var geocoder = new google.maps.Geocoder();
+
+    var address = document.getElementById("address").value;
+    geocoder.geocode( { 'address': address}, function(results, status) {
+      if (status == google.maps.GeocoderStatus.OK) {
+        bm2.map.setCenter(results[0].geometry.location);
+        var marker = new google.maps.Marker({
+            map: bm2.map,
+            position: results[0].geometry.location
+        });
+      } else {
+        alert("Geocode was not successful for the following reason: " + status);
+      }
+    });
 }
 
 function htmlEntities(str) {
