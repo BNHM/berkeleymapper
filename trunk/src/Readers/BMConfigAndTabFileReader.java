@@ -2,9 +2,13 @@ package Readers;
 
 import Core.*;
 
+import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.io.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import javax.xml.parsers.*;
 
 import org.w3c.dom.*;
@@ -94,7 +98,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     columnArrayList.add(datatype);
                     if (alias != null && !alias.equals("")) {
                         columnAliasArrayList.add(alias);
-                    }   else {
+                    } else {
                         columnAliasArrayList.add(datatype);
                     }
                 }
@@ -148,22 +152,19 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     /**
-     * get The Specified KML BMLayers from this File
+     * Return a BMColors object representing how to style color objects in map
      *
      * @return
      */
     public BMColors getColors() {
-
+        // Set up initial color array components
         BMColors c = new BMColors();
         Document doc = parseXmlFile(configURL, false);
         NodeList nl = doc.getElementsByTagName("colors");
         for (int i = 0; i < nl.getLength(); i++) {
             NamedNodeMap nnm = nl.item(i).getAttributes();
-
             if (nnm != null) {
-
                 for (int j = 0; j < nnm.getLength(); j++) {
-
                     Node attribute = nnm.item(j);
                     if (attribute.getNodeName().equalsIgnoreCase("method")) {
                         c.setMethod(attribute.getNodeValue());
@@ -174,6 +175,84 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     }
                 }
             }
+        }
+
+        // Color components
+        if (c.method.equals(c.FIELD)) {
+            System.out.println("Fetching Colors by Field -- explicit representation by type");
+            return getColorsByField(nl, c);
+        } else if (c.method.equals(c.DYNAMICFIELD)) {
+            System.out.println("Fetching Colors by DynamicField");
+            return getColorsByDynamicField(c);
+        }
+        return null;
+    }
+
+    /**
+     * Determine the position of the particular title variable in an arraylist of fields
+     *
+     * @param title
+     * @return
+     */
+    private Integer getBMFieldPosition(String title) {
+        Iterator rowIt = rows.iterator();
+        while (rowIt.hasNext()) {
+            BMRow r = (BMRow) rowIt.next();
+            Iterator it = r.getBMCoord().fields.iterator();
+            Integer count = 0;
+            while (it.hasNext()) {
+                BMField f = (BMField) it.next();
+                if (f.getTitle().equalsIgnoreCase(title)) {
+                    return count;
+                }
+                count++;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Get a list of unique values and assign a color ramp
+     * Need to reed tab delimited field for the appropriate column and get a list of unique values
+     * @param c
+     * @return
+     */
+    private BMColors getColorsByDynamicField(BMColors c) {
+
+        // Get unique values in the dynamic field column using HashSet
+        HashSet fieldHash = new HashSet();
+        Integer position = getBMFieldPosition(c.fieldname);
+        if (position < 0) return null;
+        Iterator rowIt = rows.iterator();
+        while (rowIt.hasNext()) {
+            BMRow r = (BMRow) rowIt.next();
+            BMField f = (BMField) r.getBMCoord().fields.get(position);
+            fieldHash.add(f.getValue());
+        }
+
+        // Create a color ramp based on HashSet
+        Iterator hashIt = fieldHash.iterator();
+        int length = fieldHash.size();
+        int count = 1;
+        while (hashIt.hasNext()) {
+            String field = (String)hashIt.next();
+            Color color = Color.getHSBColor((float) count++ / (float) length, 0.85f, 1.0f);
+            BMColor bmc = new BMColor(field, field, color.getRed(), color.getGreen(), color.getBlue());
+            c.addColor(bmc);
+        }
+
+        return c;
+    }
+
+    /**
+     * Get a list of colors as specified by individual XML Field mappings
+     *
+     * @param nl
+     * @param c
+     * @return
+     */
+    private BMColors getColorsByField(NodeList nl, BMColors c) {
+        for (int i = 0; i < nl.getLength(); i++) {
             // Fetch colors nodes
             NodeList colors = nl.item(i).getChildNodes();
             for (int k = 0; k < colors.getLength(); k++) {
@@ -201,11 +280,11 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                             }
                         }
                         BMColor bmc = new BMColor(key, label, red, green, blue);
-                        //System.out.println("adding a color");
                         c.addColor(bmc);
                     }
                 }
             }
+
         }
         return c;
     }
@@ -216,13 +295,6 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
      * @throws IOException
      */
     private void execConfig() throws IOException {
-        // Figure out
-       // BMColors colors = this.getColors();
-       // // determine that this is the FIELD based color method
-       //  if (colors == null || colors.method.equals(colors.FIELD)) {
-      //
-      //  }
-
 
         String strLine;
         // This Reader assumes that the TAB Delimited data file starts on row
@@ -230,7 +302,10 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         numRows = 1;
         while ((strLine = reader.readLine()) != null) {
             BMRow r = new BMRow(numRows, columns, columnsAlias, strLine);
-            rows.add(r);
+            if (r.getBMCoord() != null) {
+                rows.add(r);
+            }
+            //System.out.println(columns.length);
             // get the last column (is color)
             //System.out.println(columns[columns.length - 1]);
             numRows++;
@@ -253,7 +328,10 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
                 BMRow r = new BMRow(numRows, columns, columns, strLine);
-                rows.add(r);
+                if (r.getBMCoord() != null) {
+                    rows.add(r);
+                }
+
             }
         }
         //Close the input stream

@@ -350,6 +350,11 @@ function downloadSpatial() {
 
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
+    // Warn if temporary not set on server
+    if (!bm2.session)  {
+        alert ("unable to set session on server, check temporary directory?");
+        exit;
+    }
     var bound = new google.maps.LatLngBounds();
     $.ajax({
         type: "GET",
@@ -651,11 +656,16 @@ function setMapTypes() {
 
     var topo = new google.maps.ImageMapType(topoMapOptions);
     bm2.map.mapTypes.set('topo', topo);
-    http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&BBOX=-72,45.35,-71.85,45.5&WIDTH=800&HEIGHT=600&FORMAT=image/png&LAYERS=vegetation,builtup_areas,hydrography
 
-
-        var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
+    // WMS Raster Services
+    var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
     bm2.map.mapTypes.set('cantopo', cantopo);
+
+    var moorea = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
+    bm2.map.mapTypes.set('moorea',moorea);
+
+    var mooreabathy = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
+    bm2.map.mapTypes.set('mooreabathy',mooreabathy);
 
     bm2.map.setOptions({
         mapTypeControl: true,
@@ -666,7 +676,8 @@ function setMapTypes() {
                 google.maps.MapTypeId.HYBRID,
                 google.maps.MapTypeId.TERRAIN,
                 'topo',
-                'cantopo']
+                'cantopo',
+                'moorea']
         }
     });
 }

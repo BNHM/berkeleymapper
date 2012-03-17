@@ -36,9 +36,6 @@ public class BMRenderJSON implements BMRendererInterface {
         if (config != null) {
             colors = config.getColors();
         }
-        // // determine that this is the FIELD based color method
-        //  if (FieldColor == null || FieldColor.method.equals(FieldColor.FIELD)) {
-        //
 
         // Get an iterator for all the rows in this set
         Iterator rows = Arrays.asList(g.getCoordinates()).iterator();
