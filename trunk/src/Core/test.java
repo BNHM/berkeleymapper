@@ -8,6 +8,7 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -20,7 +21,7 @@ import java.util.logging.Logger;
  * @author jdeck
  */
 public class test {
-    static GeometryFactory geometryFactory = new GeometryFactory();
+    //static GeometryFactory geometryFactory = new GeometryFactory();
 
     public static void main(String args[]) {
         // Initial URL
@@ -68,7 +69,6 @@ public class test {
         } catch (IOException ex) {
             Logger.getLogger(test.class.getName()).log(Level.SEVERE, null, ex);
         }
-
         BMConfigAndTabFileReader fs = null;
         try {
             fs = new BMConfigAndTabFileReader(f.getSession());
@@ -80,7 +80,7 @@ public class test {
         // Output points
         String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(), fs);
         System.out.println(output);
-//        String id = new BMRenderJSON().Record(1, fs);
+        System.out.println(new BMRenderJSON().Record(98, fs));
         // Perform a spatial operation
         //output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
 
@@ -89,6 +89,7 @@ public class test {
         //System.out.println(new BMRenderJSON().Colors(fs));
 
         //System.out.println(id);
+
     }
 
     /**

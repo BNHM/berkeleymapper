@@ -21,7 +21,7 @@ public class BMRow {
      * @param header
      * @param line
      */
-    public BMRow(int line, Object[] header, Object[] headerAlias, String lineStr) {
+    public BMRow(int line, Object[] header, Object[] headerAlias, String lineStr, BMJoins join) {
         double Latitude = 0;
         double Longitude = 0;
         double ErrorRadiusInMeters = 0;
@@ -29,13 +29,10 @@ public class BMRow {
         ArrayList fields = new ArrayList();
 
         BMLineStringReader lsr = new BMLineStringReader(lineStr);
-
+        String JoinPart1 = "", JoinPart2 = "";
         Iterator lsri = lsr.iterator();
 
-        //int fieldNum = 0;
         for (int i = 0; i < header.length; i++) {
-            //while (lsri.hasNext()) {
-            //System.out.println(header[i]);
             String title = "";
             String value = "";
             String titleAlias = "";
@@ -57,7 +54,16 @@ public class BMRow {
                 System.err.println("Title Elements out of bounds");
             }
 
-            if (title != null && value != null) {
+            // Join will take its geographic information from the join itself
+            if (join != null) {
+                if (title.equalsIgnoreCase(join.getFieldname1())) {
+                    JoinPart1 = value;
+                }
+                if (title.equalsIgnoreCase(join.getFieldname2())) {
+                    JoinPart2 = value;
+                }
+                // If this is not a joint then these values are specified directly
+            } else if (title != null && value != null) {
                 // Assign application specific field names
                 // TODO: Log these errors when they occur
                 if (title.equalsIgnoreCase("Latitude")) {
@@ -89,7 +95,13 @@ public class BMRow {
 
             fields.add(new BMField(title, titleAlias, value));
         }
-        if (Latitude != 0 && Longitude != 0) {
+
+        if (join != null) {
+            BMCoordinate coord = join.usCounty.search(JoinPart1 + ":" + JoinPart2);
+            if (coord != null) {
+                this.BMCoord = new BMRowClassifier(line, coord, fields);
+            }
+        } else if (Latitude != 0 && Longitude != 0) {
             this.BMCoord = new BMRowClassifier(line, Latitude, Longitude, ErrorRadiusInMeters, Datum, fields);
         }
     }

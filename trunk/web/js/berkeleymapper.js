@@ -39,10 +39,12 @@ bm2.jqGridAttributes = {
             rowData += columnNames[i] + ":" + cell + "<br>";
         }
         rowData += "</div>";
-        bm2.iw = new google.maps.InfoWindow();
-        bm2.iw.setContent(rowData);
-        bm2.iw.setPosition(latlng);
-        bm2.iw.open(bm2.map);
+        if (lat != 0 && lng !=0) {
+            bm2.iw = new google.maps.InfoWindow();
+            bm2.iw.setContent(rowData);
+            bm2.iw.setPosition(latlng);
+            bm2.iw.open(bm2.map);
+        }
     }
 };
 

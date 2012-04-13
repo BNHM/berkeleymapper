@@ -83,8 +83,15 @@ public class BMSpatialFileReader implements BMFileReader {
             offset = (numRows - rows.size());
         }
         int rowNum = i - offset;
-        BMRow r = (BMRow) rows.get(rowNum);
-        return r;
+        Iterator it = rows.iterator();
+        while (it.hasNext()) {
+            BMRow r = (BMRow)it.next();
+            if (i == r.getBMCoord().line) {
+                return r;
+            }
+        }
+        //BMRow r = (BMRow) rows.get(rowNum);
+        return null;
     }
 
     /**
@@ -131,8 +138,6 @@ public class BMSpatialFileReader implements BMFileReader {
             Iterator iRow = this.rows.iterator();
             while (iRow.hasNext()) {
                 BMRow r = (BMRow) iRow.next();
-//System.out.println("r.getBMCoord=" + r.getBMCoord().toString());
-//System.out.println("cu=" + cu.toString());
                 if (r.getBMCoord()!= null && r.getBMCoord().equals(cu)) {
                     BMCoordinates.add(r.getBMCoord());
                 }

@@ -25,7 +25,7 @@ public class BMTabFileReader extends BMSpatialFileReader {
         super(session);
     }
 
-    public void exec() throws IOException {
+   /* public void exec() throws IOException {
         String strLine;
         //Read File Line By Line
         while ((strLine = reader.readLine()) != null) {
@@ -39,7 +39,7 @@ public class BMTabFileReader extends BMSpatialFileReader {
         }
         //Close the input stream
         reader.close();
-    }
+    }  */
 
 
 }

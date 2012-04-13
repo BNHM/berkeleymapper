@@ -80,7 +80,7 @@ public class BMRenderJSON implements BMRendererInterface {
         json += "[\n{";
         while (fields.hasNext()) {
             BMField field = (BMField) fields.next();
-            json += "\"" + JSONObject.escape(field.getTitle()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
+            json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
             if (fields.hasNext()) {
                 json += ",";
             }
