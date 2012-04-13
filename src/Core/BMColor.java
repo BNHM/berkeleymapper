@@ -3,11 +3,7 @@ package Core;
 import java.awt.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jdeck
- * Date: 2/10/12
- * Time: 2:58 PM
- * To change this template use File | Settings | File Templates.
+ Define color for mappable objects in BerkeleyMapper
  */
 public class BMColor {
 

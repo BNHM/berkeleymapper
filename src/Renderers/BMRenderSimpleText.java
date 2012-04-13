@@ -1,13 +1,11 @@
 package Renderers;
 
-import Core.BMCoordinate;
+import Core.BMRowClassifier;
 import Core.BMField;
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
-import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -24,7 +22,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         // Print Header
         Iterator i = Arrays.asList(g.getCoordinates()).iterator();
         while (i.hasNext()) {
-            BMCoordinate coord = (BMCoordinate) i.next();
+            BMRowClassifier coord = (BMRowClassifier) i.next();
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
@@ -38,7 +36,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
         while (i2.hasNext()) {
             try {
-                BMCoordinate coord = (BMCoordinate) i2.next();
+                BMRowClassifier coord = (BMRowClassifier) i2.next();
 
                 Iterator f = coord.fields.iterator();
                 while (f.hasNext()) {
@@ -64,7 +62,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         // Print Header
         Iterator headIt = Arrays.asList(subset.getCoordinates()).iterator();
         while (headIt.hasNext()) {
-            BMCoordinate coord = (BMCoordinate) headIt.next();
+            BMRowClassifier coord = (BMRowClassifier) headIt.next();
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
@@ -76,7 +74,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         
         Coordinate[] coords = subset.getCoordinates();
         for (int i = 0; i < coords.length; i++) {
-            BMCoordinate coord = (BMCoordinate) coords[i];
+            BMRowClassifier coord = (BMRowClassifier) coords[i];
             //if (i != 0) {
             //    tabtext += "\t";
             //}         

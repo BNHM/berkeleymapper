@@ -1,6 +1,6 @@
 package Readers;
 
-import Core.BMCoordinate;
+import Core.BMRowClassifier;
 import Core.BMRow;
 import Core.BMSession;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -123,7 +123,7 @@ public class BMSpatialFileReader implements BMFileReader {
      *
      * @param g
      */
-    public BMCoordinate[] expand(Geometry g) {
+    public BMRowClassifier[] expand(Geometry g) {
         Coordinate[] c = g.getCoordinates();
         ArrayList BMCoordinates = new ArrayList();
         for (int i = 0; i < c.length; i++) {
@@ -138,7 +138,7 @@ public class BMSpatialFileReader implements BMFileReader {
                 }
             }
         }
-        return (BMCoordinate[]) BMCoordinates.toArray(new BMCoordinate[BMCoordinates.size()]);
+        return (BMRowClassifier[]) BMCoordinates.toArray(new BMRowClassifier[BMCoordinates.size()]);
     }
 
 

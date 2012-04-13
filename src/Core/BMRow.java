@@ -12,7 +12,7 @@ import java.util.NoSuchElementException;
 public class BMRow {
 
 
-    private BMCoordinate BMCoord;
+    private BMRowClassifier BMCoord;
 
     /**
      * Encapsulate knowledge of a row that has been passed in.  Stores all fields and has convenience
@@ -90,11 +90,11 @@ public class BMRow {
             fields.add(new BMField(title, titleAlias, value));
         }
         if (Latitude != 0 && Longitude != 0) {
-            this.BMCoord = new BMCoordinate(line, Latitude, Longitude, ErrorRadiusInMeters, Datum, fields);
+            this.BMCoord = new BMRowClassifier(line, Latitude, Longitude, ErrorRadiusInMeters, Datum, fields);
         }
     }
 
-    public BMCoordinate getBMCoord() {
+    public BMRowClassifier getBMCoord() {
         return BMCoord;
     }
 

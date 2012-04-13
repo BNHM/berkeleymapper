@@ -1,9 +1,8 @@
 package Renderers;
 
-import Core.BMCoordinate;
+import Core.BMRowClassifier;
 import Core.BMField;
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
 import com.vividsolutions.jts.geom.Geometry;
 
@@ -43,7 +42,7 @@ public class BMRenderKML implements BMRendererInterface {
         String name = "";
         while (i2.hasNext()) {
             try {
-                BMCoordinate coord = (BMCoordinate) i2.next();
+                BMRowClassifier coord = (BMRowClassifier) i2.next();
                 Iterator f = coord.fields.iterator();
 
                 kml += "<Placemark>\n";

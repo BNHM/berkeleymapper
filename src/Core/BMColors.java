@@ -69,7 +69,7 @@ public class BMColors {
      * @param colors
      * @return
      */
-    public String FieldColor(BMCoordinate coord, BMColors colors) {
+    public String FieldColor(BMRowClassifier coord, BMColors colors) {
         Iterator fields = coord.fields.iterator();
         //System.out.println("here");
         while (fields.hasNext()) {
