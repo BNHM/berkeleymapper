@@ -36,6 +36,7 @@ public class test {
             //url = new URL("http://bnhm.berkeley.edu/tmp/map_1331675816.8494");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.txt");
             url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.txt");
 
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
@@ -53,6 +54,8 @@ public class test {
             //configUrl = new URL("http://bnhm.berkeley.edu/query/bnhm3.xml");
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.xml");  // dynamic field not implemented properly (switch to static field?)
             configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
+            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.xml");
+
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }

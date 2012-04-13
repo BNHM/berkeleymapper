@@ -4,6 +4,8 @@ bm2.overlays = [];          // overlays that the User has drawn
 bm2.overlayMarkers = [];    // markers to click on for the overlays that user has drawn
 bm2.markers = [];           // Point markers
 bm2.circles = [];           // Error radius circles for point markers
+bm2.georefMarkers = [];     // Georeferencing result markers
+bm2.georefCircles = [];     // Circles associated with the georeferencing markers
 bm2.kmlLayers = [];         // KML Layers (defined by config file)
 bm2.pointMode = false;      // pointMode = true draws special features for pointMapping
 bm2.session = "";           // Session string for communicating w/ server
@@ -269,7 +271,7 @@ function initialize() {
             var pos = new google.maps.LatLng(position.coords.latitude,
                                              position.coords.longitude);
 
-            alert ("location found using HTML5 " + position.coords.latitude + "/"+position.coords.longitude);
+            //alert ("location found using HTML5 " + position.coords.latitude + "/"+position.coords.longitude);
 
             bm2.map.setCenter(pos);
             bm2.map.setZoom(10);
@@ -802,21 +804,95 @@ function setHorizontalPane() {
     }
 }
 
-function codeAddress() {
-    var geocoder = new google.maps.Geocoder();
+function removeGeoref(num) {
+    bm2.georefMarkers[num].setMap(null);
+    bm2.georefCircles[num].setMap(null);
+}
 
-    var address = document.getElementById("address").value;
-    geocoder.geocode( { 'address': address}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
-        bm2.map.setCenter(results[0].geometry.location);
-        var marker = new google.maps.Marker({
-            map: bm2.map,
-            position: results[0].geometry.location
-        });
-      } else {
-        alert("Geocode was not successful for the following reason: " + status);
-      }
+function removeOtherGeoref(num) {
+    for (i = 0; i < bm2.georefMarkers.length; i++) {
+        if (i!=num) {
+            bm2.georefMarkers[i].setMap(null);
+            bm2.georefCircles[i].setMap(null);
+        }
+    }
+}
+
+function zoomToGeoref(num) {
+    var bounds = new google.maps.LatLngBounds();
+    var b = bm2.georefCircles[num].getBounds();
+    bounds.extend(b.getNorthEast());
+    bounds.extend(b.getSouthWest());
+    bm2.map.fitBounds(bounds);
+}
+
+function georefMarkerAssignment(marker,content) {
+    var infowindow = new google.maps.InfoWindow();
+    infowindow.setContent(content);
+
+    google.maps.event.addListener(marker, 'click', function() {
+        infowindow.open(bm2.map,marker);
     });
+}
+
+function codeAddress(address) {
+    googleGeoref(address, function(georefs) {
+        var bounds = new google.maps.LatLngBounds();
+
+        for (i = 0; i < georefs.length; i++) {
+            var index = bm2.georefMarkers.length;
+            var location = new google.maps.LatLng(georefs[i].decimalLatitude,georefs[i].decimalLongitude)
+            var radius = georefs[i].coordinateUncertaintyInMeters;
+
+
+            bm2.map.setCenter(location);
+
+            var georefMarker = new google.maps.Marker ({
+                position: location,
+                map: bm2.map,
+                title:address
+            });
+
+            var content = address + "<br>" + georefs[i].print();
+            content += "<p><a href='#' id='delete' onclick='removeGeoref(" + index  + ");'>Delete This</a>";
+            content += " | <a href='#' id='deleteothers' onclick='removeOtherGeoref(" + index  + ");'>Delete Others</a>";
+            content += " | <a href='#' id='zoomto' onclick='zoomToGeoref(" + index  + ");'>Zoom In</a>";
+
+             georefMarkerAssignment(georefMarker,content);
+
+            // Add circle overlay and bind to marker
+            var georefCircle = new google.maps.Circle({
+                map: bm2.map,
+                radius: radius,
+                fillColor: "#ff00dd",
+                fillOpacity: 0.05,
+                strokeOpacity: 0.5,
+                strokeWidth: 1,
+                strokeColor: "#ff00dd",
+                clickable: false
+            });
+            georefCircle.bindTo('center', georefMarker, 'position');
+
+            bm2.georefCircles.push(georefCircle);
+            bm2.georefMarkers.push(georefMarker);
+            georefMarker.setMap(bm2.map);
+
+        }
+
+        // Update the bounds based on all visible markers and their radii
+        for (var i = 0; i < bm2.georefMarkers.length; i++) {
+            if (bm2.georefMarkers[i].getVisible()) {
+                var b = bm2.georefCircles[i].getBounds();
+                bounds.extend(b.getNorthEast());
+                bounds.extend(b.getSouthWest());
+            }
+
+        }
+        bm2.map.fitBounds(bounds);
+    });
+
+
+
 }
 
 function htmlEntities(str) {

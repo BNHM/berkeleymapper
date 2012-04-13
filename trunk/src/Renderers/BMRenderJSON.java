@@ -43,7 +43,7 @@ public class BMRenderJSON implements BMRendererInterface {
 
         while (rows.hasNext()) {
 
-            BMCoordinate coord = (BMCoordinate) rows.next();
+            BMRowClassifier coord = (BMRowClassifier) rows.next();
 
 
             json += "{";
@@ -74,7 +74,7 @@ public class BMRenderJSON implements BMRendererInterface {
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
         BMRow r = ptsFile.getRowAt(line);
-        BMCoordinate coord = r.getBMCoord();
+        BMRowClassifier coord = r.getBMCoord();
         String json = "";
         Iterator fields = coord.fields.iterator();
         json += "[\n{";
@@ -94,7 +94,7 @@ public class BMRenderJSON implements BMRendererInterface {
         Coordinate[] coords = subset.getCoordinates();
         String json = "[\n";
         for (int i = 0; i < coords.length; i++) {
-            BMCoordinate coord = (BMCoordinate) coords[i];
+            BMRowClassifier coord = (BMRowClassifier) coords[i];
             Iterator fields = coord.fields.iterator();
             if (i != 0) {
                 json += ",";

@@ -24,6 +24,8 @@
     <script type="text/javascript" src="js/drawingManager.js"></script>
     <script type="text/javascript" src="js/markerclusterer.js"></script>
     <script type="text/javascript" src="js/styledmarker.js"></script>
+    <script type="text/javascript" src="js/georef.js"></script>
+
 
 
 </head>
@@ -42,7 +44,7 @@
 
                 <div id="addressControl">
                     <input id="address" type="textbox" value="Junction City, OR">
-                    <input id="addressbutton" type="button" value="Geocode" onclick="codeAddress()">
+                    <input id="addressbutton" type="button" value="Geocode" onclick="codeAddress(document.getElementById('address').value)">
                 </div>
 
                 <div id="styleOptions">
