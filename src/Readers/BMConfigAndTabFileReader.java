@@ -28,6 +28,7 @@ import org.xml.sax.*;
 public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     private URL configURL;
+    protected BMJoins joins = null;
 
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
         super(url, configURL);
@@ -65,6 +66,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         ArrayList columnAliasArrayList = new ArrayList();
 
         Document doc = parseXmlFile(configURL, false);
+
+
 
         NodeList nl = doc.getElementsByTagName("concept");
         String alias, colorlist, datatype, order, videwlist;
@@ -105,6 +108,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
             }
         }
+
+
 
         //columnArrayList.add("color");
         columns = columnArrayList.toArray();
@@ -166,6 +171,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (nnm != null) {
                 for (int j = 0; j < nnm.getLength(); j++) {
                     Node attribute = nnm.item(j);
+                    System.out.println(attribute.getNodeName());
                     if (attribute.getNodeName().equalsIgnoreCase("method")) {
                         c.setMethod(attribute.getNodeValue());
                     } else if (attribute.getNodeName().equalsIgnoreCase("fieldname")) {
@@ -178,7 +184,9 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         }
 
         // Color components
-        if (c.method.equals(c.FIELD)) {
+        if (c.method == null) {
+            return null;
+        } else if (c.method.equals(c.FIELD)) {
             System.out.println("Fetching Colors by Field -- explicit representation by type");
             return getColorsByField(nl, c);
         } else if (c.method.equals(c.DYNAMICFIELD)) {
@@ -214,6 +222,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     /**
      * Get a list of unique values and assign a color ramp
      * Need to reed tab delimited field for the appropriate column and get a list of unique values
+     *
      * @param c
      * @return
      */
@@ -235,7 +244,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         int length = fieldHash.size();
         int count = 1;
         while (hashIt.hasNext()) {
-            String field = (String)hashIt.next();
+            String field = (String) hashIt.next();
             Color color = Color.getHSBColor((float) count++ / (float) length, 0.85f, 1.0f);
             BMColor bmc = new BMColor(field, field, color.getRed(), color.getGreen(), color.getBlue());
             c.addColor(bmc);
@@ -297,17 +306,22 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     private void execConfig() throws IOException {
 
         String strLine;
+
+        // Detect the Join Condition & Define Spatial Columns
+        Document doc = parseXmlFile(configURL, false);
+        NodeList jnl = doc.getElementsByTagName("join");
+        if (jnl.getLength() > 0) {
+            joins = new BMJoins(jnl);
+        }
+
         // This Reader assumes that the TAB Delimited data file starts on row
         // 1 with no header
         numRows = 1;
         while ((strLine = reader.readLine()) != null) {
-            BMRow r = new BMRow(numRows, columns, columnsAlias, strLine);
+            BMRow r = new BMRow(numRows, columns, columnsAlias, strLine, joins);
             if (r.getBMCoord() != null) {
                 rows.add(r);
             }
-            //System.out.println(columns.length);
-            // get the last column (is color)
-            //System.out.println(columns[columns.length - 1]);
             numRows++;
         }
         //Close the input stream
@@ -327,7 +341,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (numRows == 1) {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
-                BMRow r = new BMRow(numRows, columns, columns, strLine);
+                BMRow r = new BMRow(numRows, columns, columns, strLine, null);
                 if (r.getBMCoord() != null) {
                     rows.add(r);
                 }
