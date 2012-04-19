@@ -1,4 +1,4 @@
-#Range Mapping Functions in BerkeleyMapper
+#summary Range Mapping Functions in BerkeleyMapper
 
 = Range Mapping functions in BerkeleyMapper =
 
