@@ -6,15 +6,17 @@ BerkeleyMapper 2.0 serves KML files based on spatial layers from IUCN for amphib
 
 = Details =
 
-Amphibian Example (use http://bnhmmapstest.berkeley.edu/ until v2 BM goes live):
+(NOTE! for all of the following examples, use http://bnhmmapstest.berkeley.edu/ instead of http://berkeleymapper.berkeley.edu/ until v2 BM goes live.  This is expected to happen sometime in April or May, 2012.
+
+*Amphibian Example*
 
 http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
 
-Mammal Example  (use http://bnhmmapstest.berkeley.edu/ until v2 BM goes live):
+*Mammal Example*
 
 http://berkeleymapper.berkeley.edu/v2/speciesrange/Lynx+rufus/sci_name/mamm_2009
 
-Birds Example  (use http://bnhmmapstest.berkeley.edu/ until v2 BM goes live):
+*Birds Example*
 
 http://berkeleymapper.berkeley.edu/v2/speciesrange/Aburria+aburri/sci_name/birds_2009
 
@@ -22,8 +24,8 @@ An example of inserting calls to these services in the BerkeleyMapper configurat
 <code language="xml">
 <gisdata>
 <layer title="IUCN Plethodon montanus Distribution" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/54596/0">
-<![CDATA[
-http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
+
+<![CDATA[http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
 ]]>
 </layer>
 </gisdata>
