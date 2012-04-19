@@ -1,3 +1,5 @@
+#Range Mapping Functions in BerkeleyMapper
+
 = Range Mapping functions in BerkeleyMapper =
 
 BerkeleyMapper 2.0 serves KML files based on spatial layers from IUCN for amphibians, birds, and mammals. 
