@@ -193,6 +193,7 @@
             <lib dir="lib" excludes="servlet-api.jar"/>
             <classes dir="${berkeleymapper.output.dir}"/>
             <classes dir="" includes="/xsl/*.*"/>
+            <classes dir="" includes="berkeleymapper.props"/>
         </war>
     </target>
 

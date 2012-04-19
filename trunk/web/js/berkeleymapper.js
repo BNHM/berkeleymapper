@@ -484,13 +484,14 @@ function fetchRecords() {
             retStr += "<tbody>";
             // Loop through JSON elements to construct response
             $.each(data, function() {
-                //retStr += "<ul>";
                 retStr += "<tr>";
                 $.each(this, function(k, v) {
-                    //retStr += "<li>" + k + ": " + v + "</li>";
-                    retStr += "<td width=80>" + htmlEntities(v) + "</td>";
+                    //retStr += "<td width=80>" + htmlEntities(v) + "</td>";
+                    // JBD removed the htmlEntities in this line on April 18th.. probably a good
+                    // reason for htmlEntities to be there but i'm not sure what it is.  I removed
+                    // this since it is breaking URL links.
+                    retStr += "<td width=80>" + v + "</td>";
                 });
-                //retStr += "</ul>";
                 retStr += "</tr>";
             });
             retStr += "</tbody></table>";
@@ -671,6 +672,12 @@ function setMapTypes() {
     var mooreabathy = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
     bm2.map.mapTypes.set('mooreabathy',mooreabathy);
 
+    var angelo2m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
+    bm2.map.mapTypes.set('angelo2m',angelo2m);
+
+    var angelo1m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
+    bm2.map.mapTypes.set('angelo1m',angelo1m);
+
     bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
@@ -681,7 +688,9 @@ function setMapTypes() {
                 google.maps.MapTypeId.TERRAIN,
                 'topo',
                 'cantopo',
-                'moorea']
+                'moorea',
+                'angelo2m',
+                'angelo1m']
         }
     });
 }
@@ -898,6 +907,5 @@ function codeAddress(address) {
 }
 
 function htmlEntities(str) {
-    //return escape(str);
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
