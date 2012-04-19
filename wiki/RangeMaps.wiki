@@ -23,10 +23,6 @@ http://berkeleymapper.berkeley.edu/v2/speciesrange/Aburria+aburri/sci_name/birds
 An example of inserting calls to these services in the BerkeleyMapper configuration file:
 <code language="xml">
 <gisdata>
-<layer title="IUCN Plethodon montanus Distribution" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/54596/0">
-
-<![CDATA[http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
-]]>
-</layer>
-</gisdata>
+        <layer title="Lynx rufus" name="mamm" location="Lynx rufus" legend="1" active="1" url=""><![CDATA[http://bnhmmapstest.berkeley.edu/v2/speciesrange/Lynx+rufus/sci_name/mamm_2009]]></layer>
+        </gisdata>
 </code>
