@@ -8,6 +8,8 @@ BerkeleyMapper 2.0 serves KML files based on spatial layers from IUCN for amphib
 
 (NOTE! for all of the following examples, use http://bnhmmapstest.berkeley.edu/ instead of http://berkeleymapper.berkeley.edu/ until v2 BM goes live.  This is expected to happen sometime in April or May, 2012.
 
+The following examples show what to put in the CDATA section of each layer element (see example below):
+
 *Amphibian Example*
 
 http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
