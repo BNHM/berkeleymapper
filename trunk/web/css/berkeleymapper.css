@@ -1,3 +1,8 @@
+a:link {text-decoration: none; font-size:11px;};
+a:visited {text-decoration: none; font-size:11px;}
+a:active {text-decoration: none; font-size:11px;}
+a:hover {text-decoration: underline; color: red; font-size:11px;}
+
 html, body, #map {
     margin: 0;
     padding: 0;
@@ -36,6 +41,7 @@ html, body, #map {
 #mapContainer {
     height: 100%;
     overflow:auto;
+    z-index=1;
 }
 
 #leftContent {
@@ -75,7 +81,9 @@ select {
 #addressbutton {
     font-size:11px;
 }
-
+#addressControl {
+    display:none;
+}
 #layers {
     font-size:11px;
 }
@@ -97,10 +105,20 @@ select {
 }
 #markerImg {
     height: 20px;
-
 }
 
-a:link {text-decoration: none; font-size:11px;};
-a:visited {text-decoration: none; font-size:11px;}
-a:active {text-decoration: none; font-size:11px;}
-a:hover {text-decoration: underline; color: red; font-size:11px;}
+#loadingMsg {
+    display:block;
+    width:180px;
+    z-index=99;
+    background-color:yellow;
+    margin:0px;
+    border-style:solid;
+    border-width:1px;
+    border-color:black;
+    //overflow-style: marquee;
+    //marquee-style: alternate;
+    //marquee-loop: infinite;
+    //overflow-x: -webkit-marquee;
+    //-webkit-marquee: backwards medium infinite alternate normal;
+}

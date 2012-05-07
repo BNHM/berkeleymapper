@@ -15,6 +15,7 @@ bm2.iw = null;
 bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
 bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
 bm2.polygon = "";           // A variable to hold a polygon defined by the user
+bm2.configFile = "";
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -98,7 +99,6 @@ function setKMLLayers() {
         return false;
     }
 
-
     // Populate kmlLayers Array (loop json
     $.ajax({
         url: bm2.urlRoot + "kmllayers?session=" + bm2.session,
@@ -115,10 +115,25 @@ function setKMLLayers() {
                     if (k == "zoom") kmlObj.zoom = v;               // expand|ignore
                     if (k == "title") kmlObj.title = v;
                 });
+
                 // Set the google object
-                kmlObj.google = new google.maps.KmlLayer(kmlObj.key, {preserveViewport:true});
-                bm2.kmlLayers[count] = kmlObj;
-                count++;
+                var layer = new google.maps.KmlLayer(kmlObj.key, {
+                    preserveViewport:true,
+                    map: bm2.map
+                });
+
+                // Wait for success on layer load to add it to menu
+                google.maps.event.addListener(layer, 'status_changed', function () {
+                    if (layer.getStatus() == 'OK') {
+                        kmlObj.google = layer;
+                        kmlObj.url = kmlObj.key;
+                        bm2.kmlLayers[count] = kmlObj;
+                        addKMLLayerToMenu(count);
+                        count++;
+                    } else {
+                        alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
+                    }
+                });
             });
         },
         error: function(result) {
@@ -132,9 +147,10 @@ function setKMLLayers() {
         }
     });
 
-    // Loop through KML Layers Array and perform functions
-    for (i = 0; i < bm2.kmlLayers.length; i++) {
-        // default checbox state
+}
+
+function addKMLLayerToMenu(i) {
+        // default checkbox state
         var checked = false;
         if (bm2.kmlLayers[i]['visibility'] == 'visible') {
             checked = true;
@@ -180,9 +196,7 @@ function setKMLLayers() {
         if (bm2.kmlLayers[i]['visibility'] == 'visible') {
             bm2.kmlLayers[i]['google'].setMap(bm2.map);
         }
-    }
 }
-
 // toggle visibility
 function toggleLayer(cb) {
     if (cb.checked) {
@@ -211,25 +225,13 @@ function pointDisplay(value) {
     }
 }
 
-function initialize() {
+function showMsg(a) {
+    $('#loadingMsg').html(a);
+}
 
-    // pre-load cursor image so cursor doesn't appear on Mac Chrome
-    imageObj = new Image();
-    imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
-
-    // Set pointMode
-    if (jQuery.url.param('tabfile')) {
-        $("#addressControl").hide();
-
-        bm2.pointMode = true;
-
-        var configFile = "";
-        if (jQuery.url.param('configfile')) {
-            configFile += "&configfile=" + jQuery.url.param('configfile');
-        }
-        // Initialize Session
-        $.ajax({
-            url: bm2.urlRoot + "session?tabfile=" + jQuery.url.param('tabfile') + configFile,
+function setSession() {
+    $.ajax({
+            url: bm2.urlRoot + "session?tabfile=" + jQuery.url.param('tabfile') + bm2.configFile,
             async: false,
             success: function(data) {
                 bm2.session = data;
@@ -242,30 +244,55 @@ function initialize() {
                 }
             }
         });
+}
+
+function initialize() {
+    $("#loadingMsg").show();
+
+    // pre-load cursor image so cursor doesn't appear on Mac Chrome
+    imageObj = new Image();
+    imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
+
+    // Set pointMode
+    if (jQuery.url.param('tabfile')) {
+        //$("#addressControl").hide();
+
+        bm2.pointMode = true;
+
+        if (jQuery.url.param('configfile')) {
+            bm2.configFile += "&configfile=" + jQuery.url.param('configfile');
+        }
+        // Initialize Session
+        showMsg("Initializing Session");
+        // This is to allow intializing session message to appear.
+        setSession();
+
     }
     // Initialize Map
     bm2.map = getMap();
+    google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
+ 	$('#loadingMsg').hide();
+    });
     // Setup Map type Options (add KML overlays to this??)
     setMapTypes();
     if (bm2.pointMode) {
 
         // Draw KML Layers (lookup via service)
-        if (configFile != "") {
+        if (bm2.configFile != "") {
             setKMLLayers();
         }
         // Draw the Points
         setJSONPoints();
     }   else {
         $("#bottomContainer").html("Instructions for geocoding ...");
+        // Show Geocoder tool
+        $("#addressControl").show();
 
         // Hide bottom container
         $("#myColors").hide();
         $("#layers").hide();
         $("#download").hide();
         $("#styleOptions").hide();
-
-        // Show Geocoder tool
-        $("#addressControl").show();
 
         // Try HTML5 geolocation
         if(navigator.geolocation) {
@@ -289,6 +316,7 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
+
 }
 
 function handleNoGeolocation(errorFlag) {
@@ -357,9 +385,11 @@ function setJSONPoints() {
     // Warn if temporary not set on server
     if (!bm2.session)  {
         alert ("unable to set session on server, check temporary directory?");
-        exit;
+        $("#loadingMsg").hide();
+        return false;
     }
     var bound = new google.maps.LatLngBounds();
+    showMsg("Fetching Data ...");
     $.ajax({
         type: "GET",
         url: url,
@@ -370,13 +400,16 @@ function setJSONPoints() {
             if (data) {
                 $.each(data, function() {
                     var lat, lng, line, radius, markercolor = "";
-
+                    var strElements;
                     $.each(this, function(k, v) {
-                        if (k == "lat") lat = v;
-                        if (k == "lng") lng = v;
-                        if (k == "line") line = v;
-                        if (k == "radius") radius = v;
-                        if (k == "color") markercolor = v;
+                        if (k == "r") {
+                            elements = v.split(";");
+                            line = parseInt(elements[0]);
+                            lat = parseFloat(elements[1]);
+                            lng = parseFloat(elements[2]);
+                            radius = parseInt(elements[3]);
+                            markercolor = elements[4];
+                        }
                     });
 
                     var latlng = new google.maps.LatLng(lat, lng);
@@ -407,13 +440,20 @@ function setJSONPoints() {
                 bm2.map.fitBounds(bound);
                 setMarkerClustererOn();
                 zoomPoints();
+    		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
                 bm2.map.setCenter(new google.maps.LatLng(0, 0));
+    		showMsg("Error ...");
                 alert("nothing to map! Does the data have a latitude/longitude?");
+    		$("#loadingMsg").hide();
             }
+        },
+        error: function (e,k,v) {
+            alert("Error fetching data");
         }
+
     });
 }
 
@@ -496,13 +536,18 @@ function fetchRecords() {
             });
             retStr += "</tbody></table>";
 
+    	    $("#loadingMsg").hide();
 
         },
         statusCode: {
             204: function() {
+    	    	$("#loadingMsg").hide();
                 return "unable to fetch results for polygon";
             }
-        }
+        }, 
+	error: function() {
+    	    $("#loadingMsg").hide();
+	}
     });
 
     $("#bottomContainer").html(retStr);
@@ -586,7 +631,9 @@ function setMarkerClustererOn() {
         lng2 = cb.getSouthWest().lng();
         bm2.polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
 
-        fetchRecords();
+    	$("#loadingMsg").show();
+    	showMsg("Loading Records ...");
+        setTimeout(fetchRecords,500);
     });
 }
 
@@ -800,7 +847,9 @@ function queryOverlay(num) {
     polygon += firstPoint + "))";
     bm2.polygon = polygon;
 
-    fetchRecords();
+    $("#loadingMsg").show();
+    showMsg("Loading Records ...");
+    setTimeout(fetchRecords,500);
 }
 
 function callbackPoint(num) {

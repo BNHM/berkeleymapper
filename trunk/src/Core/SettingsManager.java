@@ -1,13 +1,10 @@
 package Core;
 
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-
-
 
 /**
  * SettingsManager provides a generic way to configure BiSciCol core classes
@@ -89,17 +86,20 @@ public class SettingsManager
      *
      * @throws FileNotFoundException
      */
-    public void loadProperties() throws FileNotFoundException
-    {
-        props = new Properties();
+    public void loadProperties() throws FileNotFoundException {
+        /*props = new Properties();
 
          // Get the inputStream
         InputStream inputStream = this.getClass().getClassLoader()
                 .getResourceAsStream(propsfile);
+        System.out.println(propsfile);
+        System.out.println(inputStream.toString());*/
+        props = new Properties();
+        FileInputStream in = new FileInputStream(propsfile);
 
         // load the inputStream using the Properties
         try {
-            props.load(inputStream);
+            props.load(in);
         } catch (IOException e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

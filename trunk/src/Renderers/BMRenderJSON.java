@@ -45,31 +45,40 @@ public class BMRenderJSON implements BMRendererInterface {
 
             BMRowClassifier coord = (BMRowClassifier) rows.next();
 
-
+            json += "{\"r\":\"" +
+                    coord.line + ";" +
+                    coord.latitude + ";" +
+                    coord.longitude + ";" +
+                    Math.round(coord.errorRadiusInMeters) + ";" +
+                    JSONObject.escape(colors.FieldColor(coord, colors)) + "\"}";
+            if (rows.hasNext()) {
+                json += ",\n";
+            }
+            /*
             json += "{";
-            json += "\"line\":" + coord.line;
+            json += "\"id\":" + coord.line;
             json += ",\"lat\":" + coord.x;
             json += ",\"lng\":" + coord.y;
             // only return errorRadius and Datum if appropriate
             if (coord.errorRadiusInMeters != 0) {
-                json += ",\"radius\":" + coord.errorRadiusInMeters;
+                json += ",\"r\":" + Math.round(coord.errorRadiusInMeters);
             }
-            if (!coord.datum.equals("")) {
-                json += ",\"datum\":\"" + JSONObject.escape(coord.datum) + "\"";
-            }
+            //if (!coord.datum.equals("")) {
+            //    json += ",\"datum\":\"" + JSONObject.escape(coord.datum) + "\"";
+            //}
             if (colors != null) {
-                json += ",\"color\":\"" + JSONObject.escape(colors.FieldColor(coord, colors)) + "\"";
+                json += ",\"c\":\"" + JSONObject.escape(colors.FieldColor(coord, colors)) + "\"";
             }
             json += "}";
             if (rows.hasNext()) {
                 json += ",\n";
             }
+            */
         }
 
         json += "\n]";
         return json;
     }
-
 
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
