@@ -25,7 +25,7 @@ public class IUCN {
 
     public IUCN() {
         SettingsManager sm;
-        sm = SettingsManager.getInstance("berkeleymapper.props");
+        sm = SettingsManager.getInstance();
         try {
             sm.loadProperties();
         } catch (FileNotFoundException e) {
@@ -57,7 +57,7 @@ public class IUCN {
      * @return
      * @throws SQLException
      */
-    public String getKML(String name, String scientificNameColumn, String table) throws SQLException {
+    public String getKML(String name, String scientificNameColumn, String table) throws Exception {
         String kml = "";
         Style style = new Style("7dff0000",1.5,"styleElement");
 
@@ -70,15 +70,20 @@ public class IUCN {
                 "<Document>\n";
         kml += style.getStyleAsKML();
 
+        boolean found = false;
         while (rs.next())  {
             kml += "  <Placemark>\n";
             kml += "    <name>" + name + "</name>\n";
             kml += "    <styleUrl>#styleElement</styleUrl>\n";
             kml += "    " + rs.getString("kml");
             kml += "  </Placemark>\n";
+            found = true;
         }
         kml += "</Document>\n" +
                 "</kml>";
+        if (!found) {
+            throw new Exception("unable to find data for " + name);
+        }
         return kml;
     }
 
@@ -87,6 +92,8 @@ public class IUCN {
         try {
             System.out.println(kml.getKML("Plethodon montanus", "binomial", "gaa_2011"));
         } catch (SQLException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 

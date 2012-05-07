@@ -37,7 +37,7 @@ public class test {
             //url = new URL("http://bnhm.berkeley.edu/tmp/map_1331675816.8494");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.txt");
             url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctosbig.txt");
 
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
@@ -55,7 +55,7 @@ public class test {
             //configUrl = new URL("http://bnhm.berkeley.edu/query/bnhm3.xml");
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.xml");  // dynamic field not implemented properly (switch to static field?)
             configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.xml");
+            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.xml");
 
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
@@ -80,7 +80,7 @@ public class test {
         // Output points
         String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(), fs);
         System.out.println(output);
-        System.out.println(new BMRenderJSON().Record(98, fs));
+//        System.out.println(new BMRenderJSON().Record(98, fs));
         // Perform a spatial operation
         //output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
 
