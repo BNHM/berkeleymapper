@@ -104,10 +104,9 @@ function setKMLLayers() {
         url: bm2.urlRoot + "kmllayers?session=" + bm2.session,
         async: false,
         success: function(data) {
-            count = 0;
+            kmlcounter = 0;
             $.each(data, function() {
                 var url, mode, title;
-
                 var kmlObj = new Object();
                 $.each(this, function(k, v) {
                     if (k == "url") kmlObj.key = v;
@@ -121,15 +120,19 @@ function setKMLLayers() {
                     preserveViewport:true,
                     map: bm2.map
                 });
+                layer.added = false;
 
                 // Wait for success on layer load to add it to menu
                 google.maps.event.addListener(layer, 'status_changed', function () {
-                    if (layer.getStatus() == 'OK') {
-                        kmlObj.google = layer;
-                        kmlObj.url = kmlObj.key;
-                        bm2.kmlLayers[count] = kmlObj;
-                        addKMLLayerToMenu(count);
-                        count++;
+                    if (layer.getStatus() == 'OK' ) {
+                        if (!layer.added) {
+                            kmlObj.google = layer;
+                            kmlObj.url = kmlObj.key;
+                            bm2.kmlLayers[kmlcounter] = kmlObj;
+                            addKMLLayerToMenu(kmlcounter);
+                            layer.added = true;
+                            kmlcounter++;
+                        }
                     } else {
                         alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
                     }
