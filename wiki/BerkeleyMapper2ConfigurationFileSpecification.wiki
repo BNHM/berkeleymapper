@@ -52,13 +52,11 @@ This file is specified in the calling URL by setting configfile=<some location>.
 {{{</metadata>}}}
 
 = Record LinkBack =
-{{{<recordlinkback>}}}
 <p>
-Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application.
+Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application with the link placed in the tab delimited text as its own field (or part of another field, such as):
 <p>
 {{{<a href="someurl">12345</a>}}}
 <p>
-{{{</recordlinkback>}}}
 
 = Matching tab-delimited fields to Map schema =
 {{{<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">}}}
