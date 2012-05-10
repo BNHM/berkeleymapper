@@ -4,7 +4,7 @@
 
 Here is the link to try:
 
-http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://darwin.berkeley.edu/ucjeps.txt&configfile=http://darwin.berkeley.edu/ucjeps.xml
+http://bnhmmapstest.berkeley.edu/index.html?tabfile=http://berkeleymappertest.berkeley.edu/schemas/ucjeps.txt&configfile=http://berkeleymappertest.berkeley.edu/schemas/ucjeps.xml
 
 = Details =
 
