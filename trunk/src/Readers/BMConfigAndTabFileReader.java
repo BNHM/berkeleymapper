@@ -64,17 +64,19 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     private void initHeader() {
         ArrayList columnArrayList = new ArrayList();
         ArrayList columnAliasArrayList = new ArrayList();
+        ArrayList viewListArrayList = new ArrayList();
 
         Document doc = parseXmlFile(configURL, false);
 
 
 
         NodeList nl = doc.getElementsByTagName("concept");
-        String alias, colorlist, datatype, order, videwlist;
+        String alias, colorlist, datatype, order, viewlist;
         for (int i = 0; i < nl.getLength(); i++) {
             NamedNodeMap nnm = nl.item(i).getAttributes();
             alias = "";
             datatype = "";
+            viewlist = "";
             if (nnm != null) {
                 for (int j = 0; j < nnm.getLength(); j++) {
                     Node attribute = nnm.item(j);
@@ -82,6 +84,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                         alias = attribute.getNodeValue();
                     } else if (attribute.getNodeName().equalsIgnoreCase("datatype")) {
                         datatype = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("viewlist")) {
+                        viewlist = attribute.getNodeValue();
                     }
                 }
                 // Match Hardcoded DataTypes from BM1 specification to BM2
@@ -105,15 +109,19 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                         columnAliasArrayList.add(datatype);
                     }
                 }
+                if (viewlist.equals("") || viewlist.equals("1")) {
+                     viewListArrayList.add(true);
+                } else {
+                    viewListArrayList.add(false);
+                }
 
             }
         }
 
-
-
         //columnArrayList.add("color");
         columns = columnArrayList.toArray();
         columnsAlias = columnAliasArrayList.toArray();
+        viewList = viewListArrayList.toArray();
     }
 
     /**
@@ -318,7 +326,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         // 1 with no header
         numRows = 1;
         while ((strLine = reader.readLine()) != null) {
-            BMRow r = new BMRow(numRows, columns, columnsAlias, strLine, joins);
+            BMRow r = new BMRow(numRows, columns, columnsAlias, viewList, strLine, joins);
             if (r.getBMCoord() != null) {
                 rows.add(r);
             }
@@ -341,7 +349,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (numRows == 1) {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
-                BMRow r = new BMRow(numRows, columns, columns, strLine, null);
+                BMRow r = new BMRow(numRows, columns, columns, viewList, strLine, null);
                 if (r.getBMCoord() != null) {
                     rows.add(r);
                 }

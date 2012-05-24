@@ -517,8 +517,8 @@ function fetchRecords() {
                 if (row == 1) {
                     $.each(this, function(k, v) {
                         retStr += "<th width=80>" + k + "</th>";
-                        row++;
                     });
+                    row++;
                 }
             });
             retStr += "</tr></thead>";
@@ -527,18 +527,24 @@ function fetchRecords() {
             retStr += "<tbody>";
             // Loop through JSON elements to construct response
             $.each(data, function() {
-                retStr += "<tr>";
-                $.each(this, function(k, v) {
-                    //retStr += "<td width=80>" + htmlEntities(v) + "</td>";
-                    // JBD removed the htmlEntities in this line on April 18th.. probably a good
-                    // reason for htmlEntities to be there but i'm not sure what it is.  I removed
-                    // this since it is breaking URL links.
-                    retStr += "<td width=80>" + v + "</td>";
-                });
-                retStr += "</tr>";
+                if (row < 100) {
+                    retStr += "<tr>";
+                    $.each(this, function(k, v) {
+                        //retStr += "<td width=80>" + htmlEntities(v) + "</td>";
+                        // JBD removed the htmlEntities in this line on April 18th.. probably a good
+                        // reason for htmlEntities to be there but i'm not sure what it is.  I removed
+                        // this since it is breaking URL links.
+                        retStr += "<td width=80>" + v + "</td>";
+                    });
+                    retStr += "</tr>";
+                }
+                row++;
             });
             retStr += "</tbody></table>";
 
+            if (row > 100)  {
+                alert('result response truncated to 100 records');
+            }
     	    $("#loadingMsg").hide();
 
         },

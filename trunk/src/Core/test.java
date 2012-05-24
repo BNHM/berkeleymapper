@@ -32,12 +32,12 @@ public class test {
             //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
             //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.txt");
+            //url = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.txt");
             //url = new URL("http://miomap.berkeley.edu/downloads/map_table_7282.xls");
             //url = new URL("http://bnhm.berkeley.edu/tmp/map_1331675816.8494");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctosbig.txt");
+            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
+            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt");
 
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
@@ -50,11 +50,11 @@ public class test {
             //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.xml");
             //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.xml");
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.xml");
+            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.xml");
             //configUrl = new URL("http://miomap.berkeley.edu/FAUNMAP/miomap.xml");
             //configUrl = new URL("http://bnhm.berkeley.edu/query/bnhm3.xml");
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.xml");  // dynamic field not implemented properly (switch to static field?)
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
+            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
             configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.xml");
 
         } catch (MalformedURLException ex) {
@@ -80,7 +80,7 @@ public class test {
         // Output points
         String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(), fs);
         System.out.println(output);
-//        System.out.println(new BMRenderJSON().Record(98, fs));
+        System.out.println(new BMRenderJSON().Record(10, fs));
         // Perform a spatial operation
         //output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
 

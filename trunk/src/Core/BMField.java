@@ -9,11 +9,13 @@ public class BMField {
     protected String title;
     protected String titleAlias;
     protected String value;
+    protected Boolean view;
 
-    public BMField(String title, String titleAlias, String value) {
+    public BMField(String title, String titleAlias, Boolean view, String value) {
         this.title = title;
         this.value = value;
         this.titleAlias = titleAlias;
+        this.view = view;
     }
 
     public String getTitle() {
@@ -27,5 +29,12 @@ public class BMField {
     public String getTitleAlias() {
         return titleAlias;
     }
-   
+
+    public Boolean getView() {
+        // Latitude/Longitude must be returned
+        if (getTitle().equals("Latitude") || getTitle().equals("Longitude") ) {
+            return true;
+        }
+        return view;
+    }
 }
