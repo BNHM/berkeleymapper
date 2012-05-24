@@ -53,10 +53,23 @@ This file is specified in the calling URL by setting configfile=<some location>.
 
 = Record LinkBack =
 <p>
-Record Linkbacks in BerkeleyMapper 2.0 are expected to be fully formatted from the calling application with the link placed in the tab delimited text as its own field (or part of another field, such as):
+There are two methods for record linkbacks in BerkeleyMapper 2.0.  
+<p>
+1. Fully formatted from the calling application with the link placed in the tab delimited text as its own field (or part of another field, such as):
 <p>
 {{{<a href="someurl">12345</a>}}}
 <p>
+2. Specified in  the linkback URL syntax with:
+
+method: how to linkback
+linkurl: url to use
+text: text to display inside href tag
+fieldname: name of field
+key1: Concept Alias
+value1: Concept Name
+{{{<recordlinkback>
+<linkback method="root" linkurl="http://elib.cs.berkeley.edu/cgi-bin/mvz_query" text="View Details" fieldname="Link Back" key1="Coll_Object_id" value1="undefined_2"></linkback>
+</recordlinkback>}}}
 
 = Matching tab-delimited fields to Map schema =
 {{{<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">}}}
