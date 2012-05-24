@@ -100,6 +100,9 @@ public class BMRenderJSON implements BMRendererInterface {
                 json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
             }
         }
+        //if (ptsFile.recordLinkBack != null) {
+        //    json += ",\"" + JSONObject.escape(ptsFile.recordLinkBack.getFieldname()) + "\":\"" + ptsFile.recordLinkBack.getURL() + "\"";
+        //}
         json += "}\n]";
         return json;
     }
@@ -129,7 +132,11 @@ public class BMRenderJSON implements BMRendererInterface {
                         count++;
                         json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
                     }
+                    //if (ptsFile.recordLinkBack != null) {
+                   //     json += ",\"" + JSONObject.escape(ptsFile.recordLinkBack.getFieldname()) + "\":\"" + ptsFile.recordLinkBack.getURL() + "\"";
+                   // }
                 }
+
                 json += "}";
             }
         }

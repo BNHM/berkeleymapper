@@ -30,6 +30,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     private URL configURL;
     protected BMJoins joins = null;
 
+
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
         super(url, configURL);
         this.configURL = configURL;
@@ -69,6 +70,36 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         Document doc = parseXmlFile(configURL, false);
 
 
+        // Structure linkbacks
+        NodeList nlLinkback = doc.getElementsByTagName("linkback");
+        for (int i = 0; i < nlLinkback.getLength(); i++) {
+            NamedNodeMap nnm = nlLinkback.item(i).getAttributes();
+            String linkurl = "", text = "", key1 = "", value1 = "", fieldname = "", method = "";
+
+            if (nnm != null) {
+
+                for (int j = 0; j < nnm.getLength(); j++) {
+                    Node attribute = nnm.item(j);
+
+                    if (attribute.getNodeName().equalsIgnoreCase("linkurl")) {
+                        linkurl = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("text")) {
+                        text = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("key1")) {
+                        key1 = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("value1")) {
+                        value1 = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("fieldname")) {
+                        fieldname = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("method")) {
+                        method = attribute.getNodeValue();
+                    }
+                }
+
+                recordLinkBack = new BMRecordLinkBack(linkurl, text, key1, value1, fieldname, method);
+
+            }
+        }
 
         NodeList nl = doc.getElementsByTagName("concept");
         String alias, colorlist, datatype, order, viewlist;
@@ -110,7 +141,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     }
                 }
                 if (viewlist.equals("") || viewlist.equals("1")) {
-                     viewListArrayList.add(true);
+                    viewListArrayList.add(true);
                 } else {
                     viewListArrayList.add(false);
                 }
@@ -179,7 +210,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (nnm != null) {
                 for (int j = 0; j < nnm.getLength(); j++) {
                     Node attribute = nnm.item(j);
-                    System.out.println(attribute.getNodeName());
+                    //System.out.println(attribute.getNodeName());
                     if (attribute.getNodeName().equalsIgnoreCase("method")) {
                         c.setMethod(attribute.getNodeValue());
                     } else if (attribute.getNodeName().equalsIgnoreCase("fieldname")) {
@@ -195,10 +226,10 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         if (c.method == null) {
             return null;
         } else if (c.method.equals(c.FIELD)) {
-            System.out.println("Fetching Colors by Field -- explicit representation by type");
+            //System.out.println("Fetching Colors by Field -- explicit representation by type");
             return getColorsByField(nl, c);
         } else if (c.method.equals(c.DYNAMICFIELD)) {
-            System.out.println("Fetching Colors by DynamicField");
+            //System.out.println("Fetching Colors by DynamicField");
             return getColorsByDynamicField(c);
         }
         return null;
@@ -326,7 +357,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         // 1 with no header
         numRows = 1;
         while ((strLine = reader.readLine()) != null) {
-            BMRow r = new BMRow(numRows, columns, columnsAlias, viewList, strLine, joins);
+            //BMRow r = new BMRow(numRows, columns, columnsAlias, viewList, strLine, joins);
+            BMRow r = new BMRow(numRows, this, strLine, joins);
             if (r.getBMCoord() != null) {
                 rows.add(r);
             }
@@ -349,7 +381,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             if (numRows == 1) {
                 columns = new BMLineStringReader(strLine).toArray();
             } else {
-                BMRow r = new BMRow(numRows, columns, columns, viewList, strLine, null);
+                BMRow r = new BMRow(numRows, this, strLine, null);
                 if (r.getBMCoord() != null) {
                     rows.add(r);
                 }

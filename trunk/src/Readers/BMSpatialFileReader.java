@@ -1,5 +1,6 @@
 package Readers;
 
+import Core.BMRecordLinkBack;
 import Core.BMRowClassifier;
 import Core.BMRow;
 import Core.BMSession;
@@ -27,11 +28,12 @@ public class BMSpatialFileReader implements BMFileReader {
     private BMSession session;
 
     public int numRows = 0;
-    protected Object[] columns;
-    protected Object[] columnsAlias;
-    protected Object[] viewList;
+    public Object[] columns;
+    public Object[] columnsAlias;
+    public Object[] viewList;
     protected ArrayList rows = new ArrayList();
     protected GeometryFactory geometryFactory;
+    public BMRecordLinkBack recordLinkBack = null;
 
 
     /**
@@ -66,8 +68,8 @@ public class BMSpatialFileReader implements BMFileReader {
     }
 
     //public void exec() throws IOException {
-   //     //To change body of implemented methods use File | Settings | File Templates.
-   // }
+    //     //To change body of implemented methods use File | Settings | File Templates.
+    // }
 
     /**
      * Get the BMRow at the given line number
@@ -86,7 +88,7 @@ public class BMSpatialFileReader implements BMFileReader {
         int rowNum = i - offset;
         Iterator it = rows.iterator();
         while (it.hasNext()) {
-            BMRow r = (BMRow)it.next();
+            BMRow r = (BMRow) it.next();
             if (i == r.getBMCoord().line) {
                 return r;
             }
@@ -139,7 +141,7 @@ public class BMSpatialFileReader implements BMFileReader {
             Iterator iRow = this.rows.iterator();
             while (iRow.hasNext()) {
                 BMRow r = (BMRow) iRow.next();
-                if (r.getBMCoord()!= null && r.getBMCoord().equals(cu)) {
+                if (r.getBMCoord() != null && r.getBMCoord().equals(cu)) {
                     BMCoordinates.add(r.getBMCoord());
                 }
             }
