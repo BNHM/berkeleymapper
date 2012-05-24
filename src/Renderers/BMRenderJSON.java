@@ -87,11 +87,17 @@ public class BMRenderJSON implements BMRendererInterface {
         String json = "";
         Iterator fields = coord.fields.iterator();
         json += "[\n{";
+
+        int count = 0;
         while (fields.hasNext()) {
+
             BMField field = (BMField) fields.next();
-            json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
-            if (fields.hasNext()) {
-                json += ",";
+            if (field.getView()) {
+                if (count != 0) {
+                    json += ",";
+                }
+                count++;
+                json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
             }
         }
         json += "}\n]";
@@ -103,21 +109,29 @@ public class BMRenderJSON implements BMRendererInterface {
         Coordinate[] coords = subset.getCoordinates();
         String json = "[\n";
         for (int i = 0; i < coords.length; i++) {
-            BMRowClassifier coord = (BMRowClassifier) coords[i];
-            Iterator fields = coord.fields.iterator();
-            if (i != 0) {
-                json += ",";
-            }
-
-            json += "{";
-            while (fields.hasNext()) {
-                BMField field = (BMField) fields.next();
-                json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
-                if (fields.hasNext()) {
+            // Limit number of records in output to 101
+            if (i < 101) {
+                BMRowClassifier coord = (BMRowClassifier) coords[i];
+                Iterator fields = coord.fields.iterator();
+                if (i != 0) {
                     json += ",";
                 }
+
+                json += "{";
+                int count = 0;
+                while (fields.hasNext()) {
+                    BMField field = (BMField) fields.next();
+
+                    if (field.getView()) {
+                        if (count != 0) {
+                            json += ",";
+                        }
+                        count++;
+                        json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
+                    }
+                }
+                json += "}";
             }
-            json += "}";
         }
         json += "\n]";
         return json;

@@ -21,7 +21,7 @@ public class BMRow {
      * @param header
      * @param line
      */
-    public BMRow(int line, Object[] header, Object[] headerAlias, String lineStr, BMJoins join) {
+    public BMRow(int line, Object[] header, Object[] headerAlias, Object[] viewList, String lineStr, BMJoins join) {
         double Latitude = 0;
         double Longitude = 0;
         double ErrorRadiusInMeters = 0;
@@ -36,6 +36,8 @@ public class BMRow {
             String title = "";
             String value = "";
             String titleAlias = "";
+            Boolean viewlist = true;
+
             try {
                 value = (String) lsri.next();
             } catch (NoSuchElementException e) {
@@ -52,6 +54,12 @@ public class BMRow {
             } catch (ArrayIndexOutOfBoundsException e) {
                 titleAlias = "column" + i;
                 System.err.println("Title Elements out of bounds");
+            }
+             try {
+                viewlist = (Boolean) viewList[i];
+            } catch (ArrayIndexOutOfBoundsException e) {
+                viewlist = true;
+                System.err.println("ViewList Elements out of bounds");
             }
 
             // Join will take its geographic information from the join itself
@@ -93,7 +101,7 @@ public class BMRow {
                 }
             }
 
-            fields.add(new BMField(title, titleAlias, value));
+            fields.add(new BMField(title, titleAlias, viewlist, value));
         }
 
         if (join != null) {
