@@ -1,5 +1,7 @@
 package Core;
 
+import Readers.BMConfigAndTabFileReader;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -21,12 +23,24 @@ public class BMRow {
      * @param header
      * @param line
      */
-    public BMRow(int line, Object[] header, Object[] headerAlias, Object[] viewList, String lineStr, BMJoins join) {
+    //public BMRow(int line, Object[] header, Object[] headerAlias, Object[] viewList, String lineStr, BMJoins join) {
+    public BMRow(int line, BMConfigAndTabFileReader fileReader, String lineStr, BMJoins join) {
+        Object[] header = fileReader.columns;
+        Object[] headerAlias = fileReader.columnsAlias;
+        Object[] viewList = fileReader.viewList;
+
         double Latitude = 0;
         double Longitude = 0;
         double ErrorRadiusInMeters = 0;
         String Datum = "";
         ArrayList fields = new ArrayList();
+
+        // LinkBack Logic
+        String linkbackField = "";
+        String linkbackValue = "";
+        if (fileReader.recordLinkBack != null) {
+            linkbackField = fileReader.recordLinkBack.getValue1();
+        }
 
         BMLineStringReader lsr = new BMLineStringReader(lineStr);
         String JoinPart1 = "", JoinPart2 = "";
@@ -55,11 +69,15 @@ public class BMRow {
                 titleAlias = "column" + i;
                 System.err.println("Title Elements out of bounds");
             }
-             try {
+            try {
                 viewlist = (Boolean) viewList[i];
             } catch (ArrayIndexOutOfBoundsException e) {
                 viewlist = true;
                 System.err.println("ViewList Elements out of bounds");
+            }
+            // For recordlinkback
+            if (title.equalsIgnoreCase(linkbackField)) {
+                linkbackValue = value;
             }
 
             // Join will take its geographic information from the join itself
@@ -102,6 +120,15 @@ public class BMRow {
             }
 
             fields.add(new BMField(title, titleAlias, viewlist, value));
+        }
+
+        // LinkBack logic
+        if (fileReader.recordLinkBack != null) {
+            fileReader.recordLinkBack.setValue(linkbackValue);
+            String url = fileReader.recordLinkBack.getURL();
+            if (url != null) {
+                fields.add(new BMField(fileReader.recordLinkBack.getFieldname(), fileReader.recordLinkBack.getFieldname(), true, url));
+            }
         }
 
         if (join != null) {
