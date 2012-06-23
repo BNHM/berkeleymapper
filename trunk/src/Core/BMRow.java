@@ -95,6 +95,8 @@ public class BMRow {
                 if (title.equalsIgnoreCase("Latitude")) {
                     try {
                         Latitude = round(Double.parseDouble(value), 5);
+                        if (Latitude > 85) Latitude = 85;
+                        if (Latitude < -85) Latitude = -85;
                     } catch (Exception e) {
                         Latitude = 0;
                     }
