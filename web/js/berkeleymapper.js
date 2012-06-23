@@ -132,9 +132,14 @@ function setKMLLayers() {
                             addKMLLayerToMenu(kmlcounter);
                             layer.added = true;
                             kmlcounter++;
+                            setBigBounds();
                         }
                     } else {
-                        alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
+                        bm2.kmlLayers[kmlcounter] = kmlObj;
+                        addKMLErrorMessageToMenu(kmlcounter);
+                        // removed the alert here for amphibiaweb since often times species maps don't have
+                        // KML layers... this way it fails silently, but this was what user requested.
+                        //alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
                     }
                 });
             });
@@ -152,6 +157,20 @@ function setKMLLayers() {
 
 }
 
+function addKMLErrorMessageToMenu(i) {
+        // Create container
+        jQuery('<div/>', {
+            id: 'container' + i,
+            style: 'clear:both;'
+        }).appendTo('#layers');
+
+        // Create Text
+        jQuery('<div/>', {
+            id: 'layertext' + i,
+            style: 'float: left;',
+            html: "NOTE: unable to add " + bm2.kmlLayers[i]['title'],
+        }).appendTo('#container' + i);
+}
 function addKMLLayerToMenu(i) {
         // default checkbox state
         var checked = false;
@@ -286,6 +305,7 @@ function initialize() {
         }
         // Draw the Points
         setJSONPoints();
+        setBigBounds();
     }   else {
         $("#bottomContainer").html("Instructions for geocoding ...");
         // Show Geocoder tool
@@ -396,7 +416,7 @@ function setJSONPoints() {
     $.ajax({
         type: "GET",
         url: url,
-        async: true,
+        async: false,
         dataType: "json",
         success: function(data, success) {
             count = 0;
@@ -415,6 +435,8 @@ function setJSONPoints() {
                         }
                     });
 
+                    //if (lat > 85) lat = 85;
+                    //if (lat < -85) lat = -85;
                     var latlng = new google.maps.LatLng(lat, lng);
 
                     if (markercolor == "") markercolor = "#FF0000";
@@ -440,9 +462,9 @@ function setJSONPoints() {
                     bm2.markers[count++] = marker;
                     bound.extend(marker.getPosition());
                 });
-                bm2.map.fitBounds(bound);
+                //bm2.map.fitBounds(bound);
                 setMarkerClustererOn();
-                zoomPoints();
+                //zoomPoints();
     		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
@@ -460,16 +482,32 @@ function setJSONPoints() {
     });
 }
 
-// Zoom to KML Layer
+// Zoom to an individual KML Layer
 function kmlZoom(i) {
     bm2.map.fitBounds(bm2.kmlLayers[i]['google'].getDefaultViewport());
 }
 
-// Zoom to this set of points
-function zoomPoints() {
+// Zoom just to this set of points
+function setBounds() {
     var bound = new google.maps.LatLngBounds();
     for (i in bm2.markers) {
         bound.extend(bm2.markers[i].getPosition());
+    }
+    bm2.map.fitBounds(bound);
+}
+
+// Zoom to entire extent of Points plus all visible layers
+function setBigBounds() {
+    var bound = new google.maps.LatLngBounds();
+    for (i in bm2.markers) {
+        bound.extend(bm2.markers[i].getPosition());
+    }
+
+    for ( var i=0; i< bm2.kmlLayers.length; i++) {
+        if (bm2.kmlLayers[i]['visibility'] == "visible") {
+            bound.extend(bm2.kmlLayers[i]['google'].getDefaultViewport().getNorthEast());
+            bound.extend(bm2.kmlLayers[i]['google'].getDefaultViewport().getSouthWest());
+        }
     }
     bm2.map.fitBounds(bound);
 }

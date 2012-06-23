@@ -18,6 +18,8 @@ public class BMCoordinate extends Coordinate {
         this.datum = datum;
         this.errorRadiusInMeters = errorRadiusInMeters;
         this.longitude = longitude;
+        if (latitude > 85) latitude = 85;
+        if (latitude < -85) latitude = -85;
         this.latitude = latitude;
     }
 }
