@@ -49,6 +49,14 @@ This file is specified in the calling URL by setting configfile=<some location>.
 ||<b>Description:</b>||This is a user-supplied disclaimer to display when users are downloading data.  Make sure you use the CDATA syntax if you include HTML tags here.||
 
 <p>
+
+||<b>Element:</b>||<pre><logo></pre>||
+||<b>Attributes:</b>||img,url||
+||<b>Repeatable:</b>||Yes||
+||<b>Example:</b>||<pre><logo img="http://moorea.berkeley.edu/sites/default/files/u4/gumpzen2_logo.gif" url="http://moorea.berkeley.edu/" /></pre>||
+||<b>Description:</b>||These tags will display logos and a link in the legend.||
+
+<p>
 {{{</metadata>}}}
 
 = Record LinkBack =
