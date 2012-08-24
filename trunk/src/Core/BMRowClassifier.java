@@ -28,4 +28,7 @@ public class BMRowClassifier extends BMCoordinate {
         this.line = line;
         this.fields = fields;
     }
+    public String print() {
+        return line + ";" + latitude + ";" + longitude + ";" + errorRadiusInMeters;
+    }
 }

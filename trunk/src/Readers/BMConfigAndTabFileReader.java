@@ -4,13 +4,11 @@ import Core.*;
 
 import java.awt.*;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.*;
 import java.io.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import javax.xml.parsers.*;
 
+import Core.Timer;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 
@@ -33,6 +31,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
         super(url, configURL);
+        Timer t = new Timer();
+
         this.configURL = configURL;
         if (configURL != null) {
             initHeader();
@@ -67,17 +67,15 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         ArrayList columnAliasArrayList = new ArrayList();
         ArrayList viewListArrayList = new ArrayList();
 
+        // Get Document
         Document doc = parseXmlFile(configURL, false);
-
 
         // Structure linkbacks
         NodeList nlLinkback = doc.getElementsByTagName("linkback");
         for (int i = 0; i < nlLinkback.getLength(); i++) {
             NamedNodeMap nnm = nlLinkback.item(i).getAttributes();
             String linkurl = "", text = "", key1 = "", value1 = "", fieldname = "", method = "";
-
             if (nnm != null) {
-
                 for (int j = 0; j < nnm.getLength(); j++) {
                     Node attribute = nnm.item(j);
 
@@ -193,6 +191,38 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         }
         // Return an Array of data that i can parse...
         return layerArrayList.toArray();
+    }
+
+
+    /**
+     * Each Configuration File may want to pass in Logos to display under the legend.  This returns the contents
+     * of all "logo" elements in a HashMap consisting of an img and url tags, thus the user simply passes in elements like
+     * <logo img="http://myurl/logo.gif" url="http://mysite.com/" />
+     *
+     * @return
+     */
+    public HashMap getLogos() {
+        // Set up initial color array components
+        Document doc = parseXmlFile(configURL, false);
+        NodeList nl = doc.getElementsByTagName("logo");
+        HashMap<String, String> logos = new HashMap<String, String>();
+        for (int i = 0; i < nl.getLength(); i++) {
+
+            NamedNodeMap nnm = nl.item(i).getAttributes();
+            if (nnm != null) {
+                String img = "", url = "";
+                for (int j = 0; j < nnm.getLength(); j++) {
+                    Node attribute = nnm.item(j);
+                    if (attribute.getNodeName().equalsIgnoreCase("img")) {
+                        img = attribute.getNodeValue();
+                    } else if (attribute.getNodeName().equalsIgnoreCase("url")) {
+                        url = attribute.getNodeValue();
+                    }
+                }
+                logos.put(img, url);
+            }
+        }
+        return logos;
     }
 
     /**

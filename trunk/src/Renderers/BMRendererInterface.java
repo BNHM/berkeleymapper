@@ -48,4 +48,12 @@ public interface BMRendererInterface {
      * @return
      */
     public String Colors(BMConfigAndTabFileReader f);
+
+    /**
+     * Given a BMFileReader, return a String representing the logos in the reader
+     * @param f
+     * @return
+     */
+    public String Logos(BMConfigAndTabFileReader f);
+
 }

@@ -1,15 +1,15 @@
 package Core;
 
 import com.eaio.uuid.UUID;
+import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+
 
 /**
  * Create a session by passing in a remote URL, copying file to local
@@ -37,39 +37,41 @@ public class BMSession {
      */
     public static void main(String args[]) {
         try {
-            int i = 0;
-            //while (i < 1000) {
             // NOTE: encoding on darwin.berkeley.edu/amphibiaweb.txt is strange--
             // I spent 2 days researching this to no avail!!  It seems that this instance
             // has a strange encoding but could not find the reason.
-            BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/amphibiaweb.txt"),null);
-
+            BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
             System.out.println(bm.getFile().getAbsoluteFile());
-            //   i++;
-            //}
         } catch (IOException ex) {
             Logger.getLogger(BMSession.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
 
-  //  public BMSession(URL url) throws IOException {
- //       setUUID();
- //       this.file = new File(filesLocation + session);
-//        copy(url, file);
- //   }
-
     public BMSession(URL url, URL configURL) throws IOException {
-        setUUID();
+        setSessionUUID();
+
         file = new File(filesLocation + session);
+
         if (configURL != null) {
             mode = CONFIG;
             configFile = new File(filesLocation + session + ".xml");
+
             copy(configURL, configFile);
+
         } else {
             mode = FILE;
         }
+        //Timer t = new Timer();
+        //t.printer("start");
         copy(url, file);
+       // t.printer("copy");
+        //commons_copy(url, file);
+        //t.printer("commons_copy");
+        //channel_copy(url,file);
+        //t.printer("channel_copy");
+
+
     }
 
 
@@ -80,7 +82,7 @@ public class BMSession {
         if (configFile != null && configFile.exists()) {
             mode = CONFIG;
         } else {
-          mode = FILE;
+            mode = FILE;
         }
     }
 
@@ -88,9 +90,8 @@ public class BMSession {
         return mode;
     }
 
-    private void setUUID() {
-        UUID uuid = new UUID();
-        this.session = String.valueOf(uuid);
+    private void setSessionUUID() {
+        this.session = String.valueOf(new UUID());
     }
 
     public File getConfigFile() {
@@ -115,4 +116,24 @@ public class BMSession {
         fos.getChannel().transferFrom(rbc, 0, 1 << 24);
     }
 
+    public static void commons_copy(URL url, File file) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file);
+        IOUtils.copy(new BufferedInputStream(url.openStream()),
+                new BufferedOutputStream(fos));
+
+    }
+
+    public static void channel_copy(URL url, File file) throws IOException {
+        // allocate the stream ... only for example
+        OutputStream output = null;
+        output = new FileOutputStream(file);
+
+        // get an  from the stream
+        ReadableByteChannel inputChannel = Channels.newChannel(url.openStream());
+
+        // copy the channels
+        ChannelTools.fastChannelCopy(Channels.newChannel(url.openStream()), Channels.newChannel(output));
+        // closing the channels
+        inputChannel.close();
+    }
 }

@@ -91,5 +91,10 @@ public class BMRenderKML implements BMRendererInterface {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
- 
+    @Override
+    public String Logos(BMConfigAndTabFileReader f) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+
 }

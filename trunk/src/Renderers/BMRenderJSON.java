@@ -13,6 +13,7 @@ import org.json.simple.JSONObject;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * JSON Representation of BMRendererInterface
@@ -21,7 +22,6 @@ import java.util.Iterator;
  */
 public class BMRenderJSON implements BMRendererInterface {
 
-    private String json = "";
 
     /**
      * Render a points File as JSON with the following fields:
@@ -32,6 +32,8 @@ public class BMRenderJSON implements BMRendererInterface {
      * @return
      */
     public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
+        StringBuilder json = new StringBuilder();
+
         BMColors colors = null;
         if (config != null) {
             colors = config.getColors();
@@ -39,109 +41,85 @@ public class BMRenderJSON implements BMRendererInterface {
 
         // Get an iterator for all the rows in this set
         Iterator rows = Arrays.asList(g.getCoordinates()).iterator();
-        json = "[\n";
+        json.append("[\n");
 
+        int count = 0;
         while (rows.hasNext()) {
-
+            // comma and line ending before every instance except for very first
+            if (count > 0) {
+                json.append(",\n");
+            }
             BMRowClassifier coord = (BMRowClassifier) rows.next();
-
-            json += "{\"r\":\"" +
+            json.append("{\"r\":\"" +
                     coord.line + ";" +
                     coord.latitude + ";" +
                     coord.longitude + ";" +
-                    Math.round(coord.errorRadiusInMeters) + ";" +
-                    JSONObject.escape(colors.FieldColor(coord, colors)) + "\"}";
-            if (rows.hasNext()) {
-                json += ",\n";
-            }
-            /*
-            json += "{";
-            json += "\"id\":" + coord.line;
-            json += ",\"lat\":" + coord.x;
-            json += ",\"lng\":" + coord.y;
-            // only return errorRadius and Datum if appropriate
-            if (coord.errorRadiusInMeters != 0) {
-                json += ",\"r\":" + Math.round(coord.errorRadiusInMeters);
-            }
-            //if (!coord.datum.equals("")) {
-            //    json += ",\"datum\":\"" + JSONObject.escape(coord.datum) + "\"";
-            //}
-            if (colors != null) {
-                json += ",\"c\":\"" + JSONObject.escape(colors.FieldColor(coord, colors)) + "\"";
-            }
-            json += "}";
-            if (rows.hasNext()) {
-                json += ",\n";
-            }
-            */
+                    coord.errorRadiusInMeters + ";" +
+                    JSONObject.escape(colors.FieldColor(coord, colors)) + "\"}");
+            count++;
         }
-
-        json += "\n]";
-        return json;
+        json.append("\n]");
+        return json.toString();
     }
 
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
+        StringBuilder json = new StringBuilder();
         BMRow r = ptsFile.getRowAt(line);
         BMRowClassifier coord = r.getBMCoord();
-        String json = "";
-        Iterator fields = coord.fields.iterator();
-        json += "[\n{";
 
+        Iterator fields = coord.fields.iterator();
+        json.append("[\n{");
         int count = 0;
         while (fields.hasNext()) {
 
             BMField field = (BMField) fields.next();
             if (field.getView()) {
                 if (count != 0) {
-                    json += ",";
+                    json.append(",");
                 }
                 count++;
-                json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
+                json.append("\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"");
             }
         }
-        //if (ptsFile.recordLinkBack != null) {
-        //    json += ",\"" + JSONObject.escape(ptsFile.recordLinkBack.getFieldname()) + "\":\"" + ptsFile.recordLinkBack.getURL() + "\"";
-        //}
-        json += "}\n]";
-        return json;
+        json.append("}\n]");
+        return json.toString();
     }
 
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
+        StringBuilder json = new StringBuilder();
+
         Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
         Coordinate[] coords = subset.getCoordinates();
-        String json = "[\n";
+         json.append("[\n");
         for (int i = 0; i < coords.length; i++) {
             // Limit number of records in output to 101
             if (i < 101) {
                 BMRowClassifier coord = (BMRowClassifier) coords[i];
                 Iterator fields = coord.fields.iterator();
                 if (i != 0) {
-                    json += ",";
+                    json.append(",");
                 }
 
-                json += "{";
+                json.append("{");
                 int count = 0;
                 while (fields.hasNext()) {
                     BMField field = (BMField) fields.next();
 
                     if (field.getView()) {
                         if (count != 0) {
-                            json += ",";
+                            json.append(",");
                         }
                         count++;
-                        json += "\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"";
+                        json.append("\"" + JSONObject.escape(field.getTitleAlias()) + "\":\"" + JSONObject.escape(field.getValue()) + "\"");
                     }
-                    //if (ptsFile.recordLinkBack != null) {
-                   //     json += ",\"" + JSONObject.escape(ptsFile.recordLinkBack.getFieldname()) + "\":\"" + ptsFile.recordLinkBack.getURL() + "\"";
-                   // }
                 }
 
-                json += "}";
+                json.append("}");
             }
         }
-        json += "\n]";
-        return json;
+        json.append("\n]");
+        return json.toString();
     }
 
     /**
@@ -151,48 +129,69 @@ public class BMRenderJSON implements BMRendererInterface {
      * @return
      */
     public String KMLLayers(BMConfigAndTabFileReader f) {
+        StringBuilder json = new StringBuilder();
+
         f.getSession();
         Object[] layers = f.getLayers();
-
-        json = "[\n";
+        json.append("[\n");
         for (int i = 0; i < layers.length; i++) {
             BMLayers layer = (BMLayers) layers[i];
             if (i > 0) {
-                json += ",";
+                json.append(",");
             }
-            json += "{\n";
-            json += "\"link\":\"" + JSONObject.escape(layer.getUrl()) + "\",\n";
-            json += "\"url\":\"" + JSONObject.escape(layer.getLocation()) + "\",\n";
-            json += "\"title\":\"" + JSONObject.escape(layer.getTitle()) + "\",\n";
-            json += "\"visibility\":\"" + layer.getVisible() + "\",\n";
-            json += "\"zoom\":\"expand\"\n";
-            json += "}\n";
+            json.append("{\n");
+            json.append("\"link\":\"" + JSONObject.escape(layer.getUrl()) + "\",\n");
+            json.append("\"url\":\"" + JSONObject.escape(layer.getLocation()) + "\",\n");
+            json.append("\"title\":\"" + JSONObject.escape(layer.getTitle()) + "\",\n");
+            json.append("\"visibility\":\"" + layer.getVisible() + "\",\n");
+            json.append("\"zoom\":\"expand\"\n");
+            json.append("}\n");
         }
-        json += "]\n";
+        json.append("]\n");
 
-        return json;
+        return json.toString();
     }
 
     public String Colors(BMConfigAndTabFileReader f) {
+        StringBuilder json = new StringBuilder();
+
         f.getSession();
         BMColors Colors = f.getColors();
         Iterator it = Colors.getColors().iterator();
-        json = "[\n";
+        json.append("[\n");
         int count = 0;
         while (it.hasNext()) {
             BMColor c = (BMColor) it.next();
             if (count > 0) {
-                json += ",";
+                json.append(",");
             }
-            json += "{\n";
-            json += "\"color\":\"" + JSONObject.escape(c.getColor()) + "\",\n";
-            json += "\"key\":\"" + JSONObject.escape(c.key) + "\",\n";
-            json += "\"label\":\"" + JSONObject.escape(c.label) + "\"\n";
-            json += "}\n";
+            json.append("{\n");
+            json.append("\"color\":\"" + JSONObject.escape(c.getColor()) + "\",\n");
+            json.append("\"key\":\"" + JSONObject.escape(c.key) + "\",\n");
+            json.append("\"label\":\"" + JSONObject.escape(c.label) + "\"\n");
+            json.append("}\n");
             count++;
         }
-        json += "]\n";
+        json.append("]\n");
 
-        return json;
+        return json.toString();
+    }
+
+    public String Logos(BMConfigAndTabFileReader f) {
+        String output = "[\n";
+        f.getSession();
+        Iterator it = f.getLogos().entrySet().iterator();
+
+        while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry) it.next();
+            output += "  {\"img\":\"" + pairs.getKey() + "\",\"url\":\"" + pairs.getValue() + "\"}";
+            if (it.hasNext()) {
+                output += ",";
+            }
+            output += "\n";
+            it.remove(); // avoids a ConcurrentModificationException
+        }
+        output += "]";
+        return output;
     }
 }
