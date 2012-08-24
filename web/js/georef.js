@@ -25,12 +25,27 @@ function Georef(decimalLatitude, decimalLongitude, coordinateUncertaintyInMeters
 
     this.print = print;
     function print() {
-        var resultsString = "";
-        resultsString += "<p>" + this.decimalLatitude + "/" + this.decimalLongitude;
+        var aboutID = "geo:"+this.decimalLatitude+","+this.decimalLongitude+";u="+this.coordinateUncertaintyInMeters+";crs="+this.geodeticDatum;
+
+            var resultsString = "<div " +
+                        "id=\"content\" about=\"" + aboutID + "\" typeof=\"http://purl.org/dc/terms/Location\">";
+
+            resultsString += "<li>Coordinate: " +
+                "<span property=\"http://rs.tdwg.org/dwc/terms/decimalLatitude\">" + this.decimalLatitude +  "</span>" +
+                " / " +
+                "<span property=\"http://rs.tdwg.org/dwc/terms/decimalLongitude\">" + this.decimalLongitude + "</span>" +
+                " (<span property=\"http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters\">" + this.coordinateUncertaintyInMeters + "</span> meters radius)</li>" +
+                "<li>Datum: <span property=\"http://rs.tdwg.org/dwc/terms/geodeticDatum\">" + this.geodeticDatum + " </span></li>" +
+                "<li>Protocol: <span property=\"http://rs.tdwg.org/dwc/terms/georeferenceProtocol\">" + this.georeferenceProtocol + "</span></li>" +
+                "<li>Remarks: <span property=\"http://rs.tdwg.org/dwc/terms/georeferenceRemarks\">" + this.georeferenceRemarks + "</span></li>" +
+                "</div>";
+
+/*        resultsString += "<div>" + this.decimalLatitude + "/" + this.decimalLongitude;
         resultsString += " (" + this.coordinateUncertaintyInMeters + " meter uncertainty)";
         resultsString += "<br>geodeticDatum=" + this.geodeticDatum;
         resultsString += "<br>georeferenceProtocol=" + this.georeferenceProtocol;
         resultsString += "<br>georeferenceRemarks=" + this.georeferenceRemarks;
+  */
         return resultsString;
     }
 }

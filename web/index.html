@@ -1,38 +1,32 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+
     <title>BerkeleyMapper</title>
 
-    <LINK REL=StyleSheet HREF="css/berkeleymapper.css">
-    <LINK REL=StyleSheet HREF="css/jquery-ui-1.8.17.custom.css">
+    <link rel=StyleSheet href="css/berkeleymapper.css">
+    <link rel=StyleSheet href="css/jquery-ui-1.8.17.custom.css">
 
-    <script type="text/javascript"
-            src="http://maps.google.com/maps/api/js?sensor=true&libraries=drawing,geometry"></script>
+    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true&libraries=drawing,geometry"></script>
     <script type="text/javascript" src="js/keydragzoom.js"></script>
     <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="js/jquery.url.js"></script>
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
-    <script type="text/javascript" src="js/jquery.dataTables.min.js"></script>
     <script type="text/javascript" src="js/jquery.cookie.js"></script>
     <script type="text/javascript" src="js/jquery.splitter.js"></script>
     <script type="text/javascript" src="js/jquery.jqGrid.min.js"></script>
-    <script type="text/javascript" src="js/grid.tbltogrid.js"></script>
     <script type="text/javascript" src="js/berkeleymapper.js"></script>
     <script type="text/javascript" src="js/drawingManager.js"></script>
     <script type="text/javascript" src="js/markerclusterer.js"></script>
     <script type="text/javascript" src="js/styledmarker.js"></script>
     <script type="text/javascript" src="js/georef.js"></script>
-
-
-
 </head>
 
 <body onload="initialize()">
-
-
 
 <div id="bigContainer">
 
@@ -45,10 +39,10 @@
 
                 <a href="http://code.google.com/p/berkeleymapper"><img width=150 src='img/bm_logo.gif'><img></a><br>
 
-                <a href="http://code.google.com/p/berkeleymapper">Linking guide</a>
+                <a href="http://code.google.com/p/berkeleymapper" target="_blank">BerkeleyMapper Information</a>
 
                 <div id="addressControl">
-                    <input id="address" type="textbox" value="Junction City, OR">
+                    <input id="address" type="textbox" value="">
                     <input id="addressbutton" type="button" value="Geocode" onclick="codeAddress(document.getElementById('address').value)">
                 </div>
 
@@ -56,20 +50,35 @@
                     <b>Display: </b>
                     <select onchange="pointDisplay(this.value);">
                         <option value="markerclusteron">MarkerClusterer</option>
-                        <option value="markers">Markers</option>
-                        <option value="markersandcircles">Markers and Error Radii</option>
-                        <!--<option value="staticdots">Static Points</option>-->
+                        <option value="markers">Placemarks</option>
                     </select>
                 </div>
 
-                <div id="download">
-                    <a href="#" onclick='downloadAll();'>Download All</a><br>
-                    <a href="#" onclick='downloadSpatial();'>Download Subset</a>
+                <div id="styleOptionsCheckboxes">
+                    <input type=checkbox id=styleOptionMarker checked onclick="styleOptionsCheckboxes();"/>Show Markers
+                    <br><input type=checkbox id=styleOptionErrorRadius checked onclick="styleOptionsCheckboxes();"/>Show Error Radius
                 </div>
 
-                <div id="layers"></div>
                 <div style="float:clear;"></div>
+
+                <div id="layers"></div>
+
+                <div style="float:clear;"></div>
+
                 <div id="myColors"></div>
+
+                <div style="float:clear;"></div>
+
+                <p></p><br>
+
+                <div id="logos"></div>
+
+                <p></p><br>
+
+                <div id="download">
+                    <a href="#" onclick='downloadAll();'>Download All (tab-delimited with XLS extension)</a><br>
+                    <a href="#" onclick='downloadSpatial();'>Download Subset</a>
+                </div>
 
             </div>
         </div>
@@ -85,7 +94,6 @@
     <div id="bottomContainer"></div>
 
 </div>
-
 
 </body>
 

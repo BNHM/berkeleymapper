@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bnhmmaps>
+<metadata>
+ <name>Moorea Biocode Map Configuration File</name>
+ <relatedinformation>http://biocode.berkeley.edu/</relatedinformation>
+ <abstract> GIS configuration file for Moorea Biocode query interface</abstract>
+ <mapkeyword keyword="specimens"/>
+ <header location="http://biocode.berkeley.edu:8000/headers_footers/header.inc"/>
+ <footer location="http://biocode.berkeley.edu:8000/headers_footers/footer.inc"/>
+ <linkbackheader location="http://biocode.berkeley.edu/"/>
+ <turnoffgooglelayers value="false" /> 
+ <bmzoom value="13" />
+</metadata>
+
+<colors method="field" fieldname="darwin:collectioncode" label="Collection">
+<color key="default" red="255" green="0" blue="0" symbol="7" label="Moorea Biocode Specimen" /> 
+<dominantcolor webcolor="629ad3"/>
+<subdominantcolor webcolor="ddddff"/>
+</colors>
+<themes>
+<theme method="coloryearcollected" fieldname="darwin:yearcollected" />
+</themes>
+<recordlinkback>
+<linkback method="root" linkurl="http://biocode.berkeley.edu/cgi/biocode_query?one=T" text="View Details" fieldname="Link Back" key1="bnhm_id" value1="char120_5"  />
+</recordlinkback>
+<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">
+<concept order="1" viewlist="1" datatype="char120_5" alias="Catalog ID"/>
+<concept order="2" viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+<concept order="3" viewlist="0" colorlist="1" datatype="char120_1" alias="Colloquial Name"/>
+
+
+<concept order="5" viewlist="0" colorlist="1" datatype="char255_2" alias="Kingdom"/>
+<concept order="5" viewlist="0" colorlist="1" datatype="char255_2" alias="Phylum"/>
+<concept order="5" viewlist="0" colorlist="1" datatype="char255_3" alias="Class"/>
+
+<concept order="5" viewlist="1" colorlist="1" datatype="char255_4" alias="Order"/>
+<concept order="4" viewlist="1" colorlist="1" datatype="char120_2" alias="Family"/>
+<concept order="4" viewlist="0" colorlist="1" datatype="char120_7" alias="Genus"/>
+<concept order="4" viewlist="0" colorlist="1" datatype="char255_1" alias="SpecificEpithet"/>
+<concept order="4" viewlist="0" colorlist="1" datatype="char120_8" alias="SubspecificEpithet"/>
+<concept order="6" viewlist="1" colorlist="1" datatype="char120_3" alias="Collector"/>
+<concept order="8" viewlist="1" colorlist="1" datatype="darwin:yearcollected" alias="Year Collected"/>
+<concept order="9" viewlist="1" datatype="darwin:locality" alias="Locality"/>
+<concept order="10" viewlist="1" datatype="darwin:county" alias="County"/>
+<concept order="11" viewlist="0" datatype="char120_4" alias="pic"/>
+<concept order="12" viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+<concept order="13" viewlist="0" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+<concept order="14" viewlist="0" datatype="darwin:horizontaldatum" alias="Horizontal Datum"/>
+<concept order="15" viewlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="Max Error"/>
+<concept order="16" viewlist="0" datatype="char120_6" alias="Public Access"/>
+<concept order="17" viewlist="0" datatype="int_1" alias="Coll Event ID"/>
+</concepts>
+</bnhmmaps>
+

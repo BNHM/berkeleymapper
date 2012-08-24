@@ -20,7 +20,6 @@ public class BMRow {
      * Encapsulate knowledge of a row that has been passed in.  Stores all fields and has convenience
      * functions to get Latitude, Longitude, ErrorRadiusInMeters, and Datum
      *
-     * @param header
      * @param line
      */
     //public BMRow(int line, Object[] header, Object[] headerAlias, Object[] viewList, String lineStr, BMJoins join) {
@@ -94,7 +93,7 @@ public class BMRow {
                 // TODO: Log these errors when they occur
                 if (title.equalsIgnoreCase("Latitude")) {
                     try {
-                        Latitude = round(Double.parseDouble(value), 5);
+                        Latitude = round(Double.parseDouble(value), 4);
                         if (Latitude > 85) Latitude = 85;
                         if (Latitude < -85) Latitude = -85;
                     } catch (Exception e) {
@@ -102,7 +101,7 @@ public class BMRow {
                     }
                 } else if (title.equalsIgnoreCase("Longitude")) {
                     try {
-                        Longitude = round(Double.parseDouble(value), 5);
+                        Longitude = round(Double.parseDouble(value), 4);
                     } catch (Exception e) {
                         Longitude = 0;
                     }
@@ -126,6 +125,7 @@ public class BMRow {
 
         // LinkBack logic
         if (fileReader.recordLinkBack != null) {
+
             fileReader.recordLinkBack.setValue(linkbackValue);
             String url = fileReader.recordLinkBack.getURL();
             if (url != null) {
@@ -149,7 +149,8 @@ public class BMRow {
 
     public static Double round(Double valueToRound, int numberOfDecimalPlaces) {
         Double multipicationFactor = Math.pow(10, numberOfDecimalPlaces);
-        Double interestedInZeroDPs = valueToRound * multipicationFactor;
-        return Math.round(interestedInZeroDPs) / multipicationFactor;
+        return Math.floor(multipicationFactor * valueToRound + 0.5) / multipicationFactor;
+        //Double interestedInZeroDPs = valueToRound * multipicationFactor;
+        //return Math.round(interestedInZeroDPs) / multipicationFactor;
     }
 }

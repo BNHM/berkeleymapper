@@ -58,7 +58,8 @@ function initializeDrawingManager() {
         
         bm2.overlayMarkers.push(marker);
     });
-    
+
+    // Generate RDFa content for defining a coordinate
     google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
         bm2.overlays.push(c);
         index = bm2.overlays.length - 1;
@@ -66,15 +67,21 @@ function initializeDrawingManager() {
         var lat = c.getCenter().lat().toFixed(5);
         var lng = c.getCenter().lng().toFixed(5);
         var radius = Math.round(c.getRadius());
-        var contentString = "<div id='content'>User Defined Point & Error Radius:" +
-        "<br>Center: <i>" +lat +", " + lng + "</i>" +
-        "<br>Error Radius In Meters: <i>" + radius + "</i>" +
-        "<br>Text: <i>Generated visually in BerkeleyMapper</i>" + 
-        "<br>---------------" +
-        //"<br><a href='#' id='callback' onclick='callbackPoint(" + index + ");'>Callback</a>" +
-        "<br><a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>" +
-        "</div>";
-    
+        var locality = $("#address").val();
+        var aboutID = "geo:"+lat+","+lng+";u="+radius+";crs=WGS84";
+        var contentString = "<div " +
+            "id=\"content\" about=\"" + aboutID + "\" typeof=\"http://purl.org/dc/terms/Location\">";
+        //contentString += "<li>Locality: <span property=\"http://rs.tdwg.org/dwc/terms/locality\">" + locality+ "</span></li>";
+        contentString += "<li>Coordinate: " +
+                "<span property=\"http://rs.tdwg.org/dwc/terms/decimalLatitude\">" + lat +  "</span>" +
+                " / " +
+                "<span property=\"http://rs.tdwg.org/dwc/terms/decimalLongitude\">" + lng + "</span>" +
+                " (<span property=\"http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters\">" + radius + "</span> meters radius)</li>" +
+            "<li>Datum: <span property=\"http://rs.tdwg.org/dwc/terms/geodeticDatum\">WGS84</span></li>" +
+            "<li>Protocol: <span property=\"http://rs.tdwg.org/dwc/terms/georeferenceProtocol\">Generated Visually in BerkeleyMapper</span></li>" +
+        "</div>" +
+        "<a href='#' id='delete' onclick='removeOverlay(" + index  + ");'>Delete Shape</a>";
+
         var marker = new google.maps.Marker({
             icon: bm2.drawnMarkerImage,
             position: c.getBounds().getCenter(), 

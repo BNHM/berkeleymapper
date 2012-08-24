@@ -93,13 +93,55 @@ if (!google.maps.Polyline.prototype.getBounds) {
     }
 }
 
+function getLogos() {
+      if (!bm2.pointMode) {
+          return false;
+      }
+      // Populate logos Array (loop json)
+      $.ajax({
+          url: bm2.urlRoot + "logos?session=" + bm2.session,
+          async: true,
+          success: function(data) {
+                counter = 1;
+              $.each(data, function() {
+                  var url, img;
+                  var logoObj = new Object();
+
+                  $.each(this, function(k, v) {
+
+                      if (k == "url") logoObj.url = v;
+                      if (k == "img") logoObj.img = v;
+                  });
+
+                  logoId = "logo" + counter;
+                  $("#logos").append("<br>");
+                  $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
+                  $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=150 \/>");
+                  $("#logos").append("<br>");
+                  counter++;
+              });
+
+
+          },
+          error: function(result) {
+              return false;
+          },
+          statusCode: {
+              204: function() {
+                  // fail quietly
+              }
+          }
+      });
+}
+
+
 // Initialize the Array of Available KML Layers
 function setKMLLayers() {
     if (!bm2.pointMode) {
         return false;
     }
 
-    // Populate kmlLayers Array (loop json
+    // Populate kmlLayers Array (loop json)
     $.ajax({
         url: bm2.urlRoot + "kmllayers?session=" + bm2.session,
         async: false,
@@ -228,22 +270,26 @@ function toggleLayer(cb) {
     }
 }
 
+// Set custom display options
+function styleOptionsCheckboxes() {
+    setMarkersAndCirclesOn($("#styleOptionMarker").is(':checked'),$("#styleOptionErrorRadius").is(':checked'));
+}
 
 // Control display of points
 function pointDisplay(value) {
+   // Custom option
     if (value == "markers") {
-        setMarkersAndCirclesOn(false);
+        // Default checkbox state is set everything on
+        setMarkersAndCirclesOn(true,true);
         $("#myColors").html("");
         setColors();
-    } else if (value == "markersandcircles") {
-        $("#myColors").html("");
-        setColors();
-        setMarkersAndCirclesOn(true);
-    } else if (value == "staticdots") {
-        alert('not yet implemented');
+        $("#styleOptionsCheckboxes").show();
+    // Marker clusterer
     } else {
         $("#myColors").html("");
+        $("#styleOptionsCheckboxes").hide();
         setMarkerClustererOn();
+
     }
 }
 
@@ -269,6 +315,9 @@ function setSession() {
 }
 
 function initialize() {
+  if (jQuery.browser.msie) {
+    alert("BerkeleyMapper does not run reliably under Internet Explorer.  Please use any other browser.")
+  } else {
     $("#loadingMsg").show();
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
@@ -277,8 +326,6 @@ function initialize() {
 
     // Set pointMode
     if (jQuery.url.param('tabfile')) {
-        //$("#addressControl").hide();
-
         bm2.pointMode = true;
 
         if (jQuery.url.param('configfile')) {
@@ -289,15 +336,13 @@ function initialize() {
         // This is to allow intializing session message to appear.
         setSession();
 
-    }
-    // Initialize Map
-    bm2.map = getMap();
-    google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
- 	$('#loadingMsg').hide();
-    });
-    // Setup Map type Options (add KML overlays to this??)
-    setMapTypes();
-    if (bm2.pointMode) {
+        // Initialize Map
+        bm2.map = getMap();
+        google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
+ 	        $('#loadingMsg').hide();
+        });
+        // Setup Map type Options
+        setMapTypes();
 
         // Draw KML Layers (lookup via service)
         if (bm2.configFile != "") {
@@ -306,8 +351,23 @@ function initialize() {
         // Draw the Points
         setJSONPoints();
         setBigBounds();
-    }   else {
-        $("#bottomContainer").html("Instructions for geocoding ...");
+
+        // getLogos
+        getLogos();
+    // Plain map mode, no points passed in
+    } else {
+        bm2.map = getMap();
+        google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
+ 	        $('#loadingMsg').hide();
+        });
+
+        $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.0</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
+            "<li>This page provides an interface for working with Google's geocoding services " +
+            "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
+             "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +
+            "<li>To include point and range mapping functions on your website, visit the " +
+            "<a href='http://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
+            "or to contact the development team.</li></ul>");
         // Show Geocoder tool
         $("#addressControl").show();
 
@@ -339,7 +399,7 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
-
+  }
 }
 
 function handleNoGeolocation(errorFlag) {
@@ -417,6 +477,7 @@ function setJSONPoints() {
         type: "GET",
         url: url,
         async: false,
+        //contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function(data, success) {
             count = 0;
@@ -476,7 +537,7 @@ function setJSONPoints() {
             }
         },
         error: function (e,k,v) {
-            alert("Error fetching data");
+            alert("Error fetching data: "+v);
         }
 
     });
@@ -510,6 +571,11 @@ function setBigBounds() {
         }
     }
     bm2.map.fitBounds(bound);
+    // make sure the zoom is not too small
+    var listener = google.maps.event.addListener(bm2.map, "idle", function() {
+    if (bm2.map.getZoom() > 10) bm2.map.setZoom(10);
+        google.maps.event.removeListener(listener);
+    });
 }
 
 function fetchRecord(line) {
@@ -628,18 +694,22 @@ function clearAllMarkers() {
     $("#bottomContainer").html(bm2.bottomContainerText);
 }
 
-function setMarkersAndCirclesOn(drawRadius) {
+function setMarkersAndCirclesOn(drawMarkers,drawRadius) {
     clearAllMarkers();
+
     if (bm2.markers) {
         for (i in bm2.markers) {
-            bm2.markers[i].setMap(bm2.map);
+            if (drawMarkers) {
+                bm2.markers[i].setMap(bm2.map);
+            }
             // Add circle overlay and bind to marker
             if (drawRadius && bm2.markers[i].radius > 0) {
                 var circle = new google.maps.Circle({
                     map: bm2.map,
                     radius: bm2.markers[i].radius,
                     fillColor: bm2.markers[i].color,
-                    fillOpacity: 0.05,
+                    fillOpacity: 0,
+                    //fillOpacity: 0.05,
                     strokeOpacity: 0.5,
                     strokeWidth: 1,
                     strokeColor: bm2.markers[i].color,
@@ -658,7 +728,7 @@ function setMarkerClustererOn() {
     var mcOptions = {
         gridSize:25,
         averageCenter:true,
-        title:"multiple markers",
+        title:"Click to view these records on bottom of screen",
         minimumClusterSize:1,
         zoomOnClick:false
     };
@@ -698,6 +768,7 @@ function getMap() {
                 position: google.maps.ControlPosition.LEFT_TOP
             },
             zoomControl: true,
+            scaleControl: true,
             scrollwheel: false,
             zoomControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
@@ -714,6 +785,7 @@ function getMap() {
             },
             zoomControl: true,
             scrollwheel: false,
+            scaleControl: true,
             zoomControlOptions: {
                 position: google.maps.ControlPosition.LEFT_TOP
             }

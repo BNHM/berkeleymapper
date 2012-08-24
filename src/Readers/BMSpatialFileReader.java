@@ -1,9 +1,6 @@
 package Readers;
 
-import Core.BMRecordLinkBack;
-import Core.BMRowClassifier;
-import Core.BMRow;
-import Core.BMSession;
+import Core.*;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
@@ -61,6 +58,7 @@ public class BMSpatialFileReader implements BMFileReader {
         reader = new BufferedReader(
                 new FileReader(
                         session.getFile()));
+
     }
 
     public BMSession getSession() {

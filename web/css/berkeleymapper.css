@@ -27,7 +27,7 @@ html, body, #map {
     min-width: 500px;
     min-height: 300px;
     height: 100%;
-    overflow:auto;
+    overflow:hidden;
 }
 .vsplitbar {
     width: 5px;
@@ -58,7 +58,7 @@ html, body, #map {
 #bottomContainer {
     padding-top: 8px;
     height: 100px;
-    max-height: 400px;
+    max-height: 300px;
     min-height: 0px;
     overflow:auto;
 }
@@ -121,4 +121,9 @@ select {
     //marquee-loop: infinite;
     //overflow-x: -webkit-marquee;
     //-webkit-marquee: backwards medium infinite alternate normal;
+}
+
+#styleOptionsCheckboxes {
+    display:none;
+      font-size:11px;
 }
