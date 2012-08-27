@@ -1,39 +1,26 @@
-<bnhmmaps>
-	<metadata>
-		<name>BerkeleyMapper Configuration File</name>
-		<relatedinformation>http://arctos.database.museum</relatedinformation>
-		<abstract>GIS configuration file for specimen query interface</abstract>
-		<mapkeyword keyword="specimens"/>
-		<header location="http://arctos.database.museum/images/nada.gif"/>
-		<linkbackheader location="http://arctos.database.museum"/>
-		<footer location="http://arctos.database.museum/bnhmMaps/BerkMapFooter.html"/>
-		<charset name="UTF-8"></charset>
-	</metadata>
-	<colors method="field" fieldname="darwin:collectioncode" label="Collection">
-		<dominantcolor webcolor="9999cc"/>
-		<subdominantcolor webcolor="9999cc"/>
-		<color key="MVZ Hildebrand" red="135" green="6" blue="110" symbol="7" label="MVZ Hildebrand"/>
-		<color key="MVZ Mammals" red="22" green="154" blue="0" symbol="7" label="MVZ Mammals"/>
-		<color key="default" red="255" green="0" blue="0" symbol="2" label="Unspecified Collection"/>
-	</colors>
-	<recordlinkback>
-		<linkback method="entireurl" linkurl="Related Information" fieldname="More Information (opens in new window)"/>
-	</recordlinkback>
-	<annotation show="1">
-		<annotation_replyto_email value="arctos.database@gmail.com,ondatra@berkeley.edu,mkoo@berkeley.edu" />
-	</annotation>
-	<concepts>
-	<concept order="1" viewlist="1" colorlist="0" datatype="darwin:relatedinformation"  alias="Related Information" />
-		<concept order="2" viewlist="1" colorlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
-		<concept order="3" viewlist="1" colorlist="0" datatype="char120_1" alias="Verbatim Date"/>
-		<concept order="4" viewlist="1" colorlist="0" datatype="darwin:locality" alias="Specific Locality"/>
-		<concept order="5" viewlist="0" colorlist="0" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
-		<concept order="6" viewlist="0" colorlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
-		<concept order="7" viewlist="1" colorlist="0" datatype="darwin:coordinateuncertaintyinmeters" alias="Error (m)"/>
-		<concept order="8" viewlist="1" colorlist="0" datatype="darwin:horizontaldatum" alias="Datum"/>
-		<concept order="9" viewlist="0" colorlist="0" datatype="darwin:collectioncode" alias="Collection Code"/>
-	</concepts>
-	<gisdata>
-	<layer title="Lynx rufus" name="mamm" location="Lynx rufus" legend="1" active="1" url=""><![CDATA[http://bnhmmapstest.berkeley.edu/v2/speciesrange/Lynx+rufus/sci_name/mamm_2009]]></layer>
-	</gisdata>
-</bnhmmaps>
+<berkeleymapper>
+    <colors method="dynamicfield" fieldname="darwin:collectioncode" label="Collection"></colors>
+
+    <concepts>
+        <concept viewlist="1" datatype="darwin:relatedinformation" alias="Related Information"/>
+        <concept viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+        <concept viewlist="1" datatype="char120_1" alias="Verbatim Date"/>
+        <concept viewlist="1" datatype="darwin:locality" alias="Specific Locality"/>
+        <concept viewlist="0" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+        <concept viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+        <concept viewlist="1" datatype="darwin:coordinateuncertaintyinmeters"
+                 alias="Error (m)"/>
+        <concept viewlist="1" datatype="darwin:horizontaldatum" alias="Datum"/>
+        <concept viewlist="0" datatype="darwin:collectioncode" alias="Collection Code"/>
+    </concepts>
+
+    <gisdata>
+        <layer title="Lynx rufus" name="mamm" location="Lynx rufus" legend="1" active="1" url=""><![CDATA[http://berkeleymappertest.berkeley.edu/v2/speciesrange/Lynx+rufus/sci_name/mamm_2009]]></layer>
+    </gisdata>
+
+    <logos>
+        <logo img="http://arctos.database.museum/images/genericHeaderIcon.gif" url="http://arctos.database.museum/"/>
+        <logo img="http://amphibiaweb.org/images/redlist_logo.jpg"
+              url="http://www.iucnredlist.org/initiatives/mammals"/>
+    </logos>
+</berkeleymapper>
