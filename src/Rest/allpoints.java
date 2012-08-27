@@ -41,22 +41,27 @@ public class allpoints {
     @GET
     @Produces("application/json")
     public Response getAllPoints(
-            @QueryParam("session") String session) throws MalformedURLException {
+            @QueryParam("session") String session,
+            @QueryParam("gzip") String gzip) throws MalformedURLException {
         // Load the File
         BMSession sess = new BMSession(session);
         String filename = null;
         try {
             if (sess.getMode() == sess.CONFIG) {
-                // TabFileReader reasonably fast
                 BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
-                // Rendering process here is slow for many points... look into this.
                 String output = new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), f);
-                filename = compress(output,session);
+                if (gzip.equalsIgnoreCase("true")) {
+                    filename = compress(output, session);
+                } else {
+                    filename = nocompress(output, session);
+                }
             } else {
                 BMFileReader f = new BMSpatialFileReader(sess);
-                //rb = Response.ok(compressAC(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null)));
-                 filename = compress(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null),session);
-                //rb = Response.ok(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null));
+                if (gzip.equalsIgnoreCase("true")) {
+                    filename = compress(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null), session);
+                } else {
+                    filename = nocompress(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null), session);
+                }
             }
         } catch (IOException e) {
             rb = Response.status(204);
@@ -67,9 +72,11 @@ public class allpoints {
             rb.header("Access-Control-Allow-Origin", "*");
             return rb.build();
         }
-        rb = Response.ok((Object)new File(filename));
-        rb.header("Content-Disposition", "attachment; filename=\"" + filename +"\"");
-        rb.header("Content-Encoding","gzip");
+        rb = Response.ok((Object) new File(filename));
+        rb.header("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        if (gzip.equalsIgnoreCase("true")) {
+            rb.header("Content-Encoding", "gzip");
+        }
         rb.header("Access-Control-Allow-Origin", "*");
         System.out.println("just about to send file back");
         return rb.build();
@@ -80,11 +87,22 @@ public class allpoints {
         String filename = "/tmp/ms_tmp/" + session + ".gz";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         FileOutputStream fout = new FileOutputStream(filename);
-         CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                 .createCompressorOutputStream(CompressorStreamFactory.GZIP, fout);
+        CompressorOutputStream gzippedOut = new CompressorStreamFactory()
+                .createCompressorOutputStream(CompressorStreamFactory.GZIP, fout);
 
         gzippedOut.write(str.getBytes());
         gzippedOut.close();
+        os.flush();
+
+        return filename;
+    }
+
+    public static String nocompress(String str, String session) throws IOException {
+        String filename = "/tmp/ms_tmp/" + session + ".txt";
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        FileOutputStream fout = new FileOutputStream(filename);
+        fout.write(str.getBytes());
+        fout.close();
         os.flush();
 
         return filename;

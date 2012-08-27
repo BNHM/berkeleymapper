@@ -16,6 +16,7 @@ bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
 bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
 bm2.polygon = "";           // A variable to hold a polygon defined by the user
 bm2.configFile = "";
+bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -183,6 +184,7 @@ function setKMLLayers() {
                         // KML layers... this way it fails silently, but this was what user requested.
                         //alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
                     }
+
                 });
             });
         },
@@ -210,9 +212,10 @@ function addKMLErrorMessageToMenu(i) {
         jQuery('<div/>', {
             id: 'layertext' + i,
             style: 'float: left;',
-            html: "NOTE: unable to add " + bm2.kmlLayers[i]['title'],
+            html: "NOTE: unable to add " + bm2.kmlLayers[i]['title'] + "<br>",
         }).appendTo('#container' + i);
 }
+
 function addKMLLayerToMenu(i) {
         // default checkbox state
         var checked = false;
@@ -465,6 +468,12 @@ function downloadSpatial() {
 
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
+    if (bm2.isSafari) {
+        url += "&gzip=false";
+    } else {
+        url += "&gzip=true";
+    }
+
     // Warn if temporary not set on server
     if (!bm2.session)  {
         alert ("unable to set session on server, check temporary directory?");
@@ -496,8 +505,6 @@ function setJSONPoints() {
                         }
                     });
 
-                    //if (lat > 85) lat = 85;
-                    //if (lat < -85) lat = -85;
                     var latlng = new google.maps.LatLng(lat, lng);
 
                     if (markercolor == "") markercolor = "#FF0000";
@@ -523,17 +530,15 @@ function setJSONPoints() {
                     bm2.markers[count++] = marker;
                     bound.extend(marker.getPosition());
                 });
-                //bm2.map.fitBounds(bound);
                 setMarkerClustererOn();
-                //zoomPoints();
-    		showMsg("Installing Components...");
+    		    showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
                 bm2.map.setCenter(new google.maps.LatLng(0, 0));
-    		showMsg("Error ...");
+    		    showMsg("Error ...");
                 alert("nothing to map! Does the data have a latitude/longitude?");
-    		$("#loadingMsg").hide();
+    		    $("#loadingMsg").hide();
             }
         },
         error: function (e,k,v) {
@@ -546,6 +551,12 @@ function setJSONPoints() {
 // Zoom to an individual KML Layer
 function kmlZoom(i) {
     bm2.map.fitBounds(bm2.kmlLayers[i]['google'].getDefaultViewport());
+}
+
+function switchMarkerType() {
+     for (i in bm2.markers) {
+        bm2.markers[i].styleIcon;
+    }
 }
 
 // Zoom just to this set of points
@@ -571,9 +582,10 @@ function setBigBounds() {
         }
     }
     bm2.map.fitBounds(bound);
+
     // make sure the zoom is not too small
     var listener = google.maps.event.addListener(bm2.map, "idle", function() {
-    if (bm2.map.getZoom() > 10) bm2.map.setZoom(10);
+        if (bm2.map.getZoom() > 10) bm2.map.setZoom(10);
         google.maps.event.removeListener(listener);
     });
 }

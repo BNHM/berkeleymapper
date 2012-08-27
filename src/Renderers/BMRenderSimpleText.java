@@ -18,7 +18,8 @@ import java.util.Iterator;
 public class BMRenderSimpleText implements BMRendererInterface {
 
     public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
-        String strRet = "";
+        StringBuilder strRet = new StringBuilder();
+
         // Print Header
         Iterator i = Arrays.asList(g.getCoordinates()).iterator();
         while (i.hasNext()) {
@@ -26,11 +27,11 @@ public class BMRenderSimpleText implements BMRendererInterface {
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
-                strRet += field.getTitleAlias() + "\t";
+                strRet.append(field.getTitleAlias() + "\t");
             }
             break;
         }
-        strRet += "\n";
+        strRet.append("\n");
 
         // Print Rows
         Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
@@ -41,14 +42,14 @@ public class BMRenderSimpleText implements BMRendererInterface {
                 Iterator f = coord.fields.iterator();
                 while (f.hasNext()) {
                     BMField field = (BMField) f.next();
-                    strRet += field.getValue() + "\t";
+                    strRet.append(field.getValue() + "\t");
                 }
-                strRet += "\n";
+                strRet.append("\n");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-        return strRet;
+        return strRet.toString();
     }
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
@@ -56,7 +57,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
     }
 
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
-        String tabtext = "";
+        StringBuilder tabtext = new StringBuilder();
         Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
          
         // Print Header
@@ -66,11 +67,11 @@ public class BMRenderSimpleText implements BMRendererInterface {
             Iterator f = coord.fields.iterator();
             while (f.hasNext()) {
                 BMField field = (BMField) f.next();
-                tabtext += field.getTitleAlias() + "\t";
+                tabtext.append(field.getTitleAlias() + "\t");
             }
             break;
         }
-        tabtext += "\n";
+        tabtext.append("\n");
         
         Coordinate[] coords = subset.getCoordinates();
         for (int i = 0; i < coords.length; i++) {
@@ -83,14 +84,14 @@ public class BMRenderSimpleText implements BMRendererInterface {
             // data fields
             while (fields.hasNext()) {
                 BMField field = (BMField) fields.next();
-                tabtext += field.getValue();
+                tabtext.append(field.getValue());
                 if (fields.hasNext()) {
-                    tabtext += "\t";
+                    tabtext.append("\t");
                 }
             }
-            tabtext += "\n";
+            tabtext.append("\n");
         }
-        return tabtext;
+        return tabtext.toString();
     }
 
     public String KMLLayers(BMConfigAndTabFileReader f) {
