@@ -515,17 +515,14 @@ function setJSONPoints() {
                         map: bm2.map,
                         title:"point"
                     });
+                    // additional options
                     marker.line = line;
                     marker.radius = radius;
                     marker.color = markercolor;
-
-                    google.maps.event.addListener(marker, 'click', (function(marker, count) {
-                        return function() {
-                            var infowindow = new google.maps.InfoWindow();
-                            infowindow.setContent(fetchRecord(line));
-                            infowindow.open(bm2.map, marker);
-                        }
-                    })(marker, count));
+                    marker.type = "marker";
+                    marker.message = fetchRecord(line);
+                    marker.count = count;
+                    markerInfoWindow(marker);
 
                     bm2.markers[count++] = marker;
                     bound.extend(marker.getPosition());
@@ -1089,3 +1086,64 @@ function codeAddress(address) {
 function htmlEntities(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
+
+function markerInfoWindow(marker) {
+    count = marker.count;
+    google.maps.event.addListener(marker, 'click', (function(marker,count) {
+        return function() {
+            var infowindow = new google.maps.InfoWindow();
+            infowindow.setContent(marker.message);
+            infowindow.open(bm2.map, marker);
+        }
+    })(marker,count));
+}
+
+/*
+Function that switches between two available marker types, regular marker and point
+*/
+function switchMarkerType() {
+    for (i in bm2.markers) {
+        var position = bm2.markers[i].get("position");
+        var message = bm2.markers[i].message;
+        var count = bm2.markers[i].count;
+        var line = bm2.markers[i].line;
+        var radius = bm2.markers[i].radius;
+        if (bm2.markers[i].type == "marker") {
+            var color = bm2.markers[i].styleIcon.get("color");
+            bm2.markers[i].setMap(null);
+            smallDot =  {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: color,
+                strokeColor: color,
+                fillOpacity: 0.8,
+                scale: 3,
+                strokeWeight: 2
+            };
+            bm2.markers[i] = new StyledMarker({
+                styleIcon:new StyledIcon(StyledIconTypes.CLASS,{icon: smallDot}),
+                    position:position,
+                    map:bm2.map
+            });
+            bm2.markers[i].color = color;
+            bm2.markers[i].type = "point";
+            bm2.markers[i].message = message;
+            bm2.markers[i].count = count;
+            bm2.markers[i].radius = radius;
+        } else {
+                var color = bm2.markers[i].color;
+                bm2.markers[i].setMap(null);
+                bm2.markers[i] = new StyledMarker(
+                    {styleIcon: new StyledIcon(StyledIconTypes.MARKER, {color:color}),
+                    position:position,
+                    map:bm2.map
+                });
+                bm2.markers[i].color = color;
+                bm2.markers[i].message = message;
+                bm2.markers[i].type = "marker";
+                bm2.markers[i].count = count;
+                bm2.markers[i].radius = radius;
+                markerInfoWindow(bm2.markers[i])
+        }
+    }
+}
+
