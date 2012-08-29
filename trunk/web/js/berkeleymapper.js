@@ -520,7 +520,7 @@ function setJSONPoints() {
                     marker.radius = radius;
                     marker.color = markercolor;
                     marker.type = "marker";
-                    marker.message = fetchRecord(line);
+                    //marker.message = fetchRecord(line);
                     marker.count = count;
                     markerInfoWindow(marker);
 
@@ -1088,11 +1088,12 @@ function htmlEntities(str) {
 }
 
 function markerInfoWindow(marker) {
-    count = marker.count;
+    var count = marker.count;
+    var line = marker.line;
     google.maps.event.addListener(marker, 'click', (function(marker,count) {
         return function() {
             var infowindow = new google.maps.InfoWindow();
-            infowindow.setContent(marker.message);
+            infowindow.setContent(fetchRecord(line));
             infowindow.open(bm2.map, marker);
         }
     })(marker,count));
@@ -1126,7 +1127,7 @@ function switchMarkerType() {
             });
             bm2.markers[i].color = color;
             bm2.markers[i].type = "point";
-            bm2.markers[i].message = message;
+            //bm2.markers[i].message = message;
             bm2.markers[i].count = count;
             bm2.markers[i].radius = radius;
         } else {
@@ -1138,7 +1139,7 @@ function switchMarkerType() {
                     map:bm2.map
                 });
                 bm2.markers[i].color = color;
-                bm2.markers[i].message = message;
+                //bm2.markers[i].message = message;
                 bm2.markers[i].type = "marker";
                 bm2.markers[i].count = count;
                 bm2.markers[i].radius = radius;
