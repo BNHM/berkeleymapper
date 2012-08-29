@@ -1,6 +1,6 @@
 #summary Range Mapping Functions in BerkeleyMapper
 
-= Range Mapping functions in BerkeleyMapper =
+= Range Mapping functions in !BerkeleyMapper 2.0 =
 
 !BerkeleyMapper 2.0 serves KML files based on spatial layers from IUCN for amphibians, birds, and mammals. 
 
@@ -22,7 +22,7 @@ http://berkeleymapper.berkeley.edu/v2/speciesrange/Lynx+rufus/sci_name/mamm_2009
 
 http://berkeleymapper.berkeley.edu/v2/speciesrange/Aburria+aburri/sci_name/birds_2009
 
-An example of inserting calls to these services in the BerkeleyMapper configuration file:
+An example of inserting calls to these services in the !BerkeleyMapper configuration file:
 <code language="xml">
 <gisdata>
 
