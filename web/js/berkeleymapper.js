@@ -704,32 +704,53 @@ function clearAllMarkers() {
 }
 
 function setMarkersAndCirclesOn(drawMarkers,drawRadius) {
-    clearAllMarkers();
+      clearAllMarkers();
+                positions = [];
+                var count = 0;
+                var circlecount = 0;
 
-    if (bm2.markers) {
-        for (i in bm2.markers) {
-            if (drawMarkers) {
-                bm2.markers[i].setMap(bm2.map);
-            }
-            // Add circle overlay and bind to marker
-            if (drawRadius && bm2.markers[i].radius > 0) {
-                var circle = new google.maps.Circle({
-                    map: bm2.map,
-                    radius: bm2.markers[i].radius,
-                    fillColor: bm2.markers[i].color,
-                    fillOpacity: 0,
-                    //fillOpacity: 0.05,
-                    strokeOpacity: 0.5,
-                    strokeWidth: 1,
-                    strokeColor: bm2.markers[i].color,
-                    clickable: false
-                });
-                bm2.circles[count++] = circle;
-                circle.bindTo('center', bm2.markers[i], 'position');
-            }
-        }
-    }
+                if (bm2.markers) {
+                    for (i in bm2.markers) {
+
+                        var positionExists = false;
+
+                        // Loop through existing positions to determine if we should display this-- avoiding marker drawing overhead
+                        for (j in positions) {
+                            if(bm2.markers[i].getPosition().lat() == positions[j].lat() &&
+                                bm2.markers[i].getPosition().lng() == positions[j].lng()) {
+                                positionExists = true;
+                                break;
+                            }
+                        }
+
+                        // Only display this marker if this not a marker at this exact position
+                        if (!positionExists) {
+                          positions[count++] = bm2.markers[i].getPosition();
+
+                          if (drawMarkers) {
+                            bm2.markers[i].setMap(bm2.map);
+                          }
+                          // Add circle overlay and bind to marker
+                          if (drawRadius && bm2.markers[i].radius > 0) {
+                            var circle = new google.maps.Circle({
+                                map: bm2.map,
+                                radius: bm2.markers[i].radius,
+                                fillColor: bm2.markers[i].color,
+                                fillOpacity: 0,
+                                //fillOpacity: 0.05,
+                                strokeOpacity: 0.5,
+                                strokeWidth: 1,
+                                strokeColor: bm2.markers[i].color,
+                                clickable: false
+                            });
+                            bm2.circles[circlecount++] = circle;
+                            circle.bindTo('center', bm2.markers[i], 'position');
+                          }
+                        }
+                    }
+                }
 }
+
 
 function setMarkerClustererOn() {
     clearAllMarkers();
@@ -1079,8 +1100,6 @@ function codeAddress(address) {
         bm2.map.fitBounds(bounds);
     });
 
-
-
 }
 
 function htmlEntities(str) {
@@ -1127,7 +1146,7 @@ function switchMarkerType() {
             });
             bm2.markers[i].color = color;
             bm2.markers[i].type = "point";
-            //bm2.markers[i].message = message;
+            bm2.markers[i].line = line;
             bm2.markers[i].count = count;
             bm2.markers[i].radius = radius;
         } else {
@@ -1139,7 +1158,7 @@ function switchMarkerType() {
                     map:bm2.map
                 });
                 bm2.markers[i].color = color;
-                //bm2.markers[i].message = message;
+                bm2.markers[i].line = line;
                 bm2.markers[i].type = "marker";
                 bm2.markers[i].count = count;
                 bm2.markers[i].radius = radius;
