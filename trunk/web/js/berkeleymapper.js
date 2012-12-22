@@ -17,6 +17,7 @@ bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to 
 bm2.polygon = "";           // A variable to hold a polygon defined by the user
 bm2.configFile = "";
 bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
+bm2.showControls = true;
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -94,6 +95,22 @@ if (!google.maps.Polyline.prototype.getBounds) {
     }
 }
 
+// Use this to turn on/off controls on map
+function toggleControls() {
+    if (bm2.showControls) {
+        bm2.showControls = false;
+        drawingManagerHide();
+        bm2.map.setOptions({ mapTypeControl: false,overviewMapControl: false,panControl:false,streetViewControl:false,zoomControl:false});
+        bm2.map.disableKeyDragZoom();
+
+    }  else {
+        bm2.showControls = true;
+        drawingManagerShow();
+        bm2.map.setOptions({ mapTypeControl: true,overviewMapControl: true,panControl:true,streetViewControl:true,zoomControl:true});
+        bm2.map.enableKeyDragZoom();
+    }
+}
+
 function getLogos() {
       if (!bm2.pointMode) {
           return false;
@@ -160,7 +177,7 @@ function setKMLLayers() {
 
                 // Set the google object
                 var layer = new google.maps.KmlLayer(kmlObj.key, {
-                    preserveViewport:true,
+                    //preserveViewport:true,
                     map: bm2.map
                 });
                 layer.added = false;
@@ -172,10 +189,10 @@ function setKMLLayers() {
                             kmlObj.google = layer;
                             kmlObj.url = kmlObj.key;
                             bm2.kmlLayers[kmlcounter] = kmlObj;
-                            addKMLLayerToMenu(kmlcounter);
+                            addKMLLayerToMenu(kmlcounter,layer);
                             layer.added = true;
                             kmlcounter++;
-                            setBigBounds();
+                            //setBigBounds();
                         }
                     } else {
                         bm2.kmlLayers[kmlcounter] = kmlObj;
@@ -216,7 +233,7 @@ function addKMLErrorMessageToMenu(i) {
         }).appendTo('#container' + i);
 }
 
-function addKMLLayerToMenu(i) {
+function addKMLLayerToMenu(i,layer) {
         // default checkbox state
         var checked = false;
         if (bm2.kmlLayers[i]['visibility'] == 'visible') {
@@ -309,7 +326,6 @@ function setSession() {
             },
             statusCode: {
                 204: function() {
-                    alert(url);
                     alert('Unable to set session on server.  Ensure tabfile & configfile locations are accessible and that the tmp directory on server is writeable.');
                     bm2.pointMode = false;
                 }
@@ -318,9 +334,9 @@ function setSession() {
 }
 
 function initialize() {
-  if (jQuery.browser.msie) {
-    alert("BerkeleyMapper does not run reliably under Internet Explorer.  Please use any other browser.")
-  } else {
+  //if (jQuery.browser.msie) {
+  //  alert("BerkeleyMapper does not run reliably under Internet Explorer.  Please use any other browser.")
+  //} else {
     $("#loadingMsg").show();
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
@@ -357,6 +373,12 @@ function initialize() {
 
         // getLogos
         getLogos();
+
+        // Special exception for amphibiaweb who doesn't want to display download links
+        if (jQuery.url.param('amphibiaweb')) {
+            $("#download").hide();
+        }
+
     // Plain map mode, no points passed in
     } else {
         bm2.map = getMap();
@@ -402,7 +424,7 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
-  }
+  //}
 }
 
 function handleNoGeolocation(errorFlag) {
@@ -656,7 +678,8 @@ function fetchRecords() {
             retStr += "</tbody></table>";
 
             if (row > 100)  {
-                alert('result response truncated to 100 records');
+                showMsg("Response truncated to 100 records");
+                //alert('result response truncated to 100 records');
             }
     	    $("#loadingMsg").hide();
 

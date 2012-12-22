@@ -34,8 +34,12 @@ public class BMRecordLinkBack {
     }
 
     public String getURL() {
+        String delimiter = "?";
+        if (linkurl.indexOf("?") > 0) {
+            delimiter = "&";
+        }
         if (method.equalsIgnoreCase("root")) {
-            return "<a href=\"" + linkurl + "&" + key1 + "=" + value1Value + "\" target=\"_blank\">" + text + "</a>";
+            return "<a href=\"" + linkurl + delimiter + key1 + "=" + value1Value + "\" target=\"_blank\">" + text + "</a>";
         } else {
             return null;
         }
