@@ -27,6 +27,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     private URL configURL;
     protected BMJoins joins = null;
+    private String name;
 
 
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
@@ -58,6 +59,14 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     /**
+     * Get the "name" assigned to this configuration file
+     * @return
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
      * Populate columns and columnsAlias Array from XML Configuration File
      *
      * @return
@@ -69,6 +78,9 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
         // Get Document
         Document doc = parseXmlFile(configURL, false);
+
+        NodeList nlMetadata = doc.getElementsByTagName("name");
+        name = nlMetadata.item(0).getTextContent();
 
         // Structure linkbacks
         NodeList nlLinkback = doc.getElementsByTagName("linkback");

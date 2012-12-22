@@ -1,7 +1,22 @@
+bm2.drawingManager;
+
+// hide drawingManager Tool
+function drawingManagerHide(){
+    bm2.drawingManager.setOptions({
+        drawingControl: false
+    });
+}
+
+// show drawingManager Tool
+function drawingManagerShow() {
+    bm2.drawingManager.setOptions({
+        drawingControl: true
+    });
+}
 
 function initializeDrawingManager() {
     // Drawing Manager/ Lines / Error Radii / Polygons
-    var drawingManager = new google.maps.drawing.DrawingManager({
+     bm2.drawingManager = new google.maps.drawing.DrawingManager({
         drawingMode: null,
         drawingControl: true,
         drawingControlOptions: {
@@ -21,9 +36,9 @@ function initializeDrawingManager() {
             zIndex: 1
         }
     });
-    drawingManager.setMap(bm2.map);
+    bm2.drawingManager.setMap(bm2.map);
     
-    google.maps.event.addDomListener(drawingManager, 'polylinecomplete', function(l) {
+    google.maps.event.addDomListener(bm2.drawingManager, 'polylinecomplete', function(l) {
         bm2.overlays.push(l);
         index = bm2.overlays.length - 1;
         
@@ -54,13 +69,13 @@ function initializeDrawingManager() {
             infowindow.open(bm2.map,marker);
         });
         
-        drawingManager.setDrawingMode(null); // revert to normal map mode
+        bm2.drawingManager.setDrawingMode(null); // revert to normal map mode
         
         bm2.overlayMarkers.push(marker);
     });
 
     // Generate RDFa content for defining a coordinate
-    google.maps.event.addDomListener(drawingManager, 'circlecomplete', function(c) {
+    google.maps.event.addDomListener(bm2.drawingManager, 'circlecomplete', function(c) {
         bm2.overlays.push(c);
         index = bm2.overlays.length - 1;
         // use 5 decimal places for approx 1 meter accuracy
@@ -97,12 +112,12 @@ function initializeDrawingManager() {
             infowindow.open(bm2.map,marker);
         });
         
-        drawingManager.setDrawingMode(null); // revert to normal map mode
+        bm2.drawingManager.setDrawingMode(null); // revert to normal map mode
         
         bm2.overlayMarkers.push(marker);
     });
         
-    google.maps.event.addDomListener(drawingManager, 'polygoncomplete', function(p) {        
+    google.maps.event.addDomListener(bm2.drawingManager, 'polygoncomplete', function(p) {
         bm2.overlays.push(p);
         index = bm2.overlays.length - 1;
         
@@ -138,7 +153,7 @@ function initializeDrawingManager() {
             infowindow.open(bm2.map,marker);
         });
         
-        drawingManager.setDrawingMode(null); // revert to normal map mode
+        bm2.drawingManager.setDrawingMode(null); // revert to normal map mode
         
         bm2.overlayMarkers.push(marker);
     });
