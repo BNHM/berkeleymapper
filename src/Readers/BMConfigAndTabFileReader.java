@@ -60,6 +60,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     /**
      * Get the "name" assigned to this configuration file
+     *
      * @return
      */
     public String getName() {
@@ -79,8 +80,12 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         // Get Document
         Document doc = parseXmlFile(configURL, false);
 
-        NodeList nlMetadata = doc.getElementsByTagName("name");
-        name = nlMetadata.item(0).getTextContent();
+        try {
+            NodeList nlMetadata = doc.getElementsByTagName("name");
+            name = nlMetadata.item(0).getTextContent();
+        } catch (NullPointerException e) {
+            name = "Undefined";
+        }
 
         // Structure linkbacks
         NodeList nlLinkback = doc.getElementsByTagName("linkback");
