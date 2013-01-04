@@ -343,8 +343,19 @@ function initialize() {
     imageObj = new Image();
     imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
 
+    var tabFile = false;
+    // Check for valid URL
+    try {
+       if(jQuery.url.param('tabfile')) {
+        tabFile = true;
+       }
+    } catch(err) {
+        alert('Unable to map your points. invalid URL passed to BerkeleyMapper, notify calling application administrator to check their URL.');
+        tabFile = false;
+    }
+
     // Set pointMode
-    if (jQuery.url.param('tabfile')) {
+    if (tabFile) {
         bm2.pointMode = true;
 
         if (jQuery.url.param('configfile')) {
