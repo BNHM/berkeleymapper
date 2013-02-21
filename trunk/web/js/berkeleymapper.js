@@ -483,6 +483,12 @@ function setColors() {
 
 
 // download links from bm2 service
+function downloadKML() {
+    var url = bm2.urlRoot + "downloadKML?session=" + bm2.session;
+    window.open(url);
+}
+
+// download links from bm2 service
 function downloadAll() {
     var url = bm2.urlRoot + "download?session=" + bm2.session;
     window.open(url);
@@ -496,8 +502,9 @@ function downloadSpatial() {
         var url = bm2.urlRoot + "downloadSpatial?session=" + bm2.session + "&polygon=" + bm2.polygon;
         window.open(url);
     }
-
 }
+
+
 
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
