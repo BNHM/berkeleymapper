@@ -27,7 +27,6 @@ public class download {
     @Produces("text/plain")
     public Response getAll(
             @QueryParam("session") String session) throws MalformedURLException {
-
         // Load the File
         BMSession sess = new BMSession(session);
         try {

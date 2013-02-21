@@ -102,7 +102,8 @@ function getRadiusFromViewPort(viewport) {
  */
 function bgGeoref(s, callback) {
     //http://bg.berkeley.edu:8080/ws/single?locality=Santa%20Cruz,CA
-     /*
+    //http://beta.geomancer-api.appspot.com/api/georef?q=5%20miles%20west%20of%20berkeley&cb=my_callback
+
         var xmlhttp;
         if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
             xmlhttp = new XMLHttpRequest();
@@ -112,12 +113,34 @@ function bgGeoref(s, callback) {
         }
         xmlhttp.onreadystatechange = function() {
             if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-               alert(xmlhttp.responseText);
+               var results = xmlhttp.responseText;
+               //alert(xmlhttp.responseText);
                 // Insert here assignments from XML to georef object variables
+                 if (results[0]) {
+                    // empty array before we populate it
+                    georefjs.georefs.length = 0;
+                    for (i = 0; i < results.length; i++) {
+                        var georef = new Georef(
+                            results[i].geometry.location.lat().toFixed(4),
+                            results[i].geometry.location.lng().toFixed(4),
+                            getRadiusFromViewPort(results[i].geometry.bbox),
+                            "WGS84",
+                            "Geomancer Results",
+                            "No location type set"
+                        )
+                        georefjs.georefs[i] = georef;
+                    }
+                    callback(georefjs.georefs);
+                } else {
+                    alert("No results found");
+                }
+
+
             }
         }
-        xmlhttp.open("GET", "http://bg.berkeley.edu:8080/ws/single?locality=" + s, true);
+        //xmlhttp.open("GET", "http://beta.geomancer-api.appspot.com/api/georef?q=" + s + "&cb=my_callback", true);
+        xmlhttp.open("GET", "http://http://biscicol.org/test.html", true);
         xmlhttp.send();
-    */
+
 }
 
