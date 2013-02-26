@@ -304,12 +304,15 @@ function pointDisplay(value) {
         $("#myColors").html("");
         setColors();
         $("#styleOptionsCheckboxes").show();
+    } else if (value == "none") {
+        setMarkersAndCirclesOn(false,false);
+        $("#myColors").html("");
+        clearAllMarkers();
     // Marker clusterer
     } else {
         $("#myColors").html("");
         $("#styleOptionsCheckboxes").hide();
         setMarkerClustererOn();
-
     }
 }
 
@@ -788,6 +791,8 @@ function setMarkersAndCirclesOn(drawMarkers,drawRadius) {
                             circle.bindTo('center', bm2.markers[i], 'position');
                           }
                         }
+
+
                     }
                 }
 }
@@ -1163,6 +1168,16 @@ function markerInfoWindow(marker) {
 Function that switches between two available marker types, regular marker and point
 */
 function switchMarkerType() {
+
+// This function is not enabled in interface since it hangs the browser!!
+   clearAllMarkers();
+
+  smallDot =  {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillOpacity: 0.8,
+                scale: 3,
+                strokeWeight: 2
+            };
     for (i in bm2.markers) {
         var position = bm2.markers[i].get("position");
         var message = bm2.markers[i].message;
@@ -1172,14 +1187,8 @@ function switchMarkerType() {
         if (bm2.markers[i].type == "marker") {
             var color = bm2.markers[i].styleIcon.get("color");
             bm2.markers[i].setMap(null);
-            smallDot =  {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillColor: color,
-                strokeColor: color,
-                fillOpacity: 0.8,
-                scale: 3,
-                strokeWeight: 2
-            };
+            smallDot.strokeColor=color;
+            smallDot.fillColor=color;
             bm2.markers[i] = new StyledMarker({
                 styleIcon:new StyledIcon(StyledIconTypes.CLASS,{icon: smallDot}),
                     position:position,
@@ -1203,7 +1212,7 @@ function switchMarkerType() {
                 bm2.markers[i].type = "marker";
                 bm2.markers[i].count = count;
                 bm2.markers[i].radius = radius;
-                markerInfoWindow(bm2.markers[i])
+                markerInfoWindow(bm2.markers[i]);
         }
     }
 }
