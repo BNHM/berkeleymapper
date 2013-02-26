@@ -74,7 +74,7 @@ public class BMRenderKML implements BMRendererInterface {
                     // Also, limit numFields based on largge sets
                     if (count < numFields)
                         //System.out.print(field.getValue() + "\t");
-                        kml.append(field.getTitle() + " = " + field.getValue() + "<br/>");
+                        kml.append(field.getTitleAlias() + " = " + field.getValue() + "<br/>");
                     count++;
                 }
                 kml.append("    ]]>\n");
