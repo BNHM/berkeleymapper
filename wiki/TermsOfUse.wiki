@@ -7,3 +7,5 @@ BerkeleyMapper displays content third-party content that is generated on externa
 BerkeleyMapper uses the Google Maps API and thus use of images from BerkeleyMapper fall under the [http://www.google.com/permissions/geoguidelines.html Google Maps Terms of Service].  Please follow the Google Maps Terms of Service Guidelines for the type of use (print, online, advertisement, ...) and also include the following citation for BerkeleyMapper:
 
 _BerkeleyMapper, created by Berkeley Natural History Museums, UC Berkeley at http://berkeleymapper.berkeley.edu/_
+
+In cases where IUCN Redlist polygons are displayed on the map, you must also cite the use of that data according to [http://www.iucnredlist.org/about/citation IUCN citation guidelines]
