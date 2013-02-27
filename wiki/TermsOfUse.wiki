@@ -10,4 +10,4 @@ _BerkeleyMapper, created by Berkeley Natural History Museums, UC Berkeley at htt
 
 In cases where IUCN Redlist polygons are displayed on the map, you must also cite the use of that data according to [http://www.iucnredlist.org/about/citation IUCN citation guidelines]
 
-Finally, if point data is displayed from the original calling application, please cite that as well as appropriate (e.g. AmphibiaWeb, Museum of Vertebrate Zoology).
+Finally, if point data is displayed from the original calling application, please cite that as well as appropriate.
