@@ -122,7 +122,7 @@ function initializeDrawingManager() {
         index = bm2.overlays.length - 1;
         
         var areaInSqMeters = Math.round(google.maps.geometry.spherical.computeArea(p.getPath()));
-        var areaInAcres = Math.round(areaInSqMeters/4046.85642);
+        var areaInAcres = (areaInSqMeters/4046.85642).toFixed(2);
         var areaInSqMiles = (areaInSqMeters*0.000000386102159).toFixed(5);
                 
         var contentString = "<div id='content'>Polygon statistics:" + 
