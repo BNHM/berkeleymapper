@@ -593,12 +593,6 @@ function kmlZoom(i) {
     bm2.map.fitBounds(bm2.kmlLayers[i]['google'].getDefaultViewport());
 }
 
-function switchMarkerType() {
-     for (i in bm2.markers) {
-        bm2.markers[i].styleIcon;
-    }
-}
-
 // Zoom just to this set of points
 function setBounds() {
     var bound = new google.maps.LatLngBounds();
@@ -749,52 +743,48 @@ function clearAllMarkers() {
 
 function setMarkersAndCirclesOn(drawMarkers,drawRadius) {
       clearAllMarkers();
-                positions = [];
-                var count = 0;
-                var circlecount = 0;
+      positions = [];
+      var count = 0;
+      var circlecount = 0;
 
-                if (bm2.markers) {
-                    for (i in bm2.markers) {
+      if (bm2.markers) {
+        for (i in bm2.markers) {
+            var positionExists = false;
 
-                        var positionExists = false;
-
-                        // Loop through existing positions to determine if we should display this-- avoiding marker drawing overhead
-                        for (j in positions) {
-                            if(bm2.markers[i].getPosition().lat() == positions[j].lat() &&
-                                bm2.markers[i].getPosition().lng() == positions[j].lng()) {
-                                positionExists = true;
-                                break;
-                            }
-                        }
-
-                        // Only display this marker if this not a marker at this exact position
-                        if (!positionExists) {
-                          positions[count++] = bm2.markers[i].getPosition();
-
-                          if (drawMarkers) {
-                            bm2.markers[i].setMap(bm2.map);
-                          }
-                          // Add circle overlay and bind to marker
-                          if (drawRadius && bm2.markers[i].radius > 0) {
-                            var circle = new google.maps.Circle({
-                                map: bm2.map,
-                                radius: bm2.markers[i].radius,
-                                fillColor: bm2.markers[i].color,
-                                fillOpacity: 0,
-                                //fillOpacity: 0.05,
-                                strokeOpacity: 0.5,
-                                strokeWidth: 1,
-                                strokeColor: bm2.markers[i].color,
-                                clickable: false
-                            });
-                            bm2.circles[circlecount++] = circle;
-                            circle.bindTo('center', bm2.markers[i], 'position');
-                          }
-                        }
-
-
-                    }
+            // Loop through existing positions to determine if we should display this-- avoiding marker drawing overhead
+            for (j in positions) {
+                if(bm2.markers[i].getPosition().lat() == positions[j].lat() &&
+                    bm2.markers[i].getPosition().lng() == positions[j].lng()) {
+                    positionExists = true;
+                    break;
                 }
+            }
+
+            // Only display this marker if this not a marker at this exact position
+            if (!positionExists) {
+                positions[count++] = bm2.markers[i].getPosition();
+
+                if (drawMarkers) {
+                    bm2.markers[i].setMap(bm2.map);
+                }
+                // Add circle overlay and bind to marker
+                if (drawRadius && bm2.markers[i].radius > 0) {
+                    var circle = new google.maps.Circle({
+                        map: bm2.map,
+                        radius: bm2.markers[i].radius,
+                        fillColor: bm2.markers[i].color,
+                        fillOpacity: 0,
+                        strokeOpacity: 0.5,
+                        strokeWidth: 1,
+                        strokeColor: bm2.markers[i].color,
+                        clickable: false
+                    });
+                    bm2.circles[circlecount++] = circle;
+                    circle.bindTo('center', bm2.markers[i], 'position');
+                }
+            }
+        }
+      }
 }
 
 
@@ -1169,15 +1159,9 @@ Function that switches between two available marker types, regular marker and po
 */
 function switchMarkerType() {
 
-// This function is not enabled in interface since it hangs the browser!!
-   clearAllMarkers();
+  clearAllMarkers();
 
-  smallDot =  {
-                path: google.maps.SymbolPath.CIRCLE,
-                fillOpacity: 0.8,
-                scale: 3,
-                strokeWeight: 2
-            };
+
     for (i in bm2.markers) {
         var position = bm2.markers[i].get("position");
         var message = bm2.markers[i].message;
@@ -1187,12 +1171,21 @@ function switchMarkerType() {
         if (bm2.markers[i].type == "marker") {
             var color = bm2.markers[i].styleIcon.get("color");
             bm2.markers[i].setMap(null);
-            smallDot.strokeColor=color;
-            smallDot.fillColor=color;
+
             bm2.markers[i] = new StyledMarker({
-                styleIcon:new StyledIcon(StyledIconTypes.CLASS,{icon: smallDot}),
-                    position:position,
-                    map:bm2.map
+                styleIcon:new StyledIcon(
+                    StyledIconTypes.CLASS,
+                    {icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillOpacity: 0.8,
+                        scale: 3,
+                        strokeWeight: 2,
+                        fillColor: color,
+                        strokeColor: color
+                    }}
+                    ),
+                 position:position,
+                 map:bm2.map
             });
             bm2.markers[i].color = color;
             bm2.markers[i].type = "point";
