@@ -18,6 +18,7 @@ bm2.polygon = "";           // A variable to hold a polygon defined by the user
 bm2.configFile = "";
 bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
 bm2.showControls = true;
+bm2.colorOption = "markers";    // value to control how to color markers
 
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
@@ -51,6 +52,7 @@ bm2.jqGridAttributes = {
     }
 };
 
+// Set up splitter panes
 $().ready(function() {
     $("#bigContainer").splitter({
         splitHorizontal: true,
@@ -111,6 +113,7 @@ function toggleControls() {
     }
 }
 
+// Get Logos from server
 function getLogos() {
       if (!bm2.pointMode) {
           return false;
@@ -291,28 +294,44 @@ function toggleLayer(cb) {
 }
 
 // Set custom display options
-function styleOptionsCheckboxes() {
-    setMarkersAndCirclesOn($("#styleOptionMarker").is(':checked'),$("#styleOptionErrorRadius").is(':checked'));
+function errorCheckBox() {
+    // Turn them on
+    if ($("#styleOptionErrorRadius").is(':checked')) {
+        for (i in bm2.markers) {
+            if (bm2.markers[i].radius > 0) {
+                drawThisRadius(i);
+            }
+        }
+    // Turn them off
+    }   else {
+       for (i in bm2.circles) {
+            bm2.circles[i].setMap(null);
+        }
+    }
 }
 
 // Control display of points
 function pointDisplay(value) {
+    var drawRadius = false;
+    if ($("#styleOptionErrorRadius").is(':checked')) {
+        drawRadius = true;
+    }
    // Custom option
-    if (value == "markers") {
+    if (value == "markers" || value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
         // Default checkbox state is set everything on
-        setMarkersAndCirclesOn(true,true);
+        bm2.colorOption = value;
+        markerController(true,drawRadius,value);
         $("#myColors").html("");
         setColors();
-        $("#styleOptionsCheckboxes").show();
+        $("#styleOptions").show();
     } else if (value == "none") {
-        setMarkersAndCirclesOn(false,false);
         $("#myColors").html("");
         clearAllMarkers();
     // Marker clusterer
     } else {
         $("#myColors").html("");
-        $("#styleOptionsCheckboxes").hide();
-        setMarkerClustererOn();
+        $("#styleOptions").hide();
+        markerClustererController();
     }
 }
 
@@ -337,9 +356,7 @@ function setSession() {
 }
 
 function initialize() {
-  //if (jQuery.browser.msie) {
-  //  alert("BerkeleyMapper does not run reliably under Internet Explorer.  Please use any other browser.")
-  //} else {
+
     $("#loadingMsg").show();
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
@@ -385,13 +402,14 @@ function initialize() {
         setJSONPoints();
         setBigBounds();
 
-        // getLogos
         getLogos();
 
         // Special exception for amphibiaweb who doesn't want to display download links
         if (jQuery.url.param('amphibiaweb')) {
             $("#download").hide();
         }
+
+        $("#styleOptions").hide();
 
     // Plain map mode, no points passed in
     } else {
@@ -422,8 +440,6 @@ function initialize() {
             var pos = new google.maps.LatLng(position.coords.latitude,
                                              position.coords.longitude);
 
-            //alert ("location found using HTML5 " + position.coords.latitude + "/"+position.coords.longitude);
-
             bm2.map.setCenter(pos);
             bm2.map.setZoom(10);
           }, function() {
@@ -438,7 +454,6 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
-  //}
 }
 
 function handleNoGeolocation(errorFlag) {
@@ -507,8 +522,7 @@ function downloadSpatial() {
     }
 }
 
-
-
+// Get the points as JSON text
 function setJSONPoints() {
     var url = bm2.urlRoot + "allpoints?session=" + bm2.session;
     if (bm2.isSafari) {
@@ -529,7 +543,6 @@ function setJSONPoints() {
         type: "GET",
         url: url,
         async: false,
-        //contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function(data, success) {
             count = 0;
@@ -570,7 +583,7 @@ function setJSONPoints() {
                     bm2.markers[count++] = marker;
                     bound.extend(marker.getPosition());
                 });
-                setMarkerClustererOn();
+                markerClustererController();
     		    showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
@@ -741,56 +754,101 @@ function clearAllMarkers() {
     $("#bottomContainer").html(bm2.bottomContainerText);
 }
 
-function setMarkersAndCirclesOn(drawMarkers,drawRadius) {
-      clearAllMarkers();
-      positions = [];
-      var count = 0;
-      var circlecount = 0;
+function markerController(drawMarkers,drawRadius,value) {
+    clearAllMarkers();
+    positions = [];
+    var count = 0;
+    var circlecount = 0;
 
-      if (bm2.markers) {
+    if (bm2.markers) {
         for (i in bm2.markers) {
-            var positionExists = false;
+                var color = bm2.markers[i].color;
+                var position = bm2.markers[i].get("position");
+                var message = bm2.markers[i].message;
+                var count = bm2.markers[i].count;
+                var line = bm2.markers[i].line;
+                var radius = bm2.markers[i].radius;
 
-            // Loop through existing positions to determine if we should display this-- avoiding marker drawing overhead
-            for (j in positions) {
-                if(bm2.markers[i].getPosition().lat() == positions[j].lat() &&
-                    bm2.markers[i].getPosition().lng() == positions[j].lng()) {
-                    positionExists = true;
-                    break;
-                }
-            }
+                if (value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
+                    var displaycolor = color;
+                    if (value == "pointMarkersBlack") displaycolor = "#000000";
+                    if (value == "pointMarkersRed") displaycolor = "#ff0000";
 
-            // Only display this marker if this not a marker at this exact position
-            if (!positionExists) {
-                positions[count++] = bm2.markers[i].getPosition();
-
-                if (drawMarkers) {
-                    bm2.markers[i].setMap(bm2.map);
-                }
-                // Add circle overlay and bind to marker
-                if (drawRadius && bm2.markers[i].radius > 0) {
-                    var circle = new google.maps.Circle({
-                        map: bm2.map,
-                        radius: bm2.markers[i].radius,
-                        fillColor: bm2.markers[i].color,
-                        fillOpacity: 0,
-                        strokeOpacity: 0.5,
-                        strokeWidth: 1,
-                        strokeColor: bm2.markers[i].color,
-                        clickable: false
+                    bm2.markers[i] = new StyledMarker({
+                        styleIcon:new StyledIcon(
+                        StyledIconTypes.CLASS,
+                        {icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillOpacity: 0.8,
+                            scale: 3,
+                            strokeWeight: 2,
+                            fillColor: displaycolor,
+                            strokeColor: displaycolor
+                        }}
+                        ),
+                        position:position,
+                        map:bm2.map
                     });
-                    bm2.circles[circlecount++] = circle;
-                    circle.bindTo('center', bm2.markers[i], 'position');
+                } else {
+                    bm2.markers[i] = new StyledMarker(
+                        {styleIcon: new StyledIcon(StyledIconTypes.MARKER, {color:color}),
+                        position:position,
+                        map:bm2.map
+                    });
                 }
-            }
+
+                bm2.markers[i].setMap(null);
+                bm2.markers[i].color = color;
+                bm2.markers[i].line = line;
+                bm2.markers[i].type = "marker";
+                bm2.markers[i].count = count;
+                bm2.markers[i].radius = radius;
+
+                // Figure out if this position exists or not.  If it does, don't display it again!
+                var positionExists = false;
+                for (j in positions) {
+                    if(bm2.markers[i].getPosition().lat() == positions[j].lat() &&
+                        bm2.markers[i].getPosition().lng() == positions[j].lng()) {
+                        positionExists = true;
+                        break;
+                    }
+                }
+
+                // Only display this marker if this not a marker at this exact position
+                if (!positionExists) {
+                    positions[count++] = bm2.markers[i].getPosition();
+
+                    if (drawMarkers) {
+                        markerInfoWindow(bm2.markers[i]);
+                        bm2.markers[i].setMap(bm2.map);
+                    }
+                    // Add circle overlay and bind to marker
+                    if (drawRadius && bm2.markers[i].radius > 0) {
+                        drawThisRadius(i);
+                    }
+                }
         }
-      }
+    }
 }
 
+function drawThisRadius(i) {
+   var circle = new google.maps.Circle({
+                            map: bm2.map,
+                            radius: bm2.markers[i].radius,
+                            fillColor: bm2.markers[i].color,
+                            fillOpacity: 0,
+                            strokeOpacity: 0.5,
+                            strokeWidth: 1,
+                            strokeColor: bm2.markers[i].color,
+                            clickable: false
+   });
+   bm2.circles[i] = circle;
+   circle.bindTo('center', bm2.markers[i], 'position');
+}
 
-function setMarkerClustererOn() {
+// Control the MarkerClusterer
+function markerClustererController() {
     clearAllMarkers();
-    //  mode = CLUSTERING;
     var mcOptions = {
         gridSize:25,
         averageCenter:true,
@@ -1015,6 +1073,13 @@ function removeOverlay(num) {
     bm2.overlayMarkers[num].setMap(null);
 }
 
+function setHorizontalPane() {
+    var curr_height = $("#bottomContainer").height();
+    if (curr_height < 200) {
+        $("#bottomContainer").css("height", "200px");
+    }
+}
+
 function queryOverlay(num) {
     var path = bm2.overlays[num].getPath();
     var polygon = "POLYGON ((";
@@ -1041,107 +1106,12 @@ function callbackPoint(num) {
     alert("possible to send this data back to some calling application??");
 }
 
-function setHorizontalPane() {
-    var curr_height = $("#bottomContainer").height();
-    if (curr_height < 200) {
-        $("#bottomContainer").css("height", "200px");
-        //$("#mapContainer").css("height", "80%");
-    }
-}
-
-function removeGeoref(num) {
-    bm2.georefMarkers[num].setMap(null);
-    bm2.georefCircles[num].setMap(null);
-}
-
-function removeOtherGeoref(num) {
-    for (i = 0; i < bm2.georefMarkers.length; i++) {
-        if (i!=num) {
-            bm2.georefMarkers[i].setMap(null);
-            bm2.georefCircles[i].setMap(null);
-        }
-    }
-}
-
-function zoomToGeoref(num) {
-    var bounds = new google.maps.LatLngBounds();
-    var b = bm2.georefCircles[num].getBounds();
-    bounds.extend(b.getNorthEast());
-    bounds.extend(b.getSouthWest());
-    bm2.map.fitBounds(bounds);
-}
-
-function georefMarkerAssignment(marker,content) {
-    var infowindow = new google.maps.InfoWindow();
-    infowindow.setContent(content);
-
-    google.maps.event.addListener(marker, 'click', function() {
-        infowindow.open(bm2.map,marker);
-    });
-}
-
-function codeAddress(address) {
-    googleGeoref(address, function(georefs) {
-        var bounds = new google.maps.LatLngBounds();
-
-        for (i = 0; i < georefs.length; i++) {
-            var index = bm2.georefMarkers.length;
-            var location = new google.maps.LatLng(georefs[i].decimalLatitude,georefs[i].decimalLongitude)
-            var radius = georefs[i].coordinateUncertaintyInMeters;
-
-
-            bm2.map.setCenter(location);
-
-            var georefMarker = new google.maps.Marker ({
-                position: location,
-                map: bm2.map,
-                title:address
-            });
-
-            var content = address + "<br>" + georefs[i].print();
-            content += "<p><a href='#' id='delete' onclick='removeGeoref(" + index  + ");'>Delete This</a>";
-            content += " | <a href='#' id='deleteothers' onclick='removeOtherGeoref(" + index  + ");'>Delete Others</a>";
-            content += " | <a href='#' id='zoomto' onclick='zoomToGeoref(" + index  + ");'>Zoom In</a>";
-
-             georefMarkerAssignment(georefMarker,content);
-
-            // Add circle overlay and bind to marker
-            var georefCircle = new google.maps.Circle({
-                map: bm2.map,
-                radius: radius,
-                fillColor: "#ff00dd",
-                fillOpacity: 0.05,
-                strokeOpacity: 0.5,
-                strokeWidth: 1,
-                strokeColor: "#ff00dd",
-                clickable: false
-            });
-            georefCircle.bindTo('center', georefMarker, 'position');
-
-            bm2.georefCircles.push(georefCircle);
-            bm2.georefMarkers.push(georefMarker);
-            georefMarker.setMap(bm2.map);
-
-        }
-
-        // Update the bounds based on all visible markers and their radii
-        for (var i = 0; i < bm2.georefMarkers.length; i++) {
-            if (bm2.georefMarkers[i].getVisible()) {
-                var b = bm2.georefCircles[i].getBounds();
-                bounds.extend(b.getNorthEast());
-                bounds.extend(b.getSouthWest());
-            }
-
-        }
-        bm2.map.fitBounds(bounds);
-    });
-
-}
-
+// Convert String to HTML Entities
 function htmlEntities(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// Add a listener to marker to open InfoWindow
 function markerInfoWindow(marker) {
     var count = marker.count;
     var line = marker.line;
@@ -1154,59 +1124,6 @@ function markerInfoWindow(marker) {
     })(marker,count));
 }
 
-/*
-Function that switches between two available marker types, regular marker and point
-*/
-function switchMarkerType() {
-
-  clearAllMarkers();
 
 
-    for (i in bm2.markers) {
-        var position = bm2.markers[i].get("position");
-        var message = bm2.markers[i].message;
-        var count = bm2.markers[i].count;
-        var line = bm2.markers[i].line;
-        var radius = bm2.markers[i].radius;
-        if (bm2.markers[i].type == "marker") {
-            var color = bm2.markers[i].styleIcon.get("color");
-            bm2.markers[i].setMap(null);
-
-            bm2.markers[i] = new StyledMarker({
-                styleIcon:new StyledIcon(
-                    StyledIconTypes.CLASS,
-                    {icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillOpacity: 0.8,
-                        scale: 3,
-                        strokeWeight: 2,
-                        fillColor: color,
-                        strokeColor: color
-                    }}
-                    ),
-                 position:position,
-                 map:bm2.map
-            });
-            bm2.markers[i].color = color;
-            bm2.markers[i].type = "point";
-            bm2.markers[i].line = line;
-            bm2.markers[i].count = count;
-            bm2.markers[i].radius = radius;
-        } else {
-                var color = bm2.markers[i].color;
-                bm2.markers[i].setMap(null);
-                bm2.markers[i] = new StyledMarker(
-                    {styleIcon: new StyledIcon(StyledIconTypes.MARKER, {color:color}),
-                    position:position,
-                    map:bm2.map
-                });
-                bm2.markers[i].color = color;
-                bm2.markers[i].line = line;
-                bm2.markers[i].type = "marker";
-                bm2.markers[i].count = count;
-                bm2.markers[i].radius = radius;
-                markerInfoWindow(bm2.markers[i]);
-        }
-    }
-}
 
