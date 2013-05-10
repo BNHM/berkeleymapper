@@ -24,6 +24,8 @@
     <script type="text/javascript" src="js/markerclusterer.js"></script>
     <script type="text/javascript" src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/styledmarker/src/StyledMarker.js"></script>
     <script type="text/javascript" src="js/georef.js"></script>
+    <script type="text/javascript" src="js/georef-utils.js"></script>
+
 </head>
 
 <body onload="initialize()">
@@ -48,19 +50,20 @@
                     <input id="addressbutton" type="button" value="Geocode" onclick="codeAddress(document.getElementById('address').value)">
                 </div>
 
-                <div id="styleOptions">
+                <div id="displayOptions">
                     <b>Display: </b>
-                    <select onchange="pointDisplay(this.value);">
+                    <select id=pointDisplayValue onchange="pointDisplay(this.value);">
                         <option value="markerclusteron">MarkerClusterer</option>
                         <option value="markers">Placemarks</option>
+                        <option value="pointMarkers">Point Markers</option>
+                        <option value="pointMarkersBlack">Point Markers - Black</option>
+                        <option value="pointMarkersRed">Point Markers - Red</option>
                         <option value="none">None</option>
                     </select>
                 </div>
 
-                <div id="styleOptionsCheckboxes">
-                    <input type=checkbox id=styleOptionMarker checked onclick="styleOptionsCheckboxes();"/>Show Markers
-                    <br><input type=checkbox id=styleOptionErrorRadius checked onclick="styleOptionsCheckboxes();"/>Show Error Radius
-                    <br><input type=checkbox  onclick="switchMarkerType();"/>Point Markers
+                <div id="styleOptions">
+                    <br><input type=checkbox id=styleOptionErrorRadius checked onclick="errorCheckBox();"/>Show Error Radius
                 </div>
 
                 <div style="float:clear;"></div>
