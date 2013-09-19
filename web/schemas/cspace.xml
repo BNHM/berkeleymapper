@@ -8,10 +8,10 @@
 		<header location="http://ucjeps.berkeley.edu/consortium/code_banner.html"></header>
 		<linkbackheader location="http://ucjeps.berkeley.edu/"></linkbackheader>
 	</metadata>
-	<gisdata>
+	<!--<gisdata>
 		<layer title="Jepson Ecoregions (California)" legend="1" active="0" url="http://ucjeps.berkeley.edu/"><![CDATA[http://ucjeps.berkeley.edu/jepcodes-v6.kmz]]></layer>
 		<layer title="California counties" legend="1" active="0" url="http://ucjeps.berkeley.edu/"> <![CDATA[http://ucjeps.berkeley.edu/c_county.kmz]]></layer>
-	</gisdata>
+	</gisdata>-->
 	<colors method="field" fieldname="darwin:institutioncode" label="Museums" >
 		<color key="default" red="200" green="200" blue="200" symbol="7" label="University and Jepson Herbaria" />
 		<dominantcolor webcolor="336699" />
