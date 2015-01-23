@@ -42,6 +42,15 @@ public class BMSpatialFileReader implements BMFileReader {
         setReader();
     }
 
+      /**
+     * Pass in tabData configURL (this is done the first time).  Sets the session.
+     */
+    public BMSpatialFileReader(String tabdata, URL configUrl) throws IOException {
+        this.geometryFactory = new GeometryFactory();
+        this.session = new BMSession(tabdata, configUrl);
+        setReader();
+    }
+
     /**
      * Pass in a BMSession when a session exists and reads that.
      *

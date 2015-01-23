@@ -40,7 +40,9 @@ public class BMSession {
             // NOTE: encoding on darwin.berkeley.edu/amphibiaweb.txt is strange--
             // I spent 2 days researching this to no avail!!  It seems that this instance
             // has a strange encoding but could not find the reason.
-            BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
+            // BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
+            BMSession bm = new BMSession(new URL("https://biscicol.org/bcid"), null);
+
             System.out.println(bm.getFile().getAbsoluteFile());
         } catch (IOException ex) {
             Logger.getLogger(BMSession.class.getName()).log(Level.SEVERE, null, ex);
@@ -48,6 +50,12 @@ public class BMSession {
 
     }
 
+    /**
+     * Create a session using a URL for filedata
+     * @param url
+     * @param configURL
+     * @throws IOException
+     */
     public BMSession(URL url, URL configURL) throws IOException {
         setSessionUUID();
 
@@ -62,18 +70,33 @@ public class BMSession {
         } else {
             mode = FILE;
         }
-        //Timer t = new Timer();
-        //t.printer("start");
+
         copy(url, file);
-       // t.printer("copy");
-        //commons_copy(url, file);
-        //t.printer("commons_copy");
-        //channel_copy(url,file);
-        //t.printer("channel_copy");
-
-
     }
 
+    /**
+     * Create a session using tabdata that we already have
+     * @param tabdata
+     * @param configURL
+     * @throws IOException
+     */
+    public BMSession(String tabdata, URL configURL) throws IOException {
+        setSessionUUID();
+
+        file = new File(filesLocation + session);
+
+        if (configURL != null) {
+            mode = CONFIG;
+            configFile = new File(filesLocation + session + ".xml");
+
+            copy(configURL, configFile);
+
+        } else {
+            mode = FILE;
+        }
+
+        copy(tabdata, file);
+    }
 
     public BMSession(String session) {
         this.session = session;
@@ -115,6 +138,39 @@ public class BMSession {
         FileOutputStream fos = new FileOutputStream(file);
         fos.getChannel().transferFrom(rbc, 0, 1 << 24);
     }
+
+    public static void copy(String data, File file) throws IOException {
+        FileOutputStream fop = null;
+        try {
+            fop = new FileOutputStream(file);
+
+            // if file doesnt exists, then create it
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            // get the content in bytes
+            byte[] contentInBytes = data.getBytes();
+
+            fop.write(contentInBytes);
+            fop.flush();
+            fop.close();
+
+            System.out.println("Done");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fop != null) {
+                    fop.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     public static void commons_copy(URL url, File file) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);

@@ -29,11 +29,13 @@ public class BMRenderJSON implements BMRendererInterface {
      * "*" means this is optional
      *
      * @param g
+     *
      * @return
      */
     public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
         StringBuilder json = new StringBuilder();
 
+        // Assign default colors
         BMColors colors = null;
         if (config != null) {
             colors = config.getColors();
@@ -50,12 +52,33 @@ public class BMRenderJSON implements BMRendererInterface {
                 json.append(",\n");
             }
             BMRowClassifier coord = (BMRowClassifier) rows.next();
-            json.append("{\"r\":\"" +
-                    coord.line + ";" +
-                    coord.latitude + ";" +
-                    coord.longitude + ";" +
-                    coord.errorRadiusInMeters + ";" +
-                    JSONObject.escape(colors.FieldColor(coord, colors)) + "\"}");
+
+            // Catch any type of error for erroradiusinmeters
+            Integer i = coord.errorRadiusInMeters;
+
+            if (i == null || i <= 0) {
+                i = 0;
+            }
+
+            try {
+                // ensure fieldcolor is good
+                String fieldcolor = "";
+
+                if (colors.FieldColor(coord, colors) == null) {
+                    fieldcolor = "";
+                } else {
+                    fieldcolor = JSONObject.escape(colors.FieldColor(coord, colors));
+                }
+                json.append("{\"r\":\"" +
+                        coord.line + ";" +
+                        coord.latitude + ";" +
+                        coord.longitude + ";" +
+                        i + ";" +
+                        fieldcolor + "\"}");
+            } catch (NullPointerException e) {
+                System.out.println("unable to map the following coord: " + coord.print());
+                e.printStackTrace();
+            }
             count++;
         }
         json.append("\n]");
@@ -91,7 +114,7 @@ public class BMRenderJSON implements BMRendererInterface {
 
         Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
         Coordinate[] coords = subset.getCoordinates();
-         json.append("[\n");
+        json.append("[\n");
         for (int i = 0; i < coords.length; i++) {
             // Limit number of records in output to 101
             if (i < 101) {
@@ -126,6 +149,7 @@ public class BMRenderJSON implements BMRendererInterface {
      * JSON representation of Layers
      *
      * @param f
+     *
      * @return
      */
     public String KMLLayers(BMConfigAndTabFileReader f) {

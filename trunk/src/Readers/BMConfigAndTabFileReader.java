@@ -43,6 +43,20 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         }
     }
 
+    public BMConfigAndTabFileReader(String tabdata, URL configURL) throws IOException {
+           super(tabdata, configURL);
+           Timer t = new Timer();
+
+           this.configURL = configURL;
+           if (configURL != null) {
+               initHeader();
+               execConfig();
+           } else {
+               execTab();
+           }
+       }
+
+
     public BMConfigAndTabFileReader(BMSession session) throws IOException {
         super(session);
         if (session.getMode() == session.CONFIG) {
@@ -271,15 +285,57 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
         // Color components
         if (c.method == null) {
-            return null;
+            c.method = c.DEFAULT;
+            return getColorsByDefault(nl,c);
         } else if (c.method.equals(c.FIELD)) {
             //System.out.println("Fetching Colors by Field -- explicit representation by type");
             return getColorsByField(nl, c);
         } else if (c.method.equals(c.DYNAMICFIELD)) {
             //System.out.println("Fetching Colors by DynamicField");
             return getColorsByDynamicField(c);
+        } else {
+
         }
         return null;
+    }
+
+    private BMColors getColorsByDefault(NodeList nl,BMColors c) {
+  for (int i = 0; i < nl.getLength(); i++) {
+            // Fetch colors nodes
+            NodeList colors = nl.item(i).getChildNodes();
+            for (int k = 0; k < colors.getLength(); k++) {
+                Node n = colors.item(k);
+                if (n != null && n.getNodeName().equalsIgnoreCase("color")) {
+                    NamedNodeMap nnmColors = n.getAttributes();
+                    String key = "", label = "";
+                    int red = 0, green = 0, blue = 0;
+
+                    if (nnmColors != null) {
+                          /*
+                        for (int l = 0; l < nnmColors.getLength(); l++) {
+                           /*
+                            Node attribute = nnmColors.item(l);
+
+                            if (attribute.getNodeName().equalsIgnoreCase("key")) {
+                                key = attribute.getNodeValue();
+                            } else if (attribute.getNodeName().equalsIgnoreCase("label")) {
+                                label = attribute.getNodeValue();
+                            } else if (attribute.getNodeName().equalsIgnoreCase("red")) {
+                                red = Integer.valueOf(attribute.getNodeValue());
+                            } else if (attribute.getNodeName().equalsIgnoreCase("green")) {
+                                green = Integer.valueOf(attribute.getNodeValue());
+                            } else if (attribute.getNodeName().equalsIgnoreCase("blue")) {
+                                blue = Integer.valueOf(attribute.getNodeValue());
+                            }
+                        }      */
+                        BMColor bmc = new BMColor(key, label, red, green, blue);
+                        c.addColor(bmc);
+                    }
+                }
+            }
+
+        }
+        return c;
     }
 
     /**
