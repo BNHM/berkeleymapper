@@ -7,10 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
@@ -55,6 +52,41 @@ public class session {
         URL url = new URL(tabfile);
         try {
             BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(url, configUrl);
+            rb = Response.ok(f.getSession().getSessionString());
+        } catch (IOException e) {
+            rb = Response.status(204);
+            return rb.build();
+        }
+
+        // Return results
+        rb.header("Access-Control-Allow-Origin", "*");
+        return rb.build();
+    }
+
+    @POST
+    @Produces("text/html")
+    public Response getSessionPOST(
+            @FormParam("tabdata") String tabdata,
+            @FormParam("configfile") String configfile) throws MalformedURLException {
+
+
+        // See if configfile is passed in
+        URL configUrl = null;
+        try {
+            configUrl = new URL(configfile);
+        } catch (Exception e) {
+            configUrl = null;
+            System.err.println(e.getMessage());
+            rb = Response.status(204);
+        }
+
+        // Load the Tab File
+        //URL url = new URL(tabdata);
+        try {
+            BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(tabdata, configUrl);
+            System.out.println("tabdata=" + tabdata);
+            System.out.println("configUrl = " + configUrl);
+
             rb = Response.ok(f.getSession().getSessionString());
         } catch (IOException e) {
             rb = Response.status(204);

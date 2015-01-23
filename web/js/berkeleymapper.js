@@ -364,10 +364,10 @@ function initialize() {
     imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
 
     var tabFile = false;
-    // Check for valid URL
+    // Check for valid URL (or also if the user wants to directly pass in a session)
     try {
-       if(jQuery.url.param('tabfile')) {
-        tabFile = true;
+       if(jQuery.url.param('tabfile') || jQuery.url.param('session')) {
+               tabFile = true;
        }
     } catch(err) {
         alert('Unable to map your points. invalid URL passed to BerkeleyMapper, notify calling application administrator to check their URL.');
@@ -383,8 +383,15 @@ function initialize() {
         }
         // Initialize Session
         showMsg("Initializing Session");
-        // This is to allow intializing session message to appear.
-        setSession();
+
+        // If a user passes is the session, it means it was created elsewhere.  Great! lets use that
+        if (jQuery.url.param('session')) {
+                bm2.session = jQuery.url.param('session');
+        }
+        // If the session parameter is not present then we try to set it here
+        else {
+            setSession();
+        }
 
         // Initialize Map
         bm2.map = getMap();
@@ -454,6 +461,14 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
+}
+
+<!-- JS Script -->
+function mapPrint() {
+    var content = window.document.getElementById("map"); // get you map details
+    var newWindow = window.open(); // open a new window
+    newWindow.document.write(content.innerHTML); // write the map into the new window
+    newWindow.print(); // print the new window
 }
 
 function handleNoGeolocation(errorFlag) {

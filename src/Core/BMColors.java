@@ -17,6 +17,8 @@ public class BMColors {
     public String label;
     public final static String FIELD = "field";                 // Specify colors by individual values
     public final static String DYNAMICFIELD = "dynamicfield";   // Dynamically assign colors from histogram
+    public final static String DEFAULT = "default";   // Dynamically assign colors from histogram
+
 
     private ArrayList colors = new ArrayList();
     private String systemDefaultColor = "#FF0000";                    // Default color for system is red
@@ -25,6 +27,7 @@ public class BMColors {
      * Figure out the systemDefaultColor from a pattern of BMColors
      *
      * @param colors
+     *
      * @return
      */
     public String defaultColor(BMColors colors) {
@@ -43,6 +46,8 @@ public class BMColors {
             this.method = FIELD;
         } else if (method.equalsIgnoreCase("dynamicfield")) {
             this.method = DYNAMICFIELD;
+        } else {
+            this.method = DEFAULT;
         }
     }
 
@@ -67,36 +72,42 @@ public class BMColors {
      *
      * @param coord
      * @param colors
+     *
      * @return
      */
     public String FieldColor(BMRowClassifier coord, BMColors colors) {
-        Iterator fields = coord.fields.iterator();
-        while (fields.hasNext()) {
+        try {
+            Iterator fields = coord.fields.iterator();
+
+            while (fields.hasNext()) {
 
 
-            BMField field = (BMField) fields.next();
-            if (colors.fieldname.equalsIgnoreCase(field.getTitle())) {
-                Iterator colorslist = colors.getColors().iterator();
-                String userDefaultColor = "";
-                while (colorslist.hasNext()) {
-                    BMColor c = (BMColor) colorslist.next();
+                BMField field = (BMField) fields.next();
+                if (colors.fieldname.equalsIgnoreCase(field.getTitle())) {
+                    Iterator colorslist = colors.getColors().iterator();
+                    String userDefaultColor = "";
+                    while (colorslist.hasNext()) {
+                        BMColor c = (BMColor) colorslist.next();
 
-                    if (c.key.trim().equalsIgnoreCase(field.getValue().trim())) {
-                        return c.getColor();
+                        if (c.key.trim().equalsIgnoreCase(field.getValue().trim())) {
+                            return c.getColor();
+                        }
+                        if (c.key.equalsIgnoreCase("default")) {
+                            userDefaultColor = c.getColor();
+                        }
                     }
-                    if (c.key.equalsIgnoreCase("default")) {
-                        userDefaultColor = c.getColor();
+                    if (!userDefaultColor.equals("")) {
+                        return userDefaultColor;
+                    } else {
+                        return systemDefaultColor;
                     }
-                }
-                if (!userDefaultColor.equals("")) {
-                    return userDefaultColor;
-                } else {
-                    return systemDefaultColor;
                 }
             }
+            // don't ever return NULL, just return systemDefaultColor
+            return colors.defaultColor(colors);
+        } catch (Exception e) {
+            return systemDefaultColor;
         }
-        // don't ever return NULL, just return systemDefaultColor
-        return colors.defaultColor(colors);
     }
 }
 
