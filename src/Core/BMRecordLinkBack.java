@@ -88,7 +88,7 @@ public class BMRecordLinkBack {
         } else if (method.equalsIgnoreCase("pattern")) {
 
             String result =  new StrSubstitutor(keyMap).replace(linkurl);
-            return result;
+            return  "<a href=\"" + result + "\" target=\"_blank\">" + text + "</a>";
         } else {
             return null;
         }
