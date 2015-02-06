@@ -2,7 +2,6 @@ package Rest;
 
 import Core.BMSession;
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMFileReader;
 import Renderers.BMRenderJSON;
 import java.net.MalformedURLException;
 import javax.ws.rs.*;
@@ -17,7 +16,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
  * @author jdeck
  */
 @Path("kmllayers")
-public class kmllayers {
+public class kmlLayers {
     ResponseBuilder rb;
 
     @GET
@@ -28,7 +27,7 @@ public class kmllayers {
         // Load the File
         BMSession sess = new BMSession(session);
         try {
-            BMFileReader f = new BMConfigAndTabFileReader(sess);            
+            BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);            
             rb = Response.ok(new BMRenderJSON().KMLLayers(f));
         } catch (IOException e) {
             rb = Response.status(204);
