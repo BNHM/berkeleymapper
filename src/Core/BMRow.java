@@ -80,9 +80,9 @@ public class BMRow {
             if (
                     fileReader.recordLinkBack != null &&
                             title != null &&
-                            fileReader.recordLinkBack.getURL() !=null &&
+                            //fileReader.recordLinkBack.getURL() !=null &&
                             fileReader.recordLinkBack.getMethod().equals("pattern")) {
-                if (fileReader.recordLinkBack.getURL().contains(title)) {
+                if (fileReader.recordLinkBack.getLinkurl().contains(title)) {
                     valuesMap.put(title, value);
                 }
             } else if (title.equalsIgnoreCase(linkbackField)) {
