@@ -2,9 +2,7 @@ package Core;
 
 import Readers.BMConfigAndTabFileReader;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * Represents a row in a data file
@@ -44,6 +42,9 @@ public class BMRow {
         BMLineStringReader lsr = new BMLineStringReader(lineStr);
         String JoinPart1 = "", JoinPart2 = "";
         Iterator lsri = lsr.iterator();
+        //ArrayList linkbackPatterns = new ArrayList();
+        Map valuesMap = new HashMap();
+
 
         for (int i = 0; i < header.length; i++) {
             String title = "";
@@ -74,8 +75,17 @@ public class BMRow {
                 viewlist = true;
                 System.err.println("ViewList Elements out of bounds");
             }
-            // For recordlinkback
-            if (title.equalsIgnoreCase(linkbackField)) {
+            // Set the linkbackValue t
+            // If this is method = patterh do the following
+            if (
+                    fileReader.recordLinkBack != null &&
+                            title != null &&
+                            fileReader.recordLinkBack.getURL() !=null &&
+                            fileReader.recordLinkBack.getMethod().equals("pattern")) {
+                if (fileReader.recordLinkBack.getURL().contains(title)) {
+                    valuesMap.put(title, value);
+                }
+            } else if (title.equalsIgnoreCase(linkbackField)) {
                 linkbackValue = value;
             }
 
@@ -123,10 +133,14 @@ public class BMRow {
             fields.add(new BMField(title, titleAlias, viewlist, value));
         }
 
-        // LinkBack logic
+        // Set the linkback field
         if (fileReader.recordLinkBack != null) {
+            if (fileReader.recordLinkBack.getMethod().equals("pattern")) {
+                fileReader.recordLinkBack.setMap(valuesMap);
+            } else {
+                fileReader.recordLinkBack.setValue(linkbackValue);
+            }
 
-            fileReader.recordLinkBack.setValue(linkbackValue);
             String url = fileReader.recordLinkBack.getURL();
             if (url != null) {
                 fields.add(new BMField(fileReader.recordLinkBack.getFieldname(), fileReader.recordLinkBack.getFieldname(), true, url));

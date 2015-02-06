@@ -39,7 +39,7 @@ public class test {
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
             url = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt");
-            url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_790.txt");
+            url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_480.txt");
             //url = new URL("http://ucmpdb.berkeley.edu/ucmp/tmpfiles/98721.xls");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.txt");
             //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
@@ -62,7 +62,7 @@ public class test {
             //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
             configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.xml");
             configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_521.xml");
-            configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_790.xml");
+            configUrl = new URL("http://darwin.berkeley.edu/foo.xml");
 
 
         } catch (MalformedURLException ex) {
@@ -89,7 +89,10 @@ public class test {
         //String output = new BMRenderKML().AllPoints(fs.getMultiPointGeometry(), fs);
         String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(),fs);
         System.out.println(output);
-        //System.out.println(new BMRenderJSON().Record(10, fs));
+        for (int i=10; i< 200; i++) {
+        System.out.println(new BMRenderJSON().Record(i, fs));
+        }
+
         //System.out.println(new BMRenderJSON().Logos(fs));
         // Perform a spatial operation
         //output = new BMRenderJSON().RecordsInPolygon(f,createTestPolygon());
