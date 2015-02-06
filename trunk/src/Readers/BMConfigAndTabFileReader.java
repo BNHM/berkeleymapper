@@ -44,17 +44,17 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     public BMConfigAndTabFileReader(String tabdata, URL configURL) throws IOException {
-           super(tabdata, configURL);
-           Timer t = new Timer();
+        super(tabdata, configURL);
+        Timer t = new Timer();
 
-           this.configURL = configURL;
-           if (configURL != null) {
-               initHeader();
-               execConfig();
-           } else {
-               execTab();
-           }
-       }
+        this.configURL = configURL;
+        if (configURL != null) {
+            initHeader();
+            execConfig();
+        } else {
+            execTab();
+        }
+    }
 
 
     public BMConfigAndTabFileReader(BMSession session) throws IOException {
@@ -125,7 +125,11 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     }
                 }
 
-                recordLinkBack = new BMRecordLinkBack(linkurl, text, key1, value1, fieldname, method);
+                if (method.equals("pattern")) {
+                    recordLinkBack = new BMRecordLinkBack(linkurl, text, fieldname);
+                } else {
+                    recordLinkBack = new BMRecordLinkBack(linkurl, text, key1, value1, fieldname, method);
+                }
 
             }
         }
@@ -227,7 +231,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
 
     /**
      * Each Configuration File may want to pass in Logos to display under the legend.  This returns the contents
-     * of all "logo" elements in a HashMap consisting of an img and url tags, thus the user simply passes in elements like
+     * of all "logo" elements in a HashMap consisting of an img and url tags, thus the user simply passes in elements
+     * like
      * <logo img="http://myurl/logo.gif" url="http://mysite.com/" />
      *
      * @return
@@ -286,7 +291,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         // Color components
         if (c.method == null) {
             c.method = c.DEFAULT;
-            return getColorsByDefault(nl,c);
+            return getColorsByDefault(nl, c);
         } else if (c.method.equals(c.FIELD)) {
             //System.out.println("Fetching Colors by Field -- explicit representation by type");
             return getColorsByField(nl, c);
@@ -299,8 +304,8 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         return null;
     }
 
-    private BMColors getColorsByDefault(NodeList nl,BMColors c) {
-  for (int i = 0; i < nl.getLength(); i++) {
+    private BMColors getColorsByDefault(NodeList nl, BMColors c) {
+        for (int i = 0; i < nl.getLength(); i++) {
             // Fetch colors nodes
             NodeList colors = nl.item(i).getChildNodes();
             for (int k = 0; k < colors.getLength(); k++) {
@@ -311,23 +316,23 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
                     int red = 0, green = 0, blue = 0;
 
                     if (nnmColors != null) {
-                          /*
-                        for (int l = 0; l < nnmColors.getLength(); l++) {
-                           /*
-                            Node attribute = nnmColors.item(l);
+                        /*
+                  for (int l = 0; l < nnmColors.getLength(); l++) {
+                     /*
+                      Node attribute = nnmColors.item(l);
 
-                            if (attribute.getNodeName().equalsIgnoreCase("key")) {
-                                key = attribute.getNodeValue();
-                            } else if (attribute.getNodeName().equalsIgnoreCase("label")) {
-                                label = attribute.getNodeValue();
-                            } else if (attribute.getNodeName().equalsIgnoreCase("red")) {
-                                red = Integer.valueOf(attribute.getNodeValue());
-                            } else if (attribute.getNodeName().equalsIgnoreCase("green")) {
-                                green = Integer.valueOf(attribute.getNodeValue());
-                            } else if (attribute.getNodeName().equalsIgnoreCase("blue")) {
-                                blue = Integer.valueOf(attribute.getNodeValue());
-                            }
-                        }      */
+                      if (attribute.getNodeName().equalsIgnoreCase("key")) {
+                          key = attribute.getNodeValue();
+                      } else if (attribute.getNodeName().equalsIgnoreCase("label")) {
+                          label = attribute.getNodeValue();
+                      } else if (attribute.getNodeName().equalsIgnoreCase("red")) {
+                          red = Integer.valueOf(attribute.getNodeValue());
+                      } else if (attribute.getNodeName().equalsIgnoreCase("green")) {
+                          green = Integer.valueOf(attribute.getNodeValue());
+                      } else if (attribute.getNodeName().equalsIgnoreCase("blue")) {
+                          blue = Integer.valueOf(attribute.getNodeValue());
+                      }
+                  }      */
                         BMColor bmc = new BMColor(key, label, red, green, blue);
                         c.addColor(bmc);
                     }
@@ -342,6 +347,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
      * Determine the position of the particular title variable in an arraylist of fields
      *
      * @param title
+     *
      * @return
      */
     private Integer getBMFieldPosition(String title) {
@@ -366,6 +372,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
      * Need to reed tab delimited field for the appropriate column and get a list of unique values
      *
      * @param c
+     *
      * @return
      */
     private BMColors getColorsByDynamicField(BMColors c) {
@@ -400,6 +407,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
      *
      * @param nl
      * @param c
+     *
      * @return
      */
     private BMColors getColorsByField(NodeList nl, BMColors c) {
