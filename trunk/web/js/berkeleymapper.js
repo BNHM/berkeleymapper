@@ -172,17 +172,17 @@ function setKMLLayers() {
                 var url, mode, title;
                 var kmlObj = new Object();
                 $.each(this, function(k, v) {
-                    if (k == "url") kmlObj.key = v;
+                    if (k == "url") kmlObj.key = v.trim();
                     if (k == "visibility") kmlObj.visibility = v;   // visibile|hidden
                     if (k == "zoom") kmlObj.zoom = v;               // expand|ignore
                     if (k == "title") kmlObj.title = v;
                 });
 
                 // Set the google object
-                var layer = new google.maps.KmlLayer(kmlObj.key, {
-                    //preserveViewport:true,
-                    map: bm2.map
-                });
+  		        var layer = new google.maps.KmlLayer(kmlObj.key);
+		        layer.setMap(bm2.map);
+
+                // Initialize this to false so it can be set to true once it is added
                 layer.added = false;
 
                 // Wait for success on layer load to add it to menu
@@ -280,16 +280,16 @@ function addKMLLayerToMenu(i,layer) {
         });
 
         // set initial visibility
-        if (bm2.kmlLayers[i]['visibility'] == 'visible') {
-            bm2.kmlLayers[i]['google'].setMap(bm2.map);
-        }
+        //if (bm2.kmlLayers[i]['visibility'] == 'visible') {
+         //   bm2.kmlLayers[i].google.setMap(bm2.map);
+        //}
 }
 // toggle visibility
 function toggleLayer(cb) {
     if (cb.checked) {
-        bm2.kmlLayers[cb.value]['google'].setMap(bm2.map);
+        bm2.kmlLayers[cb.value].google.setMap(bm2.map);
     } else {
-        bm2.kmlLayers[cb.value]['google'].setMap(null);
+        bm2.kmlLayers[cb.value].google.setMap(null);
     }
 }
 
@@ -618,7 +618,7 @@ function setJSONPoints() {
 
 // Zoom to an individual KML Layer
 function kmlZoom(i) {
-    bm2.map.fitBounds(bm2.kmlLayers[i]['google'].getDefaultViewport());
+    bm2.map.fitBounds(bm2.kmlLayers[i].google.getDefaultViewport());
 }
 
 // Zoom just to this set of points
@@ -639,8 +639,8 @@ function setBigBounds() {
 
     for ( var i=0; i< bm2.kmlLayers.length; i++) {
         if (bm2.kmlLayers[i]['visibility'] == "visible") {
-            bound.extend(bm2.kmlLayers[i]['google'].getDefaultViewport().getNorthEast());
-            bound.extend(bm2.kmlLayers[i]['google'].getDefaultViewport().getSouthWest());
+            bound.extend(bm2.kmlLayers[i].google.getDefaultViewport().getNorthEast());
+            bound.extend(bm2.kmlLayers[i].google.getDefaultViewport().getSouthWest());
         }
     }
     bm2.map.fitBounds(bound);
