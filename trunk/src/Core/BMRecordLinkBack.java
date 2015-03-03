@@ -76,6 +76,7 @@ public class BMRecordLinkBack {
 
     /**
      * Returns a URL representation based on values and method
+     *
      * @return
      */
     public String getURL() {
@@ -83,12 +84,20 @@ public class BMRecordLinkBack {
         if (linkurl.indexOf("?") > 0) {
             delimiter = "&";
         }
-        if (method.equalsIgnoreCase("root")) {
-            return "<a href=\"" + linkurl + delimiter + key1 + "=" + value1Value + "\" target=\"_blank\">" + text + "</a>";
-        } else if (method.equalsIgnoreCase("pattern")) {
 
-            String result =  new StrSubstitutor(keyMap).replace(linkurl);
-            return  "<a href=\"" + result + "\" target=\"_blank\">" + text + "</a>";
+        String href = "";
+        if (method.equalsIgnoreCase("root")) {
+            href = linkurl + delimiter + key1 + "=" + value1Value;
+            if (href.trim().equals("")) {
+                return "";
+            }
+            return "<a href=\"" + href + "\" target=\"_blank\">" + text + "</a>";
+        } else if (method.equalsIgnoreCase("pattern")) {
+            href = new StrSubstitutor(keyMap).replace(linkurl);
+            if (href.trim().equals("")) {
+                return "";
+            }
+            return "<a href=\"" + href + "\" target=\"_blank\">" + text + "</a>";
         } else {
             return null;
         }
@@ -97,11 +106,11 @@ public class BMRecordLinkBack {
     public static void main(String[] args) {
         String linkurl = "http://portal.vertnet.org/o/${institutioncode}/${collectioncode}?id=${catalognumbertext}";
 
-        BMRecordLinkBack lb = new BMRecordLinkBack(linkurl, "some text", null );
+        BMRecordLinkBack lb = new BMRecordLinkBack(linkurl, "some text", null);
         Map map = new HashMap();
         //map.put("institutioncode","");
-        map.put("collectioncode","Herp");
-        map.put("catalognumbertext","12345");
+        map.put("collectioncode", "Herp");
+        map.put("catalognumbertext", "12345");
         lb.setMap(map);
         System.out.println(lb.getURL());
     }
