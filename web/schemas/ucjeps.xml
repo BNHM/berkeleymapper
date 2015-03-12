@@ -10,7 +10,7 @@
 </metadata>
 <colors method="field" fieldname="darwin:institutioncode" label="Museums" >
 <gisdata>
-<layer title="Jepson Ecoregions (California)" legend="1" active="1" url="http://ucjeps.berkeley.edu/"><![CDATA[http://darwin.berkeley.edu/tmp/ms_tmp/data/ucjeps/jepcodes-v4.kmz]]></layer>
+<layer title="Jepson Ecoregions (California)" legend="1" active="1" url="http://ucjeps.berkeley.edu/"><![CDATA[http://darwin.berkeley.edu/data/berkeleymapperdata/ucjeps/jepcodes-v4.kmz]]></layer>
 </gisdata>
 <color key="UCSB" red="0" green="0" blue="255" symbol="7" label="University of California at Santa Barbara" />
 <color key="UC" red="0" green="255" blue="0" symbol="7" label="University Herbarium (Berkeley)" />

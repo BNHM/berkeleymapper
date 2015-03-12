@@ -971,16 +971,16 @@ function setMapTypes() {
     var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
     bm2.map.mapTypes.set('cantopo', cantopo);
 
-    var moorea = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
+    var moorea = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
     bm2.map.mapTypes.set('moorea',moorea);
 
-    var mooreabathy = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
+    var mooreabathy = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
     bm2.map.mapTypes.set('mooreabathy',mooreabathy);
 
-    var angelo2m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
+    var angelo2m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
     bm2.map.mapTypes.set('angelo2m',angelo2m);
 
-    var angelo1m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/tmp/ms_tmp/data/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
+    var angelo1m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
     bm2.map.mapTypes.set('angelo1m',angelo1m);
 
     bm2.map.setOptions({
