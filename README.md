@@ -6,3 +6,4 @@ This codebase is in active development, with many new features and interface cha
 
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
+.
