@@ -23,7 +23,7 @@ import java.util.logging.Logger;
  */
 public class test {
     //static GeometryFactory geometryFactory = new GeometryFactory();
-
+     // change in test
     public static void main(String args[]) {
         // Initial URL
         URL url = null;
