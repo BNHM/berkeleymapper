@@ -5,5 +5,3 @@ This codebase is in active development, with many new features and interface cha
 <img src='http://berkeleymapper.googlecode.com/files/mapping.jpg' width='400'>
 
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
-
-.
