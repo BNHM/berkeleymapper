@@ -16,5 +16,3 @@ Change your BerkeleyMapper 1.0 Call to use the BerkeleyMapper 2.0 Test server, f
 <a href='http://berkeleymapper.berkeley.edu/'>http://berkeleymapper.berkeley.edu/</a>....<br>
 becomes ...<br>
 <a href='http://berkeleymappertest.berkeley.edu/'>http://berkeleymappertest.berkeley.edu/</a>...<br>
-<br>
-More details and information is available at the <a href='http://code.google.com/p/berkeleymapper/w/list'>Wiki</a>
