@@ -4,9 +4,5 @@ This codebase is in active development, with many new features and interface cha
 
 <img src='http://berkeleymapper.googlecode.com/files/mapping.jpg' width='400'>
 
-Step by step guide to building a BerkeleyMapper 2.0 configuration using a SampleConfiguration.<br>
-<br>
-<b>Test BerkeleyMapper 2.0</b>
-<ul><li><a href='http://berkeleymappertest.berkeley.edu/index.html?ViewResults=tab&tabfile=http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt&configfile=http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml'>http://berkeleymappertest.berkeley.edu/index.html?ViewResults=tab&amp;tabfile=http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt&amp;configfile=http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml</a> Run TEST 1 (Map a set of points)]<br>
-</li><li><a href='http://berkeleymappertest.berkeley.edu/index.html?tabfile=http://berkeleymappertest.berkeley.edu/schemas/arctos.txt&configfile=http://berkeleymappertest.berkeley.edu/schemas/arctos.xml'>http://berkeleymappertest.berkeley.edu/index.html?tabfile=http://berkeleymappertest.berkeley.edu/schemas/arctos.txt&amp;configfile=http://berkeleymappertest.berkeley.edu/schemas/arctos.xml</a> Run TEST 2 (Point mapping with a range map)]</li></ul>
+Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
