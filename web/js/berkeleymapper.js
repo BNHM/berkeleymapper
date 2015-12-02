@@ -20,6 +20,10 @@ bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Const
 bm2.showControls = true;
 bm2.colorOption = "markers";    // value to control how to color markers
 
+String.prototype.endsWith = function(suffix) {
+    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+};
+
 // Control the look and behaviour or the table grid
 bm2.jqGridAttributes = {
     multiboxonly: true,
@@ -178,34 +182,49 @@ function setKMLLayers() {
                     if (k == "title") kmlObj.title = v;
                 });
 
-                // Set the google object
-  		        var layer = new google.maps.KmlLayer(kmlObj.key);
-		        layer.setMap(bm2.map);
-
-                // Initialize this to false so it can be set to true once it is added
-                layer.added = false;
-
-                // Wait for success on layer load to add it to menu
-                google.maps.event.addListener(layer, 'status_changed', function () {
-                    if (layer.getStatus() == 'OK' ) {
-                        if (!layer.added) {
-                            kmlObj.google = layer;
-                            kmlObj.url = kmlObj.key;
-                            bm2.kmlLayers[kmlcounter] = kmlObj;
-                            addKMLLayerToMenu(kmlcounter,layer);
-                            layer.added = true;
-                            kmlcounter++;
-                            //setBigBounds();
-                        }
-                    } else {
+                // If the "KML" ends in .json then use the JSON method
+                // TEST for end in JSON
+                kmlObj.url = kmlObj.key;
+                if (kmlObj.url.endsWith('json')) {
+                    map.data.loadGeoJson(kmlObj.url, null, function (features) {
+                        var layer = null;
+                        bm2.map.data.loadGeoJson(kmlObj.url);
                         bm2.kmlLayers[kmlcounter] = kmlObj;
-                        addKMLErrorMessageToMenu(kmlcounter);
+                        addKMLLayerToMenu(kmlcounter,layer);
+                        layer.added = true;
+                        kmlcounter++;
+                    });
+                } else {
+                    // Else proceed with KML method
+                    // Set the google object
+  		            var layer = new google.maps.KmlLayer(kmlObj.key);
+		            layer.setMap(bm2.map);
+
+                    // Initialize this to false so it can be set to true once it is added
+                    layer.added = false;
+
+                    // Wait for success on layer load to add it to menu
+                    google.maps.event.addListener(layer, 'status_changed', function () {
+                        if (layer.getStatus() == 'OK' ) {
+                            if (!layer.added) {
+                                kmlObj.google = layer;
+                                kmlObj.url = kmlObj.key;
+                                bm2.kmlLayers[kmlcounter] = kmlObj;
+                                addKMLLayerToMenu(kmlcounter,layer);
+                                layer.added = true;
+                                kmlcounter++;
+                                //setBigBounds();
+                            }
+                        } else {
+                            bm2.kmlLayers[kmlcounter] = kmlObj;
+                            addKMLErrorMessageToMenu(kmlcounter);
                         // removed the alert here for amphibiaweb since often times species maps don't have
                         // KML layers... this way it fails silently, but this was what user requested.
                         //alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
-                    }
+                        }
 
-                });
+                    });
+                 }
             });
         },
         error: function(result) {
