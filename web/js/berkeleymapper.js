@@ -186,9 +186,16 @@ function setKMLLayers() {
                 // TEST for end in JSON
                 kmlObj.url = kmlObj.key;
                 if (kmlObj.url.endsWith('json')) {
-                    map.data.loadGeoJson(kmlObj.url, null, function (features) {
-                        var layer = null;
-                        bm2.map.data.loadGeoJson(kmlObj.url);
+                    var promise = $.getJSON(kmlObj.url); //same as map.data.loadGeoJson();
+
+                    promise.then(function(data){
+                        cachedGeoJson = data; //save the geojson in case we want to update its values
+                        var layer = new google.maps.Data();
+                        layer.added = false;
+                        layer.addGeoJson(cachedGeoJson);
+                        layer.setMap(bm2.map);
+                        kmlObj.google = layer;
+                        kmlObj.url = kmlObj.key;
                         bm2.kmlLayers[kmlcounter] = kmlObj;
                         addKMLLayerToMenu(kmlcounter,layer);
                         layer.added = true;
