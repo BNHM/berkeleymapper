@@ -624,8 +624,13 @@ function setJSONPoints() {
                     bm2.markers[count++] = marker;
                     bound.extend(marker.getPosition());
                 });
-                markerClustererController();
-    		    showMsg("Installing Components...");
+                // accepts some URL parameter, if set to controll the display of points
+                if (jQuery.url.param('pointDisplay')) {
+                    pointDisplay(jQuery.url.param('pointDisplay'));
+                } else {
+                    markerClustererController();
+                }
+    		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
