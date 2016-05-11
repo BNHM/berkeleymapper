@@ -338,6 +338,7 @@ function errorCheckBox() {
 
 // Control display of points
 function pointDisplay(value) {
+    clearAllMarkers();
     var drawRadius = false;
     if ($("#styleOptionErrorRadius").is(':checked')) {
         drawRadius = true;
@@ -357,7 +358,7 @@ function pointDisplay(value) {
     } else {
         $("#myColors").html("");
         $("#styleOptions").hide();
-        markerClustererController();
+	markerClustererController();
     }
 }
 
@@ -625,11 +626,12 @@ function setJSONPoints() {
                     bound.extend(marker.getPosition());
                 });
                 // accepts some URL parameter, if set to controll the display of points
-                if (jQuery.url.param('pointDisplay')) {
-                    pointDisplay(jQuery.url.param('pointDisplay'));
-                } else {
+                //if (jQuery.url.param('pointDisplay')) {
+                //    pointDisplay(jQuery.url.param('pointDisplay'));
+                //} else {
+		    clearAllMarkers();
                     markerClustererController();
-                }
+               // }
     		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
@@ -903,8 +905,10 @@ function markerClustererController() {
         zoomOnClick:false
     };
     bm2.mc = new MarkerClusterer(bm2.map, bm2.markers, mcOptions);
+    //bm2.mc = new MarkerClusterer(bm2.map);
+    //bm2.mc.addMarkers(bm2.markers);
 
-    google.maps.event.addListener(bm2.mc, 'click', function (c) {
+    google.maps.event.addListener(bm2.mc, 'clusterclick', function (c) {
         var cb = new google.maps.LatLngBounds();
         var m = c.getMarkers();
         for (var i = 0; i < m.length; i++) {
