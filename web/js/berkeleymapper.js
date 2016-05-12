@@ -338,7 +338,6 @@ function errorCheckBox() {
 
 // Control display of points
 function pointDisplay(value) {
-    clearAllMarkers();
     var drawRadius = false;
     if ($("#styleOptionErrorRadius").is(':checked')) {
         drawRadius = true;
@@ -610,7 +609,7 @@ function setJSONPoints() {
                     var marker = new StyledMarker({
                         styleIcon:  new StyledIcon(StyledIconTypes.MARKER, {color:markercolor}),
                         position: latlng,
-                        map: bm2.map,
+                        map: null,
                         title:"point"
                     });
                     // additional options
@@ -626,12 +625,12 @@ function setJSONPoints() {
                     bound.extend(marker.getPosition());
                 });
                 // accepts some URL parameter, if set to controll the display of points
-                //if (jQuery.url.param('pointDisplay')) {
-                //    pointDisplay(jQuery.url.param('pointDisplay'));
-                //} else {
-		    clearAllMarkers();
+                if (jQuery.url.param('pointDisplay')) {
+                    pointDisplay(jQuery.url.param('pointDisplay'));
+		    $("#pointDisplayValue").val(jQuery.url.param('pointDisplay'));
+                } else {
                     markerClustererController();
-               // }
+                }
     		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
