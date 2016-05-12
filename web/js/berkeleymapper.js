@@ -504,7 +504,8 @@ function handleNoGeolocation(errorFlag) {
     } else {
         content = 'Error: Your browser doesn\'t support geolocation.';
     }
-    alert(content);
+    //Removing this alert for now since it always fails... need to switch berkeleymapper to SSL for this to work
+    //alert(content);
 }
 
 // Display a legend of colors
