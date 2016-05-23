@@ -56,32 +56,51 @@ function Georef(decimalLatitude, decimalLongitude, coordinateUncertaintyInMeters
  * @param callback
  */
 function googleGeoref(s, callback) {
-    var geocoder = new google.maps.Geocoder();
-    if (geocoder) {
-        geocoder.geocode({'address': s}, function(results, status) {
-            if (status == google.maps.GeocoderStatus.OK) {
-                if (results[0]) {
-                    // empty array before we populate it
-                    georefjs.georefs.length = 0;
-                    for (i = 0; i < results.length; i++) {
-                        var georef = new Georef(
-                            results[i].geometry.location.lat().toFixed(4),
-                            results[i].geometry.location.lng().toFixed(4),
-                            getRadiusFromViewPort(results[i].geometry.viewport),
-                            "WGS84",
-                            "Google Maps GeoCoding Service API v3",
-                            "Google location_type is " + results[i].geometry.location_type
-                        )
-                        georefjs.georefs[i] = georef;
+    var ll = isDecimalDegrees(s);
+
+    // Test to see if this is decimal degrees
+    if (ll) {
+         var georef = new Georef(
+            ll[0],
+            ll[1],
+            0,
+            "WGS84",
+            "Unknown",
+            "Direct entry of coordinates by user"
+         )
+         // empty array
+         georefjs.georefs = [];
+         georefjs.georefs[0] = georef;
+         callback(georefjs.georefs);
+    // Run the google geocoding service for all other cases
+    } else {
+        var geocoder = new google.maps.Geocoder();
+        if (geocoder) {
+            geocoder.geocode({'address': s}, function(results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    if (results[0]) {
+                        // empty array before we populate it
+                        georefjs.georefs.length = 0;
+                        for (i = 0; i < results.length; i++) {
+                            var georef = new Georef(
+                                results[i].geometry.location.lat().toFixed(4),
+                                results[i].geometry.location.lng().toFixed(4),
+                                getRadiusFromViewPort(results[i].geometry.viewport),
+                                "WGS84",
+                                "Google Maps GeoCoding Service API v3",
+                                "Google location_type is " + results[i].geometry.location_type
+                            )
+                            georefjs.georefs[i] = georef;
+                        }
+                        callback(georefjs.georefs);
+                    } else {
+                        alert("No results found");
                     }
-                    callback(georefjs.georefs);
                 } else {
-                    alert("No results found");
+                    alert("Geocoder failed due to: " + status);
                 }
-            } else {
-                alert("Geocoder failed due to: " + status);
-            }
-        });
+            });
+        }
     }
 }
 
@@ -144,3 +163,20 @@ function bgGeoref(s, callback) {
 
 }
 
+// This function always assumes latitude comes first
+function isDecimalDegrees(a) {
+    var ll=a.split(/[\/,\s]/);
+    var latitude=ll[0];
+    var longitude=ll[1];
+
+    if (isNaN(latitude) || isNaN(longitude)) {
+        return false;
+    }
+    if (latitude > 90 || latitude < -90) {
+        return false;
+    }
+    if (longitude > 180 || latitude < -180) {
+        return false;
+    }
+    return ll;
+}

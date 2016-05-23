@@ -470,6 +470,7 @@ function initialize() {
         $("#layers").hide();
         $("#download").hide();
         $("#styleOptions").hide();
+        $("#displayOptions").hide();
 
         // Try HTML5 geolocation
         if(navigator.geolocation) {

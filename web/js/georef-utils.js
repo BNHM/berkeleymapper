@@ -12,6 +12,12 @@ function removeOtherGeoref(num) {
             bm2.georefCircles[i].setMap(null);
         }
     }
+    // Now completely empty array and reinitialize with just the one we want.
+   /* bm2.georefMarkers = [bm2.georefMarkers[num]];
+    bm2.georefCircles = [bm2.georefCircles[num]];
+    bm2.georefMarkers[0].setMap(bm2.map);
+    bm2.georefCircles[0].setMap(bm2.map);
+    */
 }
 
 // Zoom into one of the georeferenced localities
