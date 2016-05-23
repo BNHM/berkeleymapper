@@ -63,11 +63,6 @@ html, body, #map {
     overflow:auto;
 }
 
-#styleOptions {
-    font-size:11px;
-    overflow:auto;
-}
-
 select {
   font-family: inherit;
 }
@@ -84,15 +79,17 @@ select {
 #addressControl {
     display:none;
 }
-#layers {
+/* These are the main content elements on the left pane */
+#layers, #download, #myColors, #styleOptions, #displayOptions, #information {
     font-size:11px;
+    margin: 5px 5px 5px 5px;
+    overflow:auto;
 }
 
-#download {
-    font-size:11px;
-}
-#myColors {
-    font-size:11px;
+#legendText {
+    font-size: 12px;
+    margin: 5px 0px 5px 5px;
+    overflow:auto;
 }
 
 .markerImgDiv {

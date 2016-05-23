@@ -28,6 +28,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     private URL configURL;
     protected BMJoins joins = null;
     private String name;
+    private String legendText;
 
 
     public BMConfigAndTabFileReader(URL url, URL configURL) throws IOException {
@@ -82,6 +83,22 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
     }
 
     /**
+     * Get the "legendText" to display on the left hand side legend
+     * @return
+     */
+    public String getLegendText() {
+        return legendText;
+    }
+
+    /**
+     * Set the "legendText" to display on the left hand side legend
+     * @param legendText
+     */
+    public void setLegendText(String legendText) {
+        this.legendText = legendText;
+    }
+
+    /**
      * Populate columns and columnsAlias Array from XML Configuration File
      *
      * @return
@@ -99,6 +116,13 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
             name = nlMetadata.item(0).getTextContent();
         } catch (NullPointerException e) {
             name = "Undefined";
+        }
+
+        try {
+            NodeList nlMetadata = doc.getElementsByTagName("legendText");
+            legendText = nlMetadata.item(0).getTextContent();
+        } catch (NullPointerException e) {
+            legendText = "Undefined";
         }
 
         // Structure linkbacks

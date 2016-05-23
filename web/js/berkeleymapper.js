@@ -162,6 +162,8 @@ function getLogos() {
 
 // Initialize the Array of Available KML Layers
 function setKMLLayers() {
+    $("#layers").append("<b>Layers</b><br>");
+
     if (!bm2.pointMode) {
         return false;
     }
@@ -432,6 +434,8 @@ function initialize() {
         if (bm2.configFile != "") {
             setKMLLayers();
         }
+        // Set the metadata elements in the legend.
+        setMetadataElements();
         // Draw the Points
         setJSONPoints();
         setBigBounds();
@@ -508,9 +512,27 @@ function handleNoGeolocation(errorFlag) {
     alert(content);
 }
 
+// set all of our metadata elements by calling the metadataElements service, parsing, and assigning to correspondingly named elements
+function setMetadataElements() {
+ var url = bm2.urlRoot + "metadataElements?session=" + bm2.session;
+    $.ajax({
+        type: "GET",
+        url: url,
+        async: true,
+        dataType: "json",
+        success: function(data, success) {
+            // Here we loop each element that is defined in the returned JSON and assigning it to
+            // an ID of the same name that is defined in our main HTML div.
+            $.each( data, function( key, val ) {
+                $("#" + key).append(val);
+            });
+        }
+    });
+}
+
 // Display a legend of colors
 function setColors() {
-    $("#myColors").append("<br>&nbsp;<br><b style='font-size:11px;'>Marker Colors</b><br>");
+    $("#myColors").append("<b>Marker Colors</b><br>");
 
     var url = bm2.urlRoot + "colors?session=" + bm2.session;
     $.ajax({
@@ -540,6 +562,7 @@ function setColors() {
         }
     });
 }
+
 
 
 // download links from bm2 service
@@ -610,7 +633,7 @@ function setJSONPoints() {
                     var marker = new StyledMarker({
                         styleIcon:  new StyledIcon(StyledIconTypes.MARKER, {color:markercolor}),
                         position: latlng,
-                        map: bm2.map,
+                        map: null,
                         title:"point"
                     });
                     // additional options
@@ -618,7 +641,6 @@ function setJSONPoints() {
                     marker.radius = radius;
                     marker.color = markercolor;
                     marker.type = "marker";
-                    //marker.message = fetchRecord(line);
                     marker.count = count;
                     markerInfoWindow(marker);
 
@@ -626,12 +648,12 @@ function setJSONPoints() {
                     bound.extend(marker.getPosition());
                 });
                 // accepts some URL parameter, if set to controll the display of points
-                //if (jQuery.url.param('pointDisplay')) {
-                //    pointDisplay(jQuery.url.param('pointDisplay'));
-                //} else {
+                if (jQuery.url.param('pointDisplay')) {
+                    pointDisplay(jQuery.url.param('pointDisplay'));
+                } else {
 		    clearAllMarkers();
                     markerClustererController();
-               // }
+                }
     		showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!

@@ -218,4 +218,20 @@ public class BMRenderJSON implements BMRendererInterface {
         output += "]";
         return output;
     }
+
+    /**
+     * Return JSON serialization of relevant metadata elements
+     * @param f
+     * @return
+     */
+    public Object MetadataElements(BMConfigAndTabFileReader f) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{\n");
+        sb.append("\t\"legendText\" : \"" + f.getLegendText() + "\"");
+        // Add more metadata elements separated by commas here
+        sb.append("\n}");
+        return sb.toString();
+    }
+
+
 }
