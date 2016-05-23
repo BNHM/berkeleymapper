@@ -340,7 +340,6 @@ function errorCheckBox() {
 
 // Control display of points
 function pointDisplay(value) {
-    clearAllMarkers();
     var drawRadius = false;
     if ($("#styleOptionErrorRadius").is(':checked')) {
         drawRadius = true;
@@ -509,7 +508,8 @@ function handleNoGeolocation(errorFlag) {
     } else {
         content = 'Error: Your browser doesn\'t support geolocation.';
     }
-    alert(content);
+    //Removing this alert for now since it always fails... need to switch berkeleymapper to SSL for this to work
+    //alert(content);
 }
 
 // set all of our metadata elements by calling the metadataElements service, parsing, and assigning to correspondingly named elements
@@ -650,8 +650,13 @@ function setJSONPoints() {
                 // accepts some URL parameter, if set to controll the display of points
                 if (jQuery.url.param('pointDisplay')) {
                     pointDisplay(jQuery.url.param('pointDisplay'));
+<<<<<<< HEAD
                 } else {
 		    clearAllMarkers();
+=======
+		    $("#pointDisplayValue").val(jQuery.url.param('pointDisplay'));
+                } else {
+>>>>>>> 06bf9caa0f9be894f73f350e3f0c82c701fc5ec0
                     markerClustererController();
                 }
     		showMsg("Installing Components...");
