@@ -524,7 +524,8 @@ function setMetadataElements() {
             // Here we loop each element that is defined in the returned JSON and assigning it to
             // an ID of the same name that is defined in our main HTML div.
             $.each( data, function( key, val ) {
-                $("#" + key).append(val);
+                if (val != "Undefined")
+                    $("#" + key).append(val);
             });
         }
     });

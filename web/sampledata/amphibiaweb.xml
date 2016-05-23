@@ -8,7 +8,7 @@
         <header location="/usr/local/web/aw/include/bm_header.html"/>
         <footer location="/usr/local/web/aw/include/bm_footer.html"/>
         <linkbackheader location=" http://amphibiaweb.org/"/>
-        <legendText><![CDATA[Important information to <i>display</i> for user]]></legendText>
+        <!--<legendText><![CDATA[Important information to <i>display</i> for user]]></legendText>-->
     </metadata>
     <gisdata>
         <layer title="IUCN Anaxyrus canorus Distribution" legend="1" active="1"
