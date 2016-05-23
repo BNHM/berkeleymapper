@@ -162,8 +162,6 @@ function getLogos() {
 
 // Initialize the Array of Available KML Layers
 function setKMLLayers() {
-    $("#layers").append("<b>Layers</b><br>");
-
     if (!bm2.pointMode) {
         return false;
     }
@@ -206,8 +204,8 @@ function setKMLLayers() {
                 } else {
                     // Else proceed with KML method
                     // Set the google object
-  		            var layer = new google.maps.KmlLayer(kmlObj.key);
-		            layer.setMap(bm2.map);
+                    var layer = new google.maps.KmlLayer(kmlObj.key);
+                    layer.setMap(bm2.map);
 
                     // Initialize this to false so it can be set to true once it is added
                     layer.added = false;
@@ -359,7 +357,7 @@ function pointDisplay(value) {
     } else {
         $("#myColors").html("");
         $("#styleOptions").hide();
-	markerClustererController();
+    markerClustererController();
     }
 }
 
@@ -424,7 +422,7 @@ function initialize() {
         // Initialize Map
         bm2.map = getMap();
         google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
- 	        $('#loadingMsg').hide();
+            $('#loadingMsg').hide();
         });
         // Setup Map type Options
         setMapTypes();
@@ -433,8 +431,6 @@ function initialize() {
         if (bm2.configFile != "") {
             setKMLLayers();
         }
-        // Set the metadata elements in the legend.
-        setMetadataElements();
         // Draw the Points
         setJSONPoints();
         setBigBounds();
@@ -452,7 +448,7 @@ function initialize() {
     } else {
         bm2.map = getMap();
         google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
- 	        $('#loadingMsg').hide();
+            $('#loadingMsg').hide();
         });
 
         $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.0</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
@@ -512,27 +508,9 @@ function handleNoGeolocation(errorFlag) {
     //alert(content);
 }
 
-// set all of our metadata elements by calling the metadataElements service, parsing, and assigning to correspondingly named elements
-function setMetadataElements() {
- var url = bm2.urlRoot + "metadataElements?session=" + bm2.session;
-    $.ajax({
-        type: "GET",
-        url: url,
-        async: true,
-        dataType: "json",
-        success: function(data, success) {
-            // Here we loop each element that is defined in the returned JSON and assigning it to
-            // an ID of the same name that is defined in our main HTML div.
-            $.each( data, function( key, val ) {
-                $("#" + key).append(val);
-            });
-        }
-    });
-}
-
 // Display a legend of colors
 function setColors() {
-    $("#myColors").append("<b>Marker Colors</b><br>");
+    $("#myColors").append("<br>&nbsp;<br><b style='font-size:11px;'>Marker Colors</b><br>");
 
     var url = bm2.urlRoot + "colors?session=" + bm2.session;
     $.ajax({
@@ -562,7 +540,6 @@ function setColors() {
         }
     });
 }
-
 
 
 // download links from bm2 service
@@ -641,6 +618,7 @@ function setJSONPoints() {
                     marker.radius = radius;
                     marker.color = markercolor;
                     marker.type = "marker";
+                    //marker.message = fetchRecord(line);
                     marker.count = count;
                     markerInfoWindow(marker);
 
@@ -650,19 +628,18 @@ function setJSONPoints() {
                 // accepts some URL parameter, if set to controll the display of points
                 if (jQuery.url.param('pointDisplay')) {
                     pointDisplay(jQuery.url.param('pointDisplay'));
-                    $("#pointDisplayValue").val(jQuery.url.param('pointDisplay'));
+            $("#pointDisplayValue").val(jQuery.url.param('pointDisplay'));
                 } else {
-		    clearAllMarkers();
                     markerClustererController();
                 }
-    		showMsg("Installing Components...");
+            showMsg("Installing Components...");
             } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
                 bm2.map.setCenter(new google.maps.LatLng(0, 0));
-    		    showMsg("Error ...");
+                showMsg("Error ...");
                 alert("nothing to map! Does the data have a latitude/longitude?");
-    		    $("#loadingMsg").hide();
+                $("#loadingMsg").hide();
             }
         },
         error: function (e,k,v) {
@@ -780,18 +757,18 @@ function fetchRecords() {
                 showMsg("Response truncated to 100 records");
                 //alert('result response truncated to 100 records');
             }
-    	    $("#loadingMsg").hide();
+            $("#loadingMsg").hide();
 
         },
         statusCode: {
             204: function() {
-    	    	$("#loadingMsg").hide();
+                $("#loadingMsg").hide();
                 return "unable to fetch results for polygon";
             }
         }, 
-	error: function() {
-    	    $("#loadingMsg").hide();
-	}
+    error: function() {
+            $("#loadingMsg").hide();
+    }
     });
 
     $("#bottomContainer").html(retStr);
@@ -945,8 +922,8 @@ function markerClustererController() {
         lng2 = cb.getSouthWest().lng();
         bm2.polygon = "POLYGON ((" + lat2 + " " + lng2 + "," + lat1 + " " + lng2 + "," + lat1 + " " + lng1 + "," + lat2 + " " + lng1 + "," + lat2 + " " + lng2 + "))";
 
-    	$("#loadingMsg").show();
-    	showMsg("Loading Records ...");
+        $("#loadingMsg").show();
+        showMsg("Loading Records ...");
         setTimeout(fetchRecords,500);
     });
 }
@@ -1196,6 +1173,7 @@ function markerInfoWindow(marker) {
         }
     })(marker,count));
 }
+
 
 
 

@@ -86,6 +86,32 @@ select {
     overflow:auto;
 }
 
+label.dropdown select {
+	display: inline-block;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	cursor: pointer;
+	outline: none;
+}
+
+label.dropdown select::-ms-expand {
+	display: none;
+}
+label.dropdown:before {
+
+	position: absolute;
+	pointer-events: none;
+	display: block;
+}
+label.dropdown { position: relative; }
+label.dropdown:after {
+	font-size: 11px;
+	position: absolute;
+	pointer-events: none;
+}
+
+
 #legendText {
     font-size: 12px;
     margin: 5px 0px 5px 5px;
