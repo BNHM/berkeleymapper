@@ -650,13 +650,8 @@ function setJSONPoints() {
                 // accepts some URL parameter, if set to controll the display of points
                 if (jQuery.url.param('pointDisplay')) {
                     pointDisplay(jQuery.url.param('pointDisplay'));
-<<<<<<< HEAD
                 } else {
 		    clearAllMarkers();
-=======
-		    $("#pointDisplayValue").val(jQuery.url.param('pointDisplay'));
-                } else {
->>>>>>> 06bf9caa0f9be894f73f350e3f0c82c701fc5ec0
                     markerClustererController();
                 }
     		showMsg("Installing Components...");
