@@ -252,6 +252,7 @@ function setKMLLayers() {
                        addKMLLayerToMenu(kmlcounter,layer);
                        layer.added = true;
                        kmlcounter++;
+
                  }
             });
         },
@@ -326,10 +327,12 @@ function addKMLLayerToMenu(i,layer) {
             kmlZoom(event.data.param1);
         });
 
-        // set initial visibility
-        //if (bm2.kmlLayers[i]['visibility'] == 'visible') {
-         //   bm2.kmlLayers[i].google.setMap(bm2.map);
-        //}
+         // set initial visibility
+                if (bm2.kmlLayers[i]['visibility'] == 'visible') {
+                    bm2.kmlLayers[i].google.setMap(bm2.map);
+                } else {
+                    bm2.kmlLayers[i].google.setMap(null);
+                }
 }
 // toggle visibility
 function toggleLayer(cb) {
