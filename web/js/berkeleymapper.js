@@ -203,7 +203,9 @@ function setKMLLayers() {
                         layer.added = true;
                         kmlcounter++;
                     });
-                } else {
+                }
+                // KML/KMZ
+                else if (kmlObj.url.endsWith('kml') || kmlObj.url.endsWith('kmz')) {
                     // Else proceed with KML method
                     // Set the google object
   		            var layer = new google.maps.KmlLayer(kmlObj.key);
@@ -233,6 +235,23 @@ function setKMLLayers() {
                         }
 
                     });
+                 }
+                  // Fusion table
+                 else {
+                        // Set the google object
+                        var layer = new google.maps.FusionTablesLayer({
+                           query: {
+                                select: 'geometry',
+                                from: kmlObj.key
+                            }
+                        });
+                       layer.setMap(bm2.map);
+                       kmlObj.google = layer;
+                       kmlObj.url = kmlObj.key;
+                       bm2.kmlLayers[kmlcounter] = kmlObj;
+                       addKMLLayerToMenu(kmlcounter,layer);
+                       layer.added = true;
+                       kmlcounter++;
                  }
             });
         },
