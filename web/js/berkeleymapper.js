@@ -239,11 +239,13 @@ function setKMLLayers() {
                   // Fusion table
                  else {
                         // Set the google object
+                        // TODO: Set geometry and styleId number in configuration file
                         var layer = new google.maps.FusionTablesLayer({
                            query: {
                                 select: 'geometry',
                                 from: kmlObj.key
-                            }
+                            },
+                            styledId: 2
                         });
                        layer.setMap(bm2.map);
                        kmlObj.google = layer;
@@ -328,11 +330,9 @@ function addKMLLayerToMenu(i,layer) {
         });
 
          // set initial visibility
-                if (bm2.kmlLayers[i]['visibility'] == 'visible') {
-                    bm2.kmlLayers[i].google.setMap(bm2.map);
-                } else {
-                    bm2.kmlLayers[i].google.setMap(null);
-                }
+        if (!checked) {
+            bm2.kmlLayers[i].google.setMap(null);
+        }
 }
 // toggle visibility
 function toggleLayer(cb) {
