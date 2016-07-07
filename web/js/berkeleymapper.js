@@ -204,8 +204,30 @@ function setKMLLayers() {
                         kmlcounter++;
                     });
                 }
+
+                // ONLY Fusion Tables does not have an HTTP reference--- uses an ID
+                else if (!kmlObj.url.includes('http')) {
+                        // Set the google object
+                         // TODO: Set geometry and styleId number in configuration file
+                        var layer = new google.maps.FusionTablesLayer({
+                        query: {
+                                select: 'geometry',
+                                from: kmlObj.key
+                        },
+                            styledId: 2
+                        });
+                        layer.setMap(bm2.map);
+                        kmlObj.google = layer;
+                        kmlObj.url = kmlObj.key;
+                        bm2.kmlLayers[kmlcounter] = kmlObj;
+                        addKMLLayerToMenu(kmlcounter,layer);
+                        layer.added = true;
+                        kmlcounter++;
+                 }
                 // KML/KMZ
-                else if (kmlObj.url.endsWith('kml') || kmlObj.url.endsWith('kmz')) {
+                 else {
+
+
                     // Else proceed with KML method
                     // Set the google object
   		            var layer = new google.maps.KmlLayer(kmlObj.key);
@@ -235,25 +257,6 @@ function setKMLLayers() {
                         }
 
                     });
-                 }
-                  // Fusion table
-                 else {
-                        // Set the google object
-                        // TODO: Set geometry and styleId number in configuration file
-                        var layer = new google.maps.FusionTablesLayer({
-                           query: {
-                                select: 'geometry',
-                                from: kmlObj.key
-                            },
-                            styledId: 2
-                        });
-                       layer.setMap(bm2.map);
-                       kmlObj.google = layer;
-                       kmlObj.url = kmlObj.key;
-                       bm2.kmlLayers[kmlcounter] = kmlObj;
-                       addKMLLayerToMenu(kmlcounter,layer);
-                       layer.added = true;
-                       kmlcounter++;
 
                  }
             });
