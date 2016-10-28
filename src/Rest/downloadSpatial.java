@@ -38,7 +38,7 @@ public class downloadSpatial {
         }
 
         rb.header("Access-Control-Allow-Origin", "*");
-        rb.header("Content-disposition", "attachment; filename=bm2_download_spatial.xls");
+        rb.header("Content-disposition", "attachment; filename=bm2_download_spatial.xlsx");
         return rb.build();
     }
 }

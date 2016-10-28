@@ -42,7 +42,7 @@ public class download {
             rb.header("Access-Control-Allow-Origin", "*");
             return rb.build();
         }
-        rb.header("Content-disposition", "attachment; filename=bm2_download.xls");
+        rb.header("Content-disposition", "attachment; filename=bm2_download.xlsx");
         rb.header("Access-Control-Allow-Origin", "*");
         return rb.build();
     }
