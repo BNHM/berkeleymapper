@@ -84,7 +84,8 @@ public class allpoints {
 
 
     public static String compress(String str, String session) throws IOException, CompressorException {
-        String filename = "/data/tmp/berkeleymapper/" + session + ".gz";
+        //String filename = "/data/tmp/berkeleymapper/" + session + ".gz";
+        String filename = "allpoints_" + session + ".gz";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         FileOutputStream fout = new FileOutputStream(filename);
         CompressorOutputStream gzippedOut = new CompressorStreamFactory()
@@ -98,7 +99,8 @@ public class allpoints {
     }
 
     public static String nocompress(String str, String session) throws IOException {
-        String filename = "/data/tmp/berkeleymapper/" + session + ".txt";
+        //String filename = "/data/tmp/berkeleymapper/" + session + ".txt";
+        String filename = "allpoints_" + session + ".txt";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         FileOutputStream fout = new FileOutputStream(filename);
         fout.write(str.getBytes());
