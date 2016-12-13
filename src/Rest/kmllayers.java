@@ -32,6 +32,7 @@ public class kmllayers {
             rb = Response.ok(new BMRenderJSON().KMLLayers(f));
         } catch (IOException e) {
             rb = Response.status(204);
+
             rb.header("Access-Control-Allow-Origin", "*");
             return rb.build();
         }
