@@ -14,6 +14,7 @@ import org.json.simple.JSONObject;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * JSON Representation of BMRendererInterface
@@ -165,7 +166,8 @@ public class BMRenderJSON implements BMRendererInterface {
             }
             json.append("{\n");
             json.append("\"link\":\"" + JSONObject.escape(layer.getUrl()) + "\",\n");
-            json.append("\"url\":\"" + JSONObject.escape(layer.getLocation()) + "\",\n");
+            // Add a random number to end of request to circumvent caching issues
+            json.append("\"url\":\"" + JSONObject.escape(layer.getLocation()) + "#"+ UUID.randomUUID().toString()+"\",\n");
             json.append("\"title\":\"" + JSONObject.escape(layer.getTitle()) + "\",\n");
             json.append("\"visibility\":\"" + layer.getVisible() + "\",\n");
             json.append("\"zoom\":\"expand\"\n");
