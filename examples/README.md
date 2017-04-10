@@ -1,4 +1,8 @@
-[Ansonia thinthinae test] (http://berkeleymapper.berkeley.edu/index.html
+[Ansonia thinthinae test](http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml&ViewResults=tab&sourcename=AmphibiaWeb+Species+Map:+Ansonia+thinthinae&amphibiaweb=true&label=1&opacity=0.50&pointDisplay=pointMarkers)
+
+The link syntax:
+```
+http://berkeleymapper.berkeley.edu/index.html
 ?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt
 &configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml
 &ViewResults=tab
@@ -6,4 +10,5 @@
 &amphibiaweb=true
 &label=1
 &opacity=0.50
-&pointDisplay=pointMarkers)
+&pointDisplay=pointMarkers
+```
