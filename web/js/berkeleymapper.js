@@ -187,7 +187,7 @@ function setKMLLayers() {
                 // If the "KML" ends in .json then use the JSON method
                 // TEST for end in JSON
                 kmlObj.url = kmlObj.key;
-                if (kmlObj.url.endsWith('json')) {
+                if (kmlObj.url.includes('json')) {
                     var promise = $.getJSON(kmlObj.url); //same as map.data.loadGeoJson();
 
                     promise.then(function(data){
