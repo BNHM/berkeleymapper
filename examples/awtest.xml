@@ -10,12 +10,8 @@
 </metadata>
 <gisdata>
 
-<layer title="Test Layer" legend="1" active="1" url="https://github.com/AmphibiaWeb/range_maps/blob/master/tests/Ansonia_thinthinae.json">
-<![CDATA[https://raw.githubusercontent.com/AmphibiaWeb/range_maps/master/tests/Ansonia_thinthinae.json]]>
-</layer> 
-<layer title="Test Layer2" legend="1" active="1" url="http://ucjeps.berkeley.edu/">
-<![CDATA[https://raw.githubusercontent.com/BNHM/berkeleymapper/master/test.json ]]>
-</layer>
+<layer title="Test Layer" legend="1" active="1" url="https://github.com/AmphibiaWeb/range_maps/blob/master/tests/Ansonia_thinthinae.json"><![CDATA[https://raw.githubusercontent.com/AmphibiaWeb/range_maps/master/tests/Ansonia_thinthinae.json]]></layer> 
+<layer title="Test Layer2" legend="1" active="1" url="http://ucjeps.berkeley.edu/"><![CDATA[https://raw.githubusercontent.com/BNHM/berkeleymapper/master/test.json]]></layer>
   
 </gisdata>
 <logo img="http://amphibiaweb.org/images/redlist_logo.jpg" url="http://www.iucnredlist.org/initiatives/amphibians"/>
