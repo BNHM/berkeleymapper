@@ -1,0 +1,44 @@
+<berkeleymapper>
+<metadata>
+<name>AmphibiaWeb Configuration File</name>
+<relatedinformation>http://amphibiaweb.org/</relatedinformation>
+<abstract>GIS configuration file for AmphibiaWeb</abstract>
+<mapkeyword keyword="specimens"/>
+<header location="/usr/local/web/aw/include/bm_header.html"/>
+<footer location="/usr/local/web/aw/include/bm_footer.html"/>
+<linkbackheader location=" http://amphibiaweb.org/"/>
+</metadata>
+<gisdata>
+
+<layer title="Test Layer" legend="1" active="1" url="https://github.com/AmphibiaWeb/range_maps/blob/master/tests/Ansonia_thinthinae.json">
+  <![CDATA[https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.json]]>
+ </layer> 
+<!--<layer title="Test Layer2" legend="1" active="1" url="http://ucjeps.berkeley.edu/"><![CDATA[https://raw.githubusercontent.com/BNHM/berkeleymapper/master/test.json]]></layer>
+  -->
+</gisdata>
+<logo img="http://amphibiaweb.org/images/redlist_logo.jpg" url="http://www.iucnredlist.org/initiatives/amphibians"/>
+<logo img="http://amphibiaweb.org/images/vertnet_logo_303x85.jpg" url="http://vertnet.org/"/>
+<logo img="http://amphibiaweb.org/images/homepage_images/awlogomed.jpg" url="http://amphibiaweb.org/"/>
+<colors method="field" fieldname="darwin:scientificname" label="ScientificName">
+<color key="default" red="0" green="0" blue="255" symbol="7" label="AmphibiaWeb Species"/>
+<dominantcolor webcolor="629ad3"/>
+<subdominantcolor webcolor="ddddff"/>
+</colors>
+<settings>
+<setting name="landsat" show="0"/>
+<setting name="maxerrorinmeters" show="1"/>
+<setting name="coloruncertainty" show="1"/>
+</settings>
+<recordlinkback>
+<linkback method="pattern" linkurl="${char255:1}" text="View Details" fieldname="Link Back"/>
+</recordlinkback>
+<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">
+<concept order="1" viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+<concept order="6" viewlist="1" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+<concept order="7" viewlist="1" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+<concept order="2" viewlist="1" datatype="darwin:institutioncode" alias="Institution Code"/>
+<concept order="4" viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
+<concept order="5" viewlist="1" datatype="darwin:catalognumber" alias="Catalog Number"/>
+<concept order="8" viewlist="0" datatype="char255:1" alias="dc_rereference"/>
+</concepts>
+</berkeleymapper>
