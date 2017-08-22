@@ -141,7 +141,7 @@ function getLogos() {
                   logoId = "logo" + counter;
                   $("#logos").append("<br>");
                   $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
-                  $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=150 \/>");
+                  $("#" + logoId).append("<img src=\"" + logoObj.img + "\" max-width=150 \/>");
                   $("#logos").append("<br>");
                   counter++;
               });
