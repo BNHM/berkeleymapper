@@ -500,6 +500,7 @@ function initialize() {
         $("#displayOptions").hide();
 
         // Try HTML5 geolocation
+
         if(navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
             var pos = new L.LatLng(position.coords.latitude,
@@ -514,6 +515,7 @@ function initialize() {
           // Browser doesn't support Geolocation
           handleNoGeolocation(false);
         }
+
 
     }
 
@@ -992,43 +994,30 @@ function getMap() {
     L.esri.basemapLayer("Topographic").addTo(bm2.defaultLayer);
 
     // Don't zoom/center if pointMode is true
+    var defaultTileLayerUrl = 'https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'
+
     if (bm2.pointMode) {
         myOptions = {
             zoom: 1,
-            //mapTypeId: google.maps.MapTypeId.ROADMAP,
-	    layers: new L.TileLayer('https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'),
+	    layers: new L.TileLayer(defaultTileLayerUrl),
             panControl: true,
-            panControlOptions: {
-                position: L.ControlPosition.LEFT_TOP
-            },
             zoomControl: true,
             scaleControl: true,
-            scrollwheel: false,
-            zoomControlOptions: {
-                position: L.ControlPosition.LEFT_TOP
-            }
+            scrollwheel: false
         };
     } else {
         myOptions = {
             zoom: 1,
-            //center: new L.LatLng(0, 0),
-            //mapTypeId: google.maps.MapTypeId.ROADMAP,
-	    layers: bm2.defaultLayer,
-	    //layers: new L.TileLayer('https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'),
+            center: new L.LatLng(0, 0),
+	    trackResize: false,
+	    layers: new L.TileLayer(defaultTileLayerUrl),
             panControl: true,
-            //panControlOptions: {
-             //   position: L.ControlPosition.LEFT_TOP
-            //},
             zoomControl: true,
-            scrollwheel: false,
             scaleControl: true,
-            //zoomControlOptions: {
-            //    position: L.ControlPosition.LEFT_TOP
-           // }
+            scrollwheel: false
         };
     }
 
-    //lmap = new google.maps.Map(document.getElementById('map'), myOptions);
     lmap = new L.Map('map', myOptions);
 
     /*lmap.enableKeyDragZoom({

@@ -150,3 +150,6 @@ label.dropdown:after {
     display:none;
       font-size:11px;
 }
+.my-leaflet-map-container img {
+    max-height: none;
+}
