@@ -12,7 +12,7 @@ bm2.session = "";           // Session string for communicating w/ server
 bm2.urlRoot = "v2/";        // URL Root to use for all calls
 bm2.mc = null;                     // markerCluster control variable
 bm2.iw = null;
-bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
+//bm2.drawnMarkerImage = new L.MarkerImage('img/marker-green.png');
 bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
 bm2.polygon = "";           // A variable to hold a polygon defined by the user
 bm2.configFile = "";
@@ -36,7 +36,7 @@ bm2.jqGridAttributes = {
         var lat = $('#flexme1').getCell(id, 'Latitude');
         var lng = $('#flexme1').getCell(id, 'Longitude');
 
-        var latlng = new google.maps.LatLng(lat, lng);
+        var latlng = new L.LatLng(lat, lng);
         if (bm2.iw) {
             bm2.iw.close();
         }
@@ -48,7 +48,7 @@ bm2.jqGridAttributes = {
         }
         rowData += "</div>";
         if (lat != 0 && lng !=0) {
-            bm2.iw = new google.maps.InfoWindow();
+            bm2.iw = new L.InfoWindow();
             bm2.iw.setContent(rowData);
             bm2.iw.setPosition(latlng);
             bm2.iw.open(bm2.map);
@@ -74,9 +74,9 @@ $().ready(function() {
 
 
 // Adjust bounds to drawn polygon
-if (!google.maps.Polygon.prototype.getBounds) {
-    google.maps.Polygon.prototype.getBounds = function(latLng) {
-        var bounds = new google.maps.LatLngBounds();
+if (!L.Polygon.prototype.getBounds) {
+    L.Polygon.prototype.getBounds = function(latLng) {
+        var bounds = new L.LatLngBounds();
         var paths = this.getPaths();
         var path;
 
@@ -91,9 +91,9 @@ if (!google.maps.Polygon.prototype.getBounds) {
 }
 
 // Adjust bounds for drawn polyline
-if (!google.maps.Polyline.prototype.getBounds) {
-    google.maps.Polyline.prototype.getBounds = function(latLng) {
-        var bounds = new google.maps.LatLngBounds();
+if (!L.Polyline.prototype.getBounds) {
+    L.Polyline.prototype.getBounds = function(latLng) {
+        var bounds = new L.LatLngBounds();
         this.getPath().forEach(function(e) {
             bounds.extend(e);
         });
@@ -107,13 +107,13 @@ function toggleControls() {
         bm2.showControls = false;
         drawingManagerHide();
         bm2.map.setOptions({ mapTypeControl: false,overviewMapControl: false,panControl:false,streetViewControl:false,zoomControl:false});
-        bm2.map.disableKeyDragZoom();
+        //bm2.map.disableKeyDragZoom();
 
     }  else {
         bm2.showControls = true;
         drawingManagerShow();
         bm2.map.setOptions({ mapTypeControl: true,overviewMapControl: true,panControl:true,streetViewControl:true,zoomControl:true});
-        bm2.map.enableKeyDragZoom();
+        //bm2.map.enableKeyDragZoom();
     }
 }
 
@@ -192,7 +192,7 @@ function setKMLLayers() {
 
                     promise.then(function(data){
                         cachedGeoJson = data; //save the geojson in case we want to update its values
-                        var layer = new google.maps.Data();
+                        var layer = new L.Data();
                         layer.added = false;
                         layer.addGeoJson(cachedGeoJson);
                         layer.setMap(bm2.map);
@@ -209,7 +209,7 @@ function setKMLLayers() {
                 else if (!kmlObj.url.includes('http')) {
                         // Set the google object
                          // TODO: Set geometry and styleId number in configuration file
-                        var layer = new google.maps.FusionTablesLayer({
+                        var layer = new L.FusionTablesLayer({
                         query: {
                                 select: 'geometry',
                                 from: kmlObj.key
@@ -230,14 +230,14 @@ function setKMLLayers() {
 
                     // Else proceed with KML method
                     // Set the google object
-  		            var layer = new google.maps.KmlLayer(kmlObj.key);
+  		            var layer = new L.KmlLayer(kmlObj.key);
 		            layer.setMap(bm2.map);
 
                     // Initialize this to false so it can be set to true once it is added
                     layer.added = false;
 
                     // Wait for success on layer load to add it to menu
-                    google.maps.event.addListener(layer, 'status_changed', function () {
+                    L.event.addListener(layer, 'status_changed', function () {
                         if (layer.getStatus() == 'OK' ) {
                             if (!layer.added) {
                                 kmlObj.google = layer;
@@ -410,6 +410,7 @@ function setSession() {
 
 function initialize() {
 
+
     $("#loadingMsg").show();
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
@@ -448,11 +449,11 @@ function initialize() {
 
         // Initialize Map
         bm2.map = getMap();
-        google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
+        L.event.addListener(bm2.map, 'bounds_changed', function() {
  	        $('#loadingMsg').hide();
+        	// Setup Map type Options
+        	setMapTypes();
         });
-        // Setup Map type Options
-        setMapTypes();
 
         // Draw KML Layers (lookup via service)
         if (bm2.configFile != "") {
@@ -476,8 +477,9 @@ function initialize() {
     // Plain map mode, no points passed in
     } else {
         bm2.map = getMap();
-        google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
- 	        $('#loadingMsg').hide();
+        bm2.map.whenReady(function (e) {
+       	   $('#loadingMsg').hide();
+           setMapTypes();
         });
 
         $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.0</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
@@ -500,10 +502,10 @@ function initialize() {
         // Try HTML5 geolocation
         if(navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = new google.maps.LatLng(position.coords.latitude,
+            var pos = new L.LatLng(position.coords.latitude,
                                              position.coords.longitude);
 
-            bm2.map.setCenter(pos);
+            bm2.map.panTo(pos);
             bm2.map.setZoom(10);
           }, function() {
             handleNoGeolocation(true);
@@ -516,7 +518,8 @@ function initialize() {
     }
 
     // Drawing Options
-    initializeDrawingManager();
+    // TODO: need leaflet drawing options
+    //initializeDrawingManager();
 }
 
 <!-- JS Script -->
@@ -629,7 +632,7 @@ function setJSONPoints() {
         $("#loadingMsg").hide();
         return false;
     }
-    var bound = new google.maps.LatLngBounds();
+    var bound = new L.LatLngBounds();
     showMsg("Fetching Data ...");
     $.ajax({
         type: "GET",
@@ -653,16 +656,18 @@ function setJSONPoints() {
                         }
                     });
 
-                    var latlng = new google.maps.LatLng(lat, lng);
+                    var latlng = new L.LatLng(lat, lng);
 
                     if (markercolor == "") markercolor = "#FF0000";
 
-                    var marker = new StyledMarker({
-                        styleIcon:  new StyledIcon(StyledIconTypes.MARKER, {color:markercolor}),
-                        position: latlng,
-                        map: null,
-                        title:"point"
-                    });
+                    //var marker = new StyledMarker({
+                      //  styleIcon:  new StyledIcon(StyledIconTypes.MARKER, {color:markercolor}),
+                      //  position: latlng,
+                      //  map: null,
+                     //   title:"point"
+                    //});
+
+		    var marker = new L.Marker(new L.LatLng(latlng));
                     // additional options
                     marker.line = line;
                     marker.radius = radius;
@@ -686,7 +691,7 @@ function setJSONPoints() {
             } else {
                 // set to global view if nothing to map!
                 bm2.map.setZoom(1);
-                bm2.map.setCenter(new google.maps.LatLng(0, 0));
+                bm2.map.panTo(new L.LatLng(0, 0));
     		    showMsg("Error ...");
                 alert("nothing to map! Does the data have a latitude/longitude?");
     		    $("#loadingMsg").hide();
@@ -706,7 +711,7 @@ function kmlZoom(i) {
 
 // Zoom just to this set of points
 function setBounds() {
-    var bound = new google.maps.LatLngBounds();
+    var bound = new L.LatLngBounds();
     for (i in bm2.markers) {
         bound.extend(bm2.markers[i].getPosition());
     }
@@ -715,7 +720,7 @@ function setBounds() {
 
 // Zoom to entire extent of Points plus all visible layers
 function setBigBounds() {
-    var bound = new google.maps.LatLngBounds();
+    var bound = new L.LatLngBounds();
     for (i in bm2.markers) {
         bound.extend(bm2.markers[i].getPosition());
     }
@@ -729,9 +734,9 @@ function setBigBounds() {
     bm2.map.fitBounds(bound);
 
     // make sure the zoom is not too small
-    var listener = google.maps.event.addListener(bm2.map, "idle", function() {
+    var listener = L.event.addListener(bm2.map, "idle", function() {
         if (bm2.map.getZoom() > 10) bm2.map.setZoom(10);
-        google.maps.event.removeListener(listener);
+        L.event.removeListener(listener);
     });
 }
 
@@ -876,7 +881,7 @@ function markerController(drawMarkers,drawRadius,value) {
                         styleIcon:new StyledIcon(
                         StyledIconTypes.CLASS,
                         {icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
+                            path: L.SymbolPath.CIRCLE,
                             fillOpacity: 0.8,
                             scale: 3,
                             strokeWeight: 2,
@@ -930,7 +935,7 @@ function markerController(drawMarkers,drawRadius,value) {
 }
 
 function drawThisRadius(i) {
-   var circle = new google.maps.Circle({
+   var circle = new L.Circle({
                             map: bm2.map,
                             radius: bm2.markers[i].radius,
                             fillColor: bm2.markers[i].color,
@@ -958,8 +963,8 @@ function markerClustererController() {
     //bm2.mc = new MarkerClusterer(bm2.map);
     //bm2.mc.addMarkers(bm2.markers);
 
-    google.maps.event.addListener(bm2.mc, 'clusterclick', function (c) {
-        var cb = new google.maps.LatLngBounds();
+    L.event.addListener(bm2.mc, 'clusterclick', function (c) {
+        var cb = new L.LatLngBounds();
         var m = c.getMarkers();
         for (var i = 0; i < m.length; i++) {
             ll = m[i].getPosition();
@@ -978,58 +983,67 @@ function markerClustererController() {
     });
 }
 
-
 // Set the initial Map
 function getMap() {
     var myOptions;
+
+    // set default layer to view on map
+    bm2.defaultLayer = L.layerGroup();
+    L.esri.basemapLayer("Topographic").addTo(bm2.defaultLayer);
+
     // Don't zoom/center if pointMode is true
     if (bm2.pointMode) {
         myOptions = {
             zoom: 1,
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            //mapTypeId: google.maps.MapTypeId.ROADMAP,
+	    layers: new L.TileLayer('https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'),
             panControl: true,
             panControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
+                position: L.ControlPosition.LEFT_TOP
             },
             zoomControl: true,
             scaleControl: true,
             scrollwheel: false,
             zoomControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
+                position: L.ControlPosition.LEFT_TOP
             }
         };
     } else {
         myOptions = {
             zoom: 1,
-            center: new google.maps.LatLng(0, 0),
-            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            //center: new L.LatLng(0, 0),
+            //mapTypeId: google.maps.MapTypeId.ROADMAP,
+	    layers: bm2.defaultLayer,
+	    //layers: new L.TileLayer('https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'),
             panControl: true,
-            panControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
-            },
+            //panControlOptions: {
+             //   position: L.ControlPosition.LEFT_TOP
+            //},
             zoomControl: true,
             scrollwheel: false,
             scaleControl: true,
-            zoomControlOptions: {
-                position: google.maps.ControlPosition.LEFT_TOP
-            }
+            //zoomControlOptions: {
+            //    position: L.ControlPosition.LEFT_TOP
+           // }
         };
     }
 
-    lmap = new google.maps.Map(document.getElementById('map'), myOptions);
+    //lmap = new google.maps.Map(document.getElementById('map'), myOptions);
+    lmap = new L.Map('map', myOptions);
 
-    lmap.enableKeyDragZoom({
+    /*lmap.enableKeyDragZoom({
         visualEnabled: true,
-        visualPosition: google.maps.ControlPosition.LEFT,
-        visualPositionOffset: new google.maps.Size(35, 0),
+        //visualPosition: L.ControlPosition.LEFT,
+        //visualPositionOffset: new L.Size(35, 0),
         visualPositionIndex: null,
         visualSprite: "http://maps.gstatic.com/mapfiles/ftr/controls/dragzoom_btn.png",
-        visualSize: new google.maps.Size(20, 20),
+        //visualSize: new L.Size(20, 20),
         visualTips: {
             off: "Turn on",
             on: "Turn off"
         }
     });
+    */
 
     return lmap;
 }
@@ -1037,21 +1051,34 @@ function getMap() {
 // mapTypes DropDown
 function setMapTypes() {
 
-    //TODO: call terraserver for topos and add DOQ
-    var topoMapOptions = {
-        getTileUrl: function(coords, zoom) {
-            return 'http://server.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/' + zoom + '/' + coords.y + '/' + coords.x;
-        },
-        tileSize: new google.maps.Size(256, 256),
-        isPng: false,
-        name: "Topo",
-        minZoom: 0,
-        maxZoom: 19
-    };
+    topoLayer = L.layerGroup();
+    L.esri.basemapLayer("Topographic").addTo(topoLayer);
 
-    var topo = new google.maps.ImageMapType(topoMapOptions);
-    bm2.map.mapTypes.set('topo', topo);
+    natgeoLayer = L.layerGroup();
+    L.esri.basemapLayer("NationalGeographic").addTo(natgeoLayer);
 
+    streetLayer = L.layerGroup();
+    L.esri.basemapLayer("Streets").addTo(streetLayer);
+
+    imageryLayer = L.layerGroup();
+    L.esri.basemapLayer("Imagery").addTo(imageryLayer);
+
+    countriesAndBoundariesLayer = L.layerGroup();
+    L.tileLayer.wms('https://demo.boundlessgeo.com/geoserver/ows?', {
+        layers: 'ne:ne_10m_admin_0_countries,ne:ne_10m_admin_0_boundary_lines_land'
+	}).addTo(countriesAndBoundariesLayer);
+
+    var baseMaps = {
+	'Topographic': topoLayer,
+	'National Geographic': natgeoLayer,
+	'Streets': streetLayer,
+	'Imagery': imageryLayer,
+	'Country Boundaries': countriesAndBoundariesLayer
+    }
+    L.control.layers( baseMaps).addTo(bm2.map); 
+    
+    /*
+    // Layers that were referenced in BM2/ think about porting to new version
     // WMS Raster Services
     var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
     bm2.map.mapTypes.set('cantopo', cantopo);
@@ -1068,21 +1095,7 @@ function setMapTypes() {
     var angelo1m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
     bm2.map.mapTypes.set('angelo1m',angelo1m);
 
-    bm2.map.setOptions({
-        mapTypeControl: true,
-        mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-            mapTypeIds: [google.maps.MapTypeId.ROADMAP,
-                google.maps.MapTypeId.SATELLITE,
-                google.maps.MapTypeId.HYBRID,
-                google.maps.MapTypeId.TERRAIN,
-                'topo',
-                'cantopo',
-                'moorea',
-                'angelo2m',
-                'angelo1m']
-        }
-    });
+    */
 }
 
 function WMSTileOverlay(urlWMS, minZ, maxZ, opacity, isPng, name) {
@@ -1092,8 +1105,8 @@ function WMSTileOverlay(urlWMS, minZ, maxZ, opacity, isPng, name) {
                 //var overlay = new MyOverlay(map);
                 var projection = bm2.map.getProjection();
                 var zpow = Math.pow(2, zoom);
-                var lULP = new google.maps.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
-                var lLRP = new google.maps.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
+                var lULP = new L.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
+                var lLRP = new L.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
                 var lULg = projection.fromPointToLatLng(lULP);
                 var lLRg = projection.fromPointToLatLng(lLRP);
                 var lULg_Longitude = lULg.lng();
@@ -1113,19 +1126,19 @@ function WMSTileOverlay(urlWMS, minZ, maxZ, opacity, isPng, name) {
                 return urlResult;
             },
 
-        tileSize: new google.maps.Size(256, 256),
+        //tileSize: new L.Size(256, 256),
         minZoom: minZ,
         maxZoom: maxZ,
         opacity: opacity,
         name: name,
         isPng: isPng};
 
-    return new google.maps.ImageMapType(overlayOptions);
+    return new L.ImageMapType(overlayOptions);
 }
 
 function PanelControl(controlDiv, pmap) {
     controlDiv.index = -1;  // value of -1 supersedes control position of others
-    pmap.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
+    pmap.controls[L.ControlPosition.TOP_LEFT].push(controlDiv);
     var controlUI = document.createElement('DIV');
     controlUI.style.cursor = 'pointer';
     controlUI.style.backgroundImage = 'url(img/left-right.gif)';
@@ -1142,7 +1155,7 @@ function NewControl(controlDiv, pmap, title, alt) {
 
     controlDiv.style.padding = '5px';
     controlDiv.index = 1;
-    pmap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
+    pmap.controls[L.ControlPosition.TOP_RIGHT].push(controlDiv);
 
 
     // Set CSS for the control border
@@ -1215,9 +1228,9 @@ function htmlEntities(str) {
 function markerInfoWindow(marker) {
     var count = marker.count;
     var line = marker.line;
-    google.maps.event.addListener(marker, 'click', (function(marker,count) {
+    L.event.addListener(marker, 'click', (function(marker,count) {
         return function() {
-            var infowindow = new google.maps.InfoWindow();
+            var infowindow = new L.InfoWindow();
             infowindow.setContent(fetchRecord(line));
             infowindow.open(bm2.map, marker);
         }
