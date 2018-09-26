@@ -994,12 +994,14 @@ function getMap() {
     L.esri.basemapLayer("Topographic").addTo(bm2.defaultLayer);
 
     // Don't zoom/center if pointMode is true
-    var defaultTileLayerUrl = 'https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'
+    //var defaultTileLayerUrl = 'https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'
+    var defaultTileLayer = L.esri.basemapLayer("NationalGeographic");
 
     if (bm2.pointMode) {
         myOptions = {
             zoom: 1,
-	    layers: new L.TileLayer(defaultTileLayerUrl),
+	    //layers: new L.TileLayer(defaultTileLayerUrl),
+	    layers: defaultTileLayer,
             panControl: true,
             zoomControl: true,
             scaleControl: true,
@@ -1010,7 +1012,8 @@ function getMap() {
             zoom: 1,
             center: new L.LatLng(0, 0),
 	    trackResize: false,
-	    layers: new L.TileLayer(defaultTileLayerUrl),
+	    layers: defaultTileLayer,
+	    //layers: new L.TileLayer(defaultTileLayerUrl),
             panControl: true,
             zoomControl: true,
             scaleControl: true,
