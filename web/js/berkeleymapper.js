@@ -500,23 +500,12 @@ function initialize() {
         $("#displayOptions").hide();
 
         // Try HTML5 geolocation
-
         if(navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = new L.LatLng(position.coords.latitude,
-                                             position.coords.longitude);
-
-            bm2.map.panTo(pos);
-            bm2.map.setZoom(10);
-          }, function() {
+	    bm2.map.locate({setView: true, maxZoom: 14, zoom: 10});
             handleNoGeolocation(true);
-          });
         } else {
-          // Browser doesn't support Geolocation
           handleNoGeolocation(false);
         }
-
-
     }
 
     // Drawing Options
