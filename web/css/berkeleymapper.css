@@ -23,12 +23,6 @@ html, body, #map {
     margin: 0;
 }
 
-#bigContainer {
-    min-width: 500px;
-    min-height: 300px;
-    height: 100%;
-    overflow:hidden;
-}
 .vsplitbar {
     width: 5px;
     background: #aaa;
@@ -36,31 +30,6 @@ html, body, #map {
 .hsplitbar {
     height: 5px;
     background: #aaa;
-}
-
-#mapContainer {
-    height: 100%;
-    overflow:auto;
-    z-index=1;
-}
-
-#leftContent {
-    height: 90%;
-    overflow:auto;
-}
-
-#leftContainer {
-    padding: 8px;
-    width: 200px;
-    max-width: 200px;
-}
-
-#bottomContainer {
-    padding-top: 8px;
-    height: 100px;
-    max-height: 300px;
-    min-height: 0px;
-    overflow:auto;
 }
 
 select {

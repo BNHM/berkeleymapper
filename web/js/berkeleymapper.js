@@ -13,7 +13,6 @@ bm2.urlRoot = "v2/";        // URL Root to use for all calls
 bm2.mc = null;                     // markerCluster control variable
 bm2.iw = null;
 //bm2.drawnMarkerImage = new L.MarkerImage('img/marker-green.png');
-bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
 bm2.polygon = "";           // A variable to hold a polygon defined by the user
 bm2.configFile = "";
 bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
@@ -58,18 +57,6 @@ bm2.jqGridAttributes = {
 
 // Set up splitter panes
 $().ready(function() {
-    $("#bigContainer").splitter({
-        splitHorizontal: true,
-        outline: true,
-        resizeToWidth: true,
-        sizeBottom: true
-    });
-
-    // Horizontal splitter, nested in the right pane of the vertical splitter.
-    $("#topContainer").splitter({
-        splitVertical: true,
-        outline: true
-    });
 });
 
 
@@ -482,22 +469,8 @@ function initialize() {
            setMapTypes();
         });
 
-        $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.0</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
-            "<li>This page provides an interface for working with Google's geocoding services " +
-            "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
-             "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +
-            "<li>To include point and range mapping functions on your website, visit the " +
-            "<a href='http://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
-            "or to contact the development team.</li></ul>");
         // Show Geocoder tool
-        $("#addressControl").show();
-
-        // Hide bottom container
-        $("#myColors").hide();
-        $("#layers").hide();
-        $("#download").hide();
-        $("#styleOptions").hide();
-        $("#displayOptions").hide();
+        //$("#addressControl").show();
 
         // Try HTML5 geolocation
         if(navigator.geolocation) {
@@ -510,7 +483,7 @@ function initialize() {
 
     // Drawing Options
     // TODO: need leaflet drawing options
-    //initializeDrawingManager();
+    initializeDrawingManager();
 }
 
 <!-- JS Script -->
@@ -528,8 +501,6 @@ function handleNoGeolocation(errorFlag) {
     } else {
         content = 'Error: Your browser doesn\'t support geolocation.';
     }
-    //Removing this alert for now since it always fails... need to switch berkeleymapper to SSL for this to work
-    //alert(content);
 }
 
 // set all of our metadata elements by calling the metadataElements service, parsing, and assigning to correspondingly named elements
@@ -817,8 +788,6 @@ function fetchRecords() {
 	}
     });
 
-    $("#bottomContainer").html(retStr);
-    setHorizontalPane();
     $(function () {
         tableToGrid("#flexme1", bm2.jqGridAttributes);
     });
@@ -844,8 +813,6 @@ function clearAllMarkers() {
     for (i in bm2.circles) {
         bm2.circles[i].setMap(null);
     }
-    // clear Container
-    $("#bottomContainer").html(bm2.bottomContainerText);
 }
 
 function markerController(drawMarkers,drawRadius,value) {
@@ -984,7 +951,7 @@ function getMap() {
 
     // Don't zoom/center if pointMode is true
     //var defaultTileLayerUrl = 'https://a.tiles.mapbox.com/v3/mapbox.world-bright/{z}/{x}/{y}.png'
-    var defaultTileLayer = L.esri.basemapLayer("NationalGeographic");
+    var defaultTileLayer = L.esri.basemapLayer("Imagery");
 
     if (bm2.pointMode) {
         myOptions = {
@@ -1050,10 +1017,10 @@ function setMapTypes() {
 	}).addTo(countriesAndBoundariesLayer);
 
     var baseMaps = {
+	'Imagery': imageryLayer,
 	'Topographic': topoLayer,
 	'National Geographic': natgeoLayer,
 	'Streets': streetLayer,
-	'Imagery': imageryLayer,
 	'Country Boundaries': countriesAndBoundariesLayer
     }
     L.control.layers( baseMaps).addTo(bm2.map); 
@@ -1167,12 +1134,6 @@ function removeOverlay(num) {
     bm2.overlayMarkers[num].setMap(null);
 }
 
-function setHorizontalPane() {
-    var curr_height = $("#bottomContainer").height();
-    if (curr_height < 200) {
-        $("#bottomContainer").css("height", "200px");
-    }
-}
 
 function queryOverlay(num) {
     var path = bm2.overlays[num].getPath();
