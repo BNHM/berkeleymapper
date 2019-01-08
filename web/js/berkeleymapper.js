@@ -472,19 +472,19 @@ function initialize() {
         // Show Geocoder tool
         //$("#addressControl").show();
 
-        // Try HTML5 geolocation
-        if(navigator.geolocation) {
-	    bm2.map.locate({setView: true, maxZoom: 14, zoom: 10});
-            handleNoGeolocation(true);
-        } else {
-          handleNoGeolocation(false);
-        }
+	bm2.map.locate({setView: true, maxZoom: 16});
+	bm2.map.on('locationerror',onLocationError) 
     }
 
     // Drawing Options
     // TODO: need leaflet drawing options
     initializeDrawingManager();
 }
+
+function onLocationError(e) {
+    alert(e.message);
+}
+
 
 <!-- JS Script -->
 function mapPrint() {
@@ -494,14 +494,6 @@ function mapPrint() {
     newWindow.print(); // print the new window
 }
 
-function handleNoGeolocation(errorFlag) {
-    var content = "";
-    if (errorFlag) {
-        content = 'Error: The Geolocation service failed.';
-    } else {
-        content = 'Error: Your browser doesn\'t support geolocation.';
-    }
-}
 
 // set all of our metadata elements by calling the metadataElements service, parsing, and assigning to correspondingly named elements
 function setMetadataElements() {
@@ -977,7 +969,7 @@ function getMap() {
         };
     }
 
-    lmap = new L.Map('map', myOptions);
+    lmap = new L.Map('map', myOptions).fitWorld();
 
     /*lmap.enableKeyDragZoom({
         visualEnabled: true,
