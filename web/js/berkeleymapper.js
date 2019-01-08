@@ -402,7 +402,7 @@ function initialize() {
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
     imageObj = new Image();
-    imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
+    imageObj.src = 'https://maps.gstatic.com/mapfiles/openhand_8_8.cur';
 
     var tabFile = false;
     // Check for valid URL (or also if the user wants to directly pass in a session)
