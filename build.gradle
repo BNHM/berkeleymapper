@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'war'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.25.1'
+	compile group: 'com.eaio.uuid', name: 'uuid', version: '3.2'
+	compile group: 'org.tmatesoft.sqljet', name: 'sqljet', version: '1.1.13'
+    	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.9'
+	compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
+	compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+	compile group: 'org.apache.commons', name: 'commons-compress', version: '1.19'
+	compile group: 'commons-io', name: 'commons-io', version: '2.6'
+	compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+}
+
+war {
+	archiveName '../../dist/berkeleymapper.war'
+	webXml = file('web/WEB-INF/web.xml') // copies a file to WEB-INF/web.xml
+	from 'web/'
+	classpath fileTree('out/production/berkeleymapper/')
+}
