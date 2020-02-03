@@ -480,7 +480,7 @@ function initialize() {
  	        $('#loadingMsg').hide();
         });
 
-        $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.0</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
+        $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.1</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
             "<li>This page provides an interface for working with Google's geocoding services " +
             "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
              "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +

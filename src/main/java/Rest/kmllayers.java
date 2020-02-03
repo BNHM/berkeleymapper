@@ -2,13 +2,13 @@ package Rest;
 
 import Core.BMSession;
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMFileReader;
 import Renderers.BMRenderJSON;
-import java.net.MalformedURLException;
+
 import javax.ws.rs.*;
-import java.io.IOException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import java.io.IOException;
+import java.net.MalformedURLException;
 
 /**
  * "kmllayers" service returns a JSON representation of all of the KML BMLayers
