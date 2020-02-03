@@ -480,8 +480,7 @@ function initialize() {
             bm2.map = getMap();
 
           navigator.geolocation.getCurrentPosition(function(position) {
-            //var pos = new google.maps.LatLng(position.coords.latitude,
-                                             position.coords.longitude);
+            //var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
 
             bm2.map(position.coords.latitude,position.coords.longitude);
