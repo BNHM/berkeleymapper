@@ -447,7 +447,7 @@ function initialize() {
         }
 
         // Initialize Map
-        bm2.map = getMap();
+        bm2.map = getMap(0,0);
         google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
  	        $('#loadingMsg').hide();
         });
@@ -475,7 +475,27 @@ function initialize() {
 
     // Plain map mode, no points passed in
     } else {
-        bm2.map = getMap();
+        // Try HTML5 geolocation
+        if(navigator.geolocation) {
+            bm2.map = getMap();
+
+          navigator.geolocation.getCurrentPosition(function(position) {
+            //var pos = new google.maps.LatLng(position.coords.latitude,
+                                             position.coords.longitude);
+
+
+            bm2.map(position.coords.latitude,position.coords.longitude);
+            bm2.map.setZoom(10);
+          }, function() {
+              bm2.map = getMap(0,0);
+
+            handleNoGeolocation(true);
+          });
+        } else {
+            bm2.map = getMap(0,0);
+          // Browser doesn't support Geolocation
+          handleNoGeolocation(false);
+        }
         google.maps.event.addListener(bm2.map, 'bounds_changed', function() {
  	        $('#loadingMsg').hide();
         });
@@ -497,21 +517,7 @@ function initialize() {
         $("#styleOptions").hide();
         $("#displayOptions").hide();
 
-        // Try HTML5 geolocation
-        if(navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function(position) {
-            var pos = new google.maps.LatLng(position.coords.latitude,
-                                             position.coords.longitude);
 
-            bm2.map.setCenter(pos);
-            bm2.map.setZoom(10);
-          }, function() {
-            handleNoGeolocation(true);
-          });
-        } else {
-          // Browser doesn't support Geolocation
-          handleNoGeolocation(false);
-        }
 
     }
 
@@ -980,7 +986,9 @@ function markerClustererController() {
 
 
 // Set the initial Map
-function getMap() {
+function getMap(a,b) {
+    var lat = a;
+    var lng = b;
     var myOptions;
     // Don't zoom/center if pointMode is true
     if (bm2.pointMode) {

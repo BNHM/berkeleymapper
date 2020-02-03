@@ -7,10 +7,12 @@ repositories {
 }
 
 dependencies {
-	compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.25.1'
+	compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.30'
+	compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.30'
 	compile group: 'com.eaio.uuid', name: 'uuid', version: '3.2'
+	compile group: 'jakarta.xml.bind', name: 'jakarta.xml.bind-api', version: '2.3.2'
+	compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.2'
 	compile group: 'org.tmatesoft.sqljet', name: 'sqljet', version: '1.1.13'
-	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.9'
 	compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
 	compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
 	compile group: 'org.apache.commons', name: 'commons-compress', version: '1.19'
