@@ -19,15 +19,15 @@ import javax.ws.rs.core.Response.ResponseBuilder;
  * eliminating the need for remotely querying external file.
  * <p/>
  * Example:
- * <br>http://localhost/v2/session?tabfile=http://darwin.berkeley.edu/amphibiaweb.txt
+ * <br>http://localhost/v2/session?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt
  * <br>OR
- * <br>http://localhost:8080/berkeleymapper/v2/session?tabfile=http://darwin.berkeley.edu/amphibiaweb.txt
+ * <br>http://localhost:8080/berkeleymapper/v2/session?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt
  * <p/>
  * An error returns an empty response with status code = 204
  *
  * @author jdeck
  */
-@Path("session")
+@Path("/session")
 public class session {
     ResponseBuilder rb = null;
 
