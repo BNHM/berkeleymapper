@@ -17,3 +17,5 @@ gradle build
 ```         
 
 The gradle build process will create a WAR file called ```dist/berkeleymapper.war```
+
+There is a file called config.props which you can create by copying the file ```config.props.template```
