@@ -45,6 +45,7 @@ public class session {
         } catch (Exception e) {
             configUrl = null;
             System.err.println(e.getMessage());
+            e.printStackTrace();
             rb = Response.status(204);
         }
 
@@ -54,6 +55,7 @@ public class session {
             BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(url, configUrl);
             rb = Response.ok(f.getSession().getSessionString());
         } catch (IOException e) {
+            e.printStackTrace();
             rb = Response.status(204);
             return rb.build();
         }
@@ -77,18 +79,23 @@ public class session {
         } catch (Exception e) {
             configUrl = null;
             System.err.println(e.getMessage());
+            e.printStackTrace();
             rb = Response.status(204);
         }
 
         // Load the Tab File
         //URL url = new URL(tabdata);
         try {
+            System.out.println("tabdata=" + tabdata);
+            System.out.println("configUrl = " + configUrl);
             BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(tabdata, configUrl);
+
             System.out.println("tabdata=" + tabdata);
             System.out.println("configUrl = " + configUrl);
 
             rb = Response.ok(f.getSession().getSessionString());
         } catch (IOException e) {
+            e.printStackTrace();
             rb = Response.status(204);
             return rb.build();
         }
