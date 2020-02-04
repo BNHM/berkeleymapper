@@ -44,12 +44,12 @@ public class BMSession {
             // has a strange encoding but could not find the reason.
             // BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
             try (InputStream input = BMSession.class.getClassLoader().getResourceAsStream("config.properties")) {
-                       Properties prop = new Properties();
-                       filesLocation = prop.getProperty("filesLocation");
-                   } catch (IOException e) {
-                       System.out.println("unable to read properties file");
-                       e.printStackTrace();
-                   }
+                Properties prop = new Properties();
+                filesLocation = prop.getProperty("filesLocation");
+            } catch (IOException e) {
+                System.out.println("unable to read properties file");
+                e.printStackTrace();
+            }
             BMSession bm = new BMSession(new URL("https://biscicol.org/bcid"), null);
 
             System.out.println(bm.getFile().getAbsoluteFile());
@@ -61,6 +61,7 @@ public class BMSession {
 
     /**
      * Create a session using a URL for filedata
+     *
      * @param url
      * @param configURL
      * @throws IOException
@@ -87,6 +88,7 @@ public class BMSession {
 
     /**
      * Create a session using tabdata that we already have
+     *
      * @param tabdata
      * @param configURL
      * @throws IOException
@@ -112,7 +114,6 @@ public class BMSession {
     }
 
     public BMSession(String session) {
-        setProps();
         this.session = session;
         this.file = new File(filesLocation + session);
         this.configFile = new File(filesLocation + session + ".xml");
@@ -123,16 +124,29 @@ public class BMSession {
         }
     }
 
+    /**
+     * The properties file sets up server-specific configurations.  Currently, this is just
+     * a directory to write to
+     */
     public void setProps() {
         try (InputStream input = BMSession.class.getClassLoader().getResourceAsStream("config.properties")) {
             Properties prop = new Properties();
+
+            if (input == null) {
+                System.out.println("Sorry, unable to find config.properties");
+                throw new IOException("unable to find config.properties class");
+            }
+
+            prop.load(input);
+
             this.filesLocation = prop.getProperty("filesLocation");
         } catch (IOException e) {
             System.out.println("unable to read properties file");
             e.printStackTrace();
         }
     }
-        public int getMode() {
+
+    public int getMode() {
         return mode;
     }
 
