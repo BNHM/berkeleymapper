@@ -65,9 +65,11 @@ public class allpoints {
             }
         } catch (IOException e) {
             rb = Response.status(204);
+            e.printStackTrace();
             rb.header("Access-Control-Allow-Origin", "*");
             return rb.build();
         } catch (CompressorException e) {
+            e.printStackTrace();
             rb = Response.status(204);
             rb.header("Access-Control-Allow-Origin", "*");
             return rb.build();
