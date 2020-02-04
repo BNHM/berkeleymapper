@@ -11,6 +11,7 @@ dependencies {
 	compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: '2.30'
 	compile group: 'com.eaio.uuid', name: 'uuid', version: '3.2'
 	compile group: 'jakarta.xml.bind', name: 'jakarta.xml.bind-api', version: '2.3.2'
+	compile group: 'org.glassfish.corba', name: 'glassfish-corba-omgapi', version: '4.0.2-b011'
 	compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: '2.3.2'
 	compile group: 'org.tmatesoft.sqljet', name: 'sqljet', version: '1.1.13'
 	compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
