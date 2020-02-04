@@ -1,0 +1,9 @@
+.idea/*
+dist/
+out/
+build/
+gradle/
+.gradle/
+gradlew
+gradlew.bat
+src/main/resources/config.props

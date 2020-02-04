@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.nio.channels.Channels;
@@ -23,7 +24,8 @@ import java.nio.channels.ReadableByteChannel;
 public class BMSession {
 
     private String session = null;
-    final private String filesLocation = "/home/jdeck/webserver_tmp/berkeleymapper/";
+    //final private String filesLocation = "/home/jdeck/webserver_tmp/berkeleymapper/";
+    private static String filesLocation = "";
     private File file = null;
     private File configFile = null;
     final public static int CONFIG = 1;
@@ -41,6 +43,13 @@ public class BMSession {
             // I spent 2 days researching this to no avail!!  It seems that this instance
             // has a strange encoding but could not find the reason.
             // BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
+            try (InputStream input = BMSession.class.getClassLoader().getResourceAsStream("config.properties")) {
+                       Properties prop = new Properties();
+                       filesLocation = prop.getProperty("filesLocation");
+                   } catch (IOException e) {
+                       System.out.println("unable to read properties file");
+                       e.printStackTrace();
+                   }
             BMSession bm = new BMSession(new URL("https://biscicol.org/bcid"), null);
 
             System.out.println(bm.getFile().getAbsoluteFile());
@@ -57,6 +66,8 @@ public class BMSession {
      * @throws IOException
      */
     public BMSession(URL url, URL configURL) throws IOException {
+        setProps();
+
         setSessionUUID();
 
         file = new File(filesLocation + session);
@@ -81,6 +92,8 @@ public class BMSession {
      * @throws IOException
      */
     public BMSession(String tabdata, URL configURL) throws IOException {
+        setProps();
+
         setSessionUUID();
 
         file = new File(filesLocation + session);
@@ -99,6 +112,7 @@ public class BMSession {
     }
 
     public BMSession(String session) {
+        setProps();
         this.session = session;
         this.file = new File(filesLocation + session);
         this.configFile = new File(filesLocation + session + ".xml");
@@ -109,7 +123,16 @@ public class BMSession {
         }
     }
 
-    public int getMode() {
+    public void setProps() {
+        try (InputStream input = BMSession.class.getClassLoader().getResourceAsStream("config.properties")) {
+            Properties prop = new Properties();
+            this.filesLocation = prop.getProperty("filesLocation");
+        } catch (IOException e) {
+            System.out.println("unable to read properties file");
+            e.printStackTrace();
+        }
+    }
+        public int getMode() {
         return mode;
     }
 
