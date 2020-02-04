@@ -6,4 +6,4 @@ gradle/
 .gradle/
 gradlew
 gradlew.bat
-src/main/resources/config.props
+src/main/resources/config.properties
