@@ -23,7 +23,7 @@ import java.nio.channels.ReadableByteChannel;
 public class BMSession {
 
     private String session = null;
-    final private String filesLocation = "/data/tmp/berkeleymapper/";
+    final private String filesLocation = "/home/jdeck/webserver_tmp/berkeleymapper/";
     private File file = null;
     private File configFile = null;
     final public static int CONFIG = 1;
