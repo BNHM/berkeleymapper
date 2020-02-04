@@ -37,6 +37,7 @@ import java.io.*;
 @Path("allpoints")
 public class allpoints {
     ResponseBuilder rb;
+    static BMSession sess;
 
     @GET
     @Produces("application/json")
@@ -44,7 +45,8 @@ public class allpoints {
             @QueryParam("session") String session,
             @QueryParam("gzip") String gzip) throws MalformedURLException {
         // Load the File
-        BMSession sess = new BMSession(session);
+         sess = new BMSession(session);
+
         String filename = null;
         try {
             if (sess.getMode() == sess.CONFIG) {
@@ -86,8 +88,7 @@ public class allpoints {
 
 
     public static String compress(String str, String session) throws IOException, CompressorException {
-        //String filename = "/data/tmp/berkeleymapper/" + session + ".gz";
-        String filename = "allpoints_" + session;
+        String filename =  sess.getFilesLocation() + "allpoints_" + session;
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         FileOutputStream fout = new FileOutputStream(filename);
         CompressorOutputStream gzippedOut = new CompressorStreamFactory()
@@ -101,8 +102,7 @@ public class allpoints {
     }
 
     public static String nocompress(String str, String session) throws IOException {
-        //String filename = "/data/tmp/berkeleymapper/" + session + ".txt";
-        String filename = "allpoints_" + session + ".txt";
+        String filename = sess.getFilesLocation() +"allpoints_" + session + ".txt";
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         FileOutputStream fout = new FileOutputStream(filename);
         fout.write(str.getBytes());
