@@ -28,21 +28,8 @@ public class test {
         // Initial URL
         URL url = null;
         try {
-            //url = new URL("file:///Users/jdeck/IdeaProjects/berkeleymapper/sampledata/amphibiaweb.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.txt");
-            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
-            //url = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.txt");
-            //url = new URL("http://miomap.berkeley.edu/downloads/map_table_7282.xls");
-            //url = new URL("http://bnhm.berkeley.edu/tmp/map_1331675816.8494");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.txt");
-            url = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt");
-            url = new URL("http://amphibiaweb.org/tmpfiles/980866");
-            //url = new URL("http://ucmpdb.berkeley.edu/ucmp/tmpfiles/98721.xls");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/ucmp.txt");
-            //url = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.txt");
+            url = new URL("https://berkeleymappertest.berkeley.edu/schemas/arctos.txt");
+            url = new URL("https://amphibiaweb.org/tmpfiles/980866");
 
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
@@ -50,20 +37,10 @@ public class test {
 
         URL configUrl = null;
         try {
-            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/pointverify.xml");
-            //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_122.xml");
-            //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_1.xml");
-            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/amphibiaweb.xml");
-            //configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_875.xml");
-            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/ucjeps.xml");
-            //configUrl = new URL("http://miomap.berkeley.edu/FAUNMAP/miomap.xml");
-            //configUrl = new URL("http://bnhm.berkeley.edu/query/bnhm3.xml");
-            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/ornis.xml");  // dynamic field not implemented properly (switch to static field?)
-            //configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/vertnet.xml");
-            configUrl = new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.xml");
-            configUrl = new URL("http://arctos.database.museum/bnhmMaps/tabfiles/arctos_521.xml");
-            configUrl = new URL("http://darwin.berkeley.edu/foo.xml");
-            configUrl = new URL("http://amphibiaweb.org/tmpfiles/bm_config_48767.xml");
+            configUrl = new URL("https://berkeleymappertest.berkeley.edu/schemas/arctos.xml");
+            configUrl = new URL("https://arctos.database.museum/bnhmMaps/tabfiles/arctos_521.xml");
+            configUrl = new URL("https://darwin.berkeley.edu/foo.xml");
+            configUrl = new URL("https://amphibiaweb.org/tmpfiles/bm_config_48767.xml");
 
 
         } catch (MalformedURLException ex) {

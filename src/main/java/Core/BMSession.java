@@ -42,7 +42,6 @@ public class BMSession {
             // NOTE: encoding on darwin.berkeley.edu/amphibiaweb.txt is strange--
             // I spent 2 days researching this to no avail!!  It seems that this instance
             // has a strange encoding but could not find the reason.
-            // BMSession bm = new BMSession(new URL("http://berkeleymappertest.berkeley.edu/schemas/arctos.txt"), null);
             try (InputStream input = BMSession.class.getClassLoader().getResourceAsStream("config.properties")) {
                 Properties prop = new Properties();
                 filesLocation = prop.getProperty("filesLocation");

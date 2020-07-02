@@ -21,14 +21,14 @@ public class BMRenderKML implements BMRendererInterface {
         StringBuilder kml = new StringBuilder();
         kml.append("");
         kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        kml.append("<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
+        kml.append("<kml xmlns=\"https://earth.google.com/kml/2.2\">\n");
         kml.append("<Document>\n");
         kml.append("  <name>BerkeleyMapper Query</name>\n");
         kml.append("  <open>1</open>\n");
         kml.append("  <Style id=\"red-star\">\n");
         kml.append("    <IconStyle>\n");
         kml.append("      <Icon>\n");
-        kml.append("        <href>http://maps.google.com/mapfiles/kml/paddle/red-stars.png</href>\n");
+        kml.append("        <href>https://maps.google.com/mapfiles/kml/paddle/red-stars.png</href>\n");
         kml.append("      </Icon>\n");
         kml.append("    </IconStyle>\n");
         kml.append("  </Style>\n");

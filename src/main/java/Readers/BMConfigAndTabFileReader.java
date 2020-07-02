@@ -257,7 +257,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
      * Each Configuration File may want to pass in Logos to display under the legend.  This returns the contents
      * of all "logo" elements in a HashMap consisting of an img and url tags, thus the user simply passes in elements
      * like
-     * <logo img="http://myurl/logo.gif" url="http://mysite.com/" />
+     * <logo img="https://myurl/logo.gif" url="https://mysite.com/" />
      *
      * @return
      */

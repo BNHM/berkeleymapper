@@ -9,7 +9,7 @@ import javax.ws.rs.core.Response;
 import java.net.MalformedURLException;
 
 /**
- * Called like:  http://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
+ * Called like:  https://berkeleymapper.berkeley.edu/v2/speciesrange/Plethodon+montanus/binomial/gaa_2011
  * NOTE: This service must run on a publicly accessible server so Google can find the generated KML
  * This makes testing with localhost very difficult!
  *
