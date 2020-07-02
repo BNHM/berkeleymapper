@@ -414,7 +414,7 @@ function initialize() {
 
     // pre-load cursor image so cursor doesn't appear on Mac Chrome
     imageObj = new Image();
-    imageObj.src = 'http://maps.gstatic.com/mapfiles/openhand_8_8.cur';
+    imageObj.src = 'https://maps.gstatic.com/mapfiles/openhand_8_8.cur';
 
     var tabFile = false;
     // Check for valid URL (or also if the user wants to directly pass in a session)
@@ -483,7 +483,7 @@ function initialize() {
             //var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
 
 
-            bm2.map(position.coords.latitude,position.coords.longitude);
+            bm2.map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
             bm2.map.setZoom(10);
           }, function() {
               bm2.map = getMap(0,0);
@@ -504,7 +504,7 @@ function initialize() {
             "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
              "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +
             "<li>To include point and range mapping functions on your website, visit the " +
-            "<a href='http://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
+            "<a href='https://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
             "or to contact the development team.</li></ul>");
         // Show Geocoder tool
         $("#addressControl").show();
@@ -1030,7 +1030,7 @@ function getMap(a,b) {
         visualPosition: google.maps.ControlPosition.LEFT,
         visualPositionOffset: new google.maps.Size(35, 0),
         visualPositionIndex: null,
-        visualSprite: "http://maps.gstatic.com/mapfiles/ftr/controls/dragzoom_btn.png",
+        visualSprite: "https://maps.gstatic.com/mapfiles/ftr/controls/dragzoom_btn.png",
         visualSize: new google.maps.Size(20, 20),
         visualTips: {
             off: "Turn on",
@@ -1047,7 +1047,7 @@ function setMapTypes() {
     //TODO: call terraserver for topos and add DOQ
     var topoMapOptions = {
         getTileUrl: function(coords, zoom) {
-            return 'http://server.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/' + zoom + '/' + coords.y + '/' + coords.x;
+            return 'https://server.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/' + zoom + '/' + coords.y + '/' + coords.x;
         },
         tileSize: new google.maps.Size(256, 256),
         isPng: false,
@@ -1060,19 +1060,19 @@ function setMapTypes() {
     bm2.map.mapTypes.set('topo', topo);
 
     // WMS Raster Services
-    var cantopo = WMSTileOverlay("http://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
+    var cantopo = WMSTileOverlay("https://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
     bm2.map.mapTypes.set('cantopo', cantopo);
 
-    var moorea = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
+    var moorea = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
     bm2.map.mapTypes.set('moorea',moorea);
 
-    var mooreabathy = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
+    var mooreabathy = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
     bm2.map.mapTypes.set('mooreabathy',mooreabathy);
 
-    var angelo2m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
+    var angelo2m = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
     bm2.map.mapTypes.set('angelo2m',angelo2m);
 
-    var angelo1m = WMSTileOverlay("http://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
+    var angelo1m = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
     bm2.map.mapTypes.set('angelo1m',angelo1m);
 
     bm2.map.setOptions({
