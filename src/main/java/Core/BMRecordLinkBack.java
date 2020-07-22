@@ -104,7 +104,7 @@ public class BMRecordLinkBack {
     }
 
     public static void main(String[] args) {
-        String linkurl = "http://portal.vertnet.org/o/${institutioncode}/${collectioncode}?id=${catalognumbertext}";
+        String linkurl = "https://portal.vertnet.org/o/${institutioncode}/${collectioncode}?id=${catalognumbertext}";
 
         BMRecordLinkBack lb = new BMRecordLinkBack(linkurl, "some text", null);
         Map map = new HashMap();

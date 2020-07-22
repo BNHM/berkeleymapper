@@ -26,9 +26,9 @@ import java.io.*;
  * line,lat,lng,radius,datum
  * <p/>
  * Example:
- * <br>http://localhost/v2/allpoints?session=SESSION_STRING
+ * <br>https://localhost/v2/allpoints?session=SESSION_STRING
  * <br>OR
- * <br>http://localhost:8080/berkeleymapper/v2/allpoints?session=SESSION_STRING
+ * <br>https://localhost:8080/berkeleymapper/v2/allpoints?session=SESSION_STRING
  * <p/>
  * An error returns an empty response with status code = 204
  *

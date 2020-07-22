@@ -66,7 +66,7 @@ public class IUCN {
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery(sql);
         kml += "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<kml xmlns=\"http://www.opengis.net/kml/2.2\">\n" +
+                "<kml xmlns=\"https://www.opengis.net/kml/2.2\">\n" +
                 "<Document>\n";
         kml += style.getStyleAsKML();
 

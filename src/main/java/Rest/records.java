@@ -23,9 +23,9 @@ import javax.ws.rs.core.Response.ResponseBuilder;
  * a JSON representation of all the fields matching the given line number.
  * <p/>
  * Example:
- * <br>http://localhost/v2/records?session=SESSION_STRING&line=2
+ * <br>https://localhost/v2/records?session=SESSION_STRING&line=2
  * <br>OR
- * <br>http://localhost:8080/berkeleymapper/v2/records?session=SESSION_STRING&line=2
+ * <br>https://localhost:8080/berkeleymapper/v2/records?session=SESSION_STRING&line=2
  * <p/>
  * POST input string has a session an a WKT polygon string as input and
  * returns a JSON list of records and fields matching the point in polygon

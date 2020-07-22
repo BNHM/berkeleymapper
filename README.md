@@ -19,3 +19,12 @@ gradle build
 The gradle build process will create a WAR file called ```dist/berkeleymapper.war```
 
 There is a file called config.props which you can create by copying the file ```config.props.template```
+
+Certain connections require importing certificate to allow 3rd party access:
+First, obtain an exported copy of certificate. (On chrome, developer tools->security)
+Second, import into keystore using the keytool program
+```
+keytool -import -alias example -keystore /etc/ssl/certs/java/cacerts -file {FILEAME}
+```
+Note that cert files are stored in ~jdeck/certs
+
