@@ -1,4 +1,4 @@
-<img src='https://raw.githubusercontent.com/BNHM/berkeleymapper/master/web/img/logo_medium.png' width='150' align="left">
+<img src='https://raw.githubusercontent.com/BNHM/berkeleymapper/master/src/main/webapp/img/logo_medium.png' width='150' align="left">
 
 ## Introduction
 BerkeleyMapper 2.0 is a mapping interface for Collections (or other) Databases built on top of Google Maps.  Users can configure their mapping interface through a simple XML configuration script while mapping data from tab-delimited text files.
