@@ -467,9 +467,9 @@ function initialize() {
         getLogos();
 
         // Special exception for amphibiaweb who doesn't want to display download links
-        if (jQuery.url.param('amphibiaweb')) {
-            $("#download").hide();
-        }
+        //if (jQuery.url.param('amphibiaweb')) {
+         //   $("#download").hide();
+        //}
 
         $("#styleOptions").hide();
 
