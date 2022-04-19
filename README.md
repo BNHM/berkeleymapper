@@ -14,6 +14,11 @@ All external libraries are controlled by gradle, so to get started, you need to 
 git clone {this_repo}
 # install gradle if you have not done so, then...
 gradle build
+
+# source ~/.bashrc
+deployBerkeleymapper
+
+
 ```         
 
 The gradle build process will create a WAR file called ```dist/berkeleymapper.war```
