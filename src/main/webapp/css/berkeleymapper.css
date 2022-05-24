@@ -1,7 +1,7 @@
-a:link {text-decoration: none; font-size:11px;};
-a:visited {text-decoration: none; font-size:11px;}
-a:active {text-decoration: none; font-size:11px;}
-a:hover {text-decoration: underline; color: red; font-size:11px;}
+a:link {text-decoration: none; font-size:12px;};
+a:visited {text-decoration: none; font-size:12px;}
+a:active {text-decoration: none; font-size:12px;}
+a:hover {text-decoration: underline; color: red; font-size:12px;}
 
 html, body, #map {
     margin: 0;
@@ -68,20 +68,20 @@ select {
 }
 
 #content {
-    font-size:11px;
+    font-size:12px;
 }
 #address {
-    font-size:11px;
+    font-size:12px;
 }
 #addressbutton {
-    font-size:11px;
+    font-size:12px;
 }
 #addressControl {
     display:none;
 }
 /* These are the main content elements on the left pane */
 #layers, #download, #myColors, #styleOptions, #displayOptions, #information {
-    font-size:11px;
+    font-size:12px;
     margin: 5px 5px 5px 5px;
     overflow:auto;
 }
@@ -106,14 +106,14 @@ label.dropdown:before {
 }
 label.dropdown { position: relative; }
 label.dropdown:after {
-	font-size: 11px;
+	font-size: 12px;
 	position: absolute;
 	pointer-events: none;
 }
 
 
 #legendText {
-    font-size: 11px;
+    font-size: 12px;
     margin: 5px 0px 5px 5px;
     overflow:auto;
 }
@@ -148,5 +148,5 @@ label.dropdown:after {
 
 #styleOptionsCheckboxes {
     display:none;
-      font-size:11px;
+      font-size:12px;
 }
