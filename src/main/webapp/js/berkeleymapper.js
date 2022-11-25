@@ -1,24 +1,24 @@
-var bm2 = {};
-bm2.map;
-bm2.overlays = [];          // overlays that the User has drawn
-bm2.overlayMarkers = [];    // markers to click on for the overlays that user has drawn
-bm2.markers = [];           // Point markers
-bm2.circles = [];           // Error radius circles for point markers
-bm2.georefMarkers = [];     // Georeferencing result markers
-bm2.georefCircles = [];     // Circles associated with the georeferencing markers
-bm2.kmlLayers = [];         // KML Layers (defined by config file)
-bm2.pointMode = false;      // pointMode = true draws special features for pointMapping
-bm2.session = "";           // Session string for communicating w/ server
-bm2.urlRoot = "v2/";        // URL Root to use for all calls
-bm2.mc = null;                     // markerCluster control variable
-bm2.iw = null;
-bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
-bm2.bottomContainerText = "<center>Click on MarkerClusters or draw a polygon to query points</center>";
-bm2.polygon = "";           // A variable to hold a polygon defined by the user
-bm2.configFile = "";
-bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
-bm2.showControls = true;
-bm2.colorOption = "markers";    // value to control how to color markers
+     var bm2 = {};
+     bm2.map;
+     bm2.overlays = [];          // overlays that the User has drawn
+     bm2.overlayMarkers = [];    // markers to click on for the overlays that user has drawn
+     bm2.markers = [];           // Point markers
+     bm2.circles = [];           // Error radius circles for point markers
+     bm2.georefMarkers = [];     // Georeferencing result markers
+     bm2.georefCircles = [];     // Circles associated with the georeferencing markers
+     bm2.kmlLayers = [];         // KML Layers (defined by config file)
+     bm2.pointMode = false;      // pointMode = true draws special features for pointMapping
+     bm2.session = "";           // Session string for communicating w/ server
+     bm2.urlRoot = "v2/";        // URL Root to use for all calls
+     bm2.mc = null;                     // markerCluster control variable
+     bm2.iw = null;
+     bm2.drawnMarkerImage = new google.maps.MarkerImage('img/marker-green.png');
+     //bm2.dialogText = "Click on MarkerClusters or draw a polygon to query points";
+     bm2.polygon = "";           // A variable to hold a polygon defined by the user
+     bm2.configFile = "";
+     bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
+     bm2.showControls = true;
+     bm2.colorOption = "markers";    // value to control how to color markers
 
 String.prototype.endsWith = function(suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
@@ -32,7 +32,7 @@ bm2.jqGridAttributes = {
     altRows: true,
     scroll: true,
     height: "100%" ,
-    onSelectRow: function(id) {
+        onSelectRow: function(id) {
         var lat = $('#flexme1').getCell(id, 'Latitude');
         var lng = $('#flexme1').getCell(id, 'Longitude');
 
@@ -57,20 +57,21 @@ bm2.jqGridAttributes = {
 };
 
 // Set up splitter panes
-$().ready(function() {
-    $("#bigContainer").splitter({
-        splitHorizontal: true,
-        outline: true,
-        resizeToWidth: true,
-        sizeBottom: true
+/*$().ready(function() {
+
+   $("#bigContainer").splitter({
+        splitHorizontal: false,
+        outline: false,
+        resizeToWidth: false,
+        sizeBottom: false
     });
 
     // Horizontal splitter, nested in the right pane of the vertical splitter.
     $("#topContainer").splitter({
-        splitVertical: true,
-        outline: true
-    });
-});
+        splitVertical: false,
+        outline: false
+    });   
+});  */
 
 
 // Adjust bounds to drawn polygon
@@ -141,7 +142,7 @@ function getLogos() {
                   logoId = "logo" + counter;
                   $("#logos").append("<br>");
                   $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
-                  $("#" + logoId).append("<img src=\"" + logoObj.img + "\" max-width=150 \/>");
+                  $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=80 \/>");
                   $("#logos").append("<br>");
                   counter++;
               });
@@ -473,6 +474,7 @@ function initialize() {
 
         $("#styleOptions").hide();
 
+
     // Plain map mode, no points passed in
     } else {
         // Try HTML5 geolocation
@@ -499,13 +501,16 @@ function initialize() {
  	        $('#loadingMsg').hide();
         });
 
-        $("#bottomContainer").html("<b>Welcome to BerkeleyMapper 2.1</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
+       /* $("#dialogWelcome").dialog('open')
+        $("#dialogWelcome").html("<html><b>Welcome to BerkeleyMapper 2.1</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
             "<li>This page provides an interface for working with Google's geocoding services " +
             "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
              "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +
             "<li>To include point and range mapping functions on your website, visit the " +
             "<a href='https://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
-            "or to contact the development team.</li></ul>");
+            "or to contact the development team.</li></ul></html>");
+
+        */
         // Show Geocoder tool
         $("#addressControl").show();
 
@@ -812,6 +817,8 @@ function fetchRecords() {
                 showMsg("Response truncated to 100 records");
                 //alert('result response truncated to 100 records');
             }
+
+
     	    $("#loadingMsg").hide();
 
         },
@@ -825,15 +832,19 @@ function fetchRecords() {
     	    $("#loadingMsg").hide();
 	}
     });
+    
 
-    $("#bottomContainer").html(retStr);
-    setHorizontalPane();
-    $(function () {
-        tableToGrid("#flexme1", bm2.jqGridAttributes);
-    });
 
-    // fixes header when scrolling
-    $('#flexme1').closest(".ui-jqgrid-bdiv").css({"overflow-y" : "scroll"});
+ // NOTE: Jq grid is not rendering inside dialog box
+                    $(function () {
+                        tableToGrid("#flexme1", bm2.jqGridAttributes);
+                    });
+
+                    // fixes header when scrolling
+                    $('#flexme1').closest(".ui-jqgrid-bdiv").css({"overflow-y" : "scroll"});
+
+     document.getElementById("resultsDiv").style.visibility = "visible";
+    document.getElementById("resultsDiv").innerHTML = retStr;
 
 
     return true;
@@ -854,7 +865,7 @@ function clearAllMarkers() {
         bm2.circles[i].setMap(null);
     }
     // clear Container
-    $("#bottomContainer").html(bm2.bottomContainerText);
+    //$("#dialog").html(bm2.dialogText);
 }
 
 function markerController(drawMarkers,drawRadius,value) {
@@ -1037,6 +1048,7 @@ function getMap(a,b) {
             on: "Turn off"
         }
     });
+    //lmap.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#aboutButton"));
 
     return lmap;
 }
@@ -1180,12 +1192,6 @@ function removeOverlay(num) {
     bm2.overlayMarkers[num].setMap(null);
 }
 
-function setHorizontalPane() {
-    var curr_height = $("#bottomContainer").height();
-    if (curr_height < 200) {
-        $("#bottomContainer").css("height", "200px");
-    }
-}
 
 function queryOverlay(num) {
     var path = bm2.overlays[num].getPath();

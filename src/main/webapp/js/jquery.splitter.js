@@ -105,7 +105,7 @@
 			},
 			h: {					// Horizontal splitters:
 				keyTop: 40, keyBottom: 38,  cursor: "n-resize",
-				splitbarClass: "hsplitbar", outlineClass: "houtline",
+				splitbarClass: "`hsplitbar", outlineClass: "houtline",
 				type: 'h', eventPos: "pageY", origin: "top",
 				split: "height", pxSplit: "offsetHeight", side1: "Top",  side2: "Bottom",
 				fixed: "width",  pxFixed: "offsetWidth",  side3: "Left", side4: "Right"
