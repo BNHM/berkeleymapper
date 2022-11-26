@@ -1,7 +1,7 @@
 // About Dialog
 $(function () {
     $("#aboutButton").click(function () {
-        $("<div>Welcome to <b>BerkeleyMapper</b></div>")
+        $("#aboutDiv")
             .dialog({
                 "title": "About",
                 "buttons": {
@@ -10,38 +10,24 @@ $(function () {
                     }
                 }
             }).attr('id', 'aboutDialog');
+        $("#aboutDialog").dialog("open")
     });
 });
 
-
-
+// Legend Dialog
 $(function () {
-     $("#resultsButton").click(function () {
-        document.getElementById("resultsDiv").style.visibility = "visible";
-    });
-});
-
-$(document).on('keydown', function (e) {
-    //user presses escape
-    if (e.keyCode === 27) {
-        document.getElementById("resultsDiv").style.visibility = "hidden";
-                }
-    });
-// Results Dialog
-
-
-
-    //.attr('id', 'resultsContainer');)
-    /*$("<div>Click on markercluster or perform spatial query to see results</div>")
+    $("#resultsDiv")
         .dialog({
             "title": "Results",
-            width: w,
-            maxHeight: 200,
+            width: screen.width,
+            height: 220,
             position: {my: 'bottom', at: 'bottom', of: "#map"},
-            autoOpen: false,
-        }).attr('id', 'resultsContainer');
-        */
-
+            autoOpen: false
+        }).attr('id', 'resultsDialog');
+    $("#resultsButton").click(function () {
+        $("#resultsDialog").dialog("open")
+    });
+});
 
 
 // Legend Dialog

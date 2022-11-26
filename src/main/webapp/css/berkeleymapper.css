@@ -1,29 +1,28 @@
-a:link {text-decoration: none; font-size:12px;};
-a:visited {text-decoration: none; font-size:12px;}
-a:active {text-decoration: none; font-size:12px;}
-a:hover {text-decoration: underline; color: red; font-size:12px;}
+a:link {
+    text-decoration: none;
+    font-size: 12px;
+}
 
-#resultsDiv {
-    left:0px;
-    bottom:0px;
-    position:fixed;
-    resize: both;
+;
+a:visited {
+    text-decoration: none;
+    font-size: 12px;
+}
+
+a:active {
+    text-decoration: none;
+    font-size: 12px;
+}
+
+a:hover {
+    text-decoration: underline;
+    color: red;
+    font-size: 12px;
+}
+
+#resultsDialog {
+
     overflow-y: auto;
-    min-width: 100%;
-    height: 200px;
-    min-height: 100px;
-    z-index=99999;
-    text-align: center;
-    background-color: #f2f2f2;
-            border-radius: 10px;
-            -webkit-border-radius: 10px;
-            -moz-border-radius: 10px;
-            border: 1px solid #666666;
-            padding: 15px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 15px;
-            border: 3px solid #cccccc;
 
 }
 
@@ -32,7 +31,7 @@ html, body, #map {
     padding: 0;
     height: 100%;
     border: none;
-    overflow:hidden;
+    overflow: hidden;
 }
 
 #top, #footer {
@@ -51,9 +50,8 @@ html, body, #map {
     min-width: 500px;
     min-height: 300px;
     height: 100%;
-    overflow:hidden;
+    overflow: hidden;
 }
-
 
 
 #legendDialog {
@@ -62,13 +60,13 @@ html, body, #map {
 
 #mapContainer {
     height: 100%;
-    overflow:auto;
-    z-index=1;
+    overflow: auto;
+    z-index: 1;
 }
 
 #leftContent {
     height: 90%;
-    overflow:auto;
+    overflow: auto;
 }
 
 #leftContainer {
@@ -79,89 +77,111 @@ html, body, #map {
 
 
 select {
-  font-family: inherit;
+    font-family: inherit;
 }
 
 #content {
-    font-size:12px;
+    font-size: 12px;
 }
+
 #address {
-    font-size:12px;
+    font-size: 12px;
 }
+
 #addressbutton {
-    font-size:12px;
+    font-size: 12px;
 }
+
 #addressControl {
-    display:none;
+    display: none;
 }
+
 /* These are the main content elements on the left pane */
 #layers, #download, #myColors, #styleOptions, #displayOptions, #information {
-    font-size:12px;
+    font-size: 12px;
     margin: 5px 5px 5px 5px;
-    overflow:auto;
+    overflow: auto;
 }
 
 label.dropdown select {
-	display: inline-block;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
-	cursor: pointer;
-	outline: none;
+    display: inline-block;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
 }
 
 label.dropdown select::-ms-expand {
-	display: none;
+    display: none;
 }
+
 label.dropdown:before {
 
-	position: absolute;
-	pointer-events: none;
-	display: block;
+    position: absolute;
+    pointer-events: none;
+    display: block;
 }
-label.dropdown { position: relative; }
+
+label.dropdown {
+    position: relative;
+}
+
 label.dropdown:after {
-	font-size: 12px;
-	position: absolute;
-	pointer-events: none;
+    font-size: 12px;
+    position: absolute;
+    pointer-events: none;
 }
 
 
 #legendText {
     font-size: 12px;
     margin: 5px 0px 5px 5px;
-    overflow:auto;
+    overflow: auto;
 }
 
 .markerImgDiv {
-    float:left;
+    float: left;
     padding-right: 4px;
 }
+
 .markerText {
-    float:left;
-    font-size:11px;
+    float: left;
+    font-size: 11px;
 }
+
 #markerImg {
     height: 20px;
 }
 
 #loadingMsg {
-    display:block;
-    width:180px;
-    z-index=99;
-    background-color:yellow;
-    margin:0px;
-    border-style:solid;
-    border-width:1px;
-    border-color:black;
-    //overflow-style: marquee;
-    //marquee-style: alternate;
-    //marquee-loop: infinite;
-    //overflow-x: -webkit-marquee;
-    //-webkit-marquee: backwards medium infinite alternate normal;
+    display: block;
+    width: 180px;
+    z-index: 99;
+    background-color: yellow;
+    margin: 0px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
 }
 
 #styleOptionsCheckboxes {
-    display:none;
-      font-size:12px;
+    display: none;
+    font-size: 12px;
+}
+
+.close {
+    text-indent: -99em;
+    overflow: hidden;
+}
+
+tr td {
+    font-size: 11px;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+th {
+    font-size: 12px;
+    padding: 2 !important;
+    margin: 2 !important;
 }

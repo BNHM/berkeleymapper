@@ -7,16 +7,20 @@
 
     <title>BerkeleyMapper</title>
 
-    <link href="http://code.jquery.com/ui/1.11.0/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <link href="http://code.jquery.com/ui/1.13.0/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <!-- Bootstrap v4.x stylesheet -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+
     <script type="text/javascript"
             src="https://maps.google.com/maps/api/js?libraries=drawing,geometry&key=AIzaSyB8xLmrGmJE81OXNK5RhL7-gQRV7mkYmsk"></script>
     <script type="text/javascript" src="js/keydragzoom.js"></script>
-    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
-    <script src="https://code.jquery.com/ui/1.11.0/jquery-ui.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
     <script type="text/javascript" src="js/jquery.url.js"></script>
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
     <script type="text/javascript" src="js/jquery.cookie.js"></script>
-    <script type="text/javascript" src="js/jquery.jqGrid.min.js"></script>
+
+    <!-- <script type="text/javascript" src="js/jquery.jqGrid.min.js"></script>-->
     <script type="text/javascript" src="js/dialogs.js"></script>
     <script type="text/javascript" src="js/berkeleymapper.js"></script>
     <script type="text/javascript" src="js/drawingManager.js"></script>
@@ -81,8 +85,6 @@
 <div id="loadingMsg">Loading Application ...</div>
 
 
-
-
 <div id="mapContainer">
     <a href="#" id="aboutButton">
         <button type="button">About</button>
@@ -94,17 +96,23 @@
         <button type="button">Results</button>
     </a>
     <div id="map"></div>
-    <div id="resultsDiv" style="visibility:hidden">
-        Click on MarkerClusterer or perform spatial query to see results
+    <div id="resultsContainer" style="visibility:hidden">
+        <div id="resultsDiv">
+            Click on MarkerClusterer or perform spatial query to see results
+        </div>
     </div>
-
-
 </div>
 
 <div style="left:2px; bottom:2px; position:fixed;z-index:50">
     <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=100 src='img/logo_medium_t.png'></a>
 </div>
 
+<div id="aboutContainer" style="visibility:hidden">
+    <div id="aboutDiv">
+        <div>Welcome to <b>BerkeleyMapper</b></div>
+        <div id="logos"></div>
+    </div>
+</div>
 
 <div id="legendContainer" style="visibility:hidden">
 
@@ -147,7 +155,6 @@
 
         <div id="myColors"></div>
 
-        <div id="logos"></div>
 
         <div id="download">
             <a href="#" onclick='downloadAll();'>Download All Viewable (tab-delimited)</a><br>
@@ -157,9 +164,5 @@
     </div>
 </div>
 
-
-
 </body>
-
-
 </html>
