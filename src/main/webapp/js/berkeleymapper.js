@@ -152,10 +152,14 @@ function getLogos() {
                 });
 
                 logoId = "logo" + counter;
-                $("#logos").append("<br>");
+                //$("#logos").append("<br>");
+                if (counter == 1) {
+                    $("#logos").append("<br></br>");
+                    $("#logos").append("<div>Partner organizations contributing to this map</div>")
+                }
                 $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
                 $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=80 \/>");
-                $("#logos").append("<br>");
+                //$("#logos").append("<br>");
                 counter++;
             });
 
@@ -539,6 +543,9 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
+
+    initializeControls(bm2.map);
+
 }
 
 <!-- JS Script -->
@@ -846,8 +853,8 @@ function fetchRecords() {
 
 
     $(function () {
-        $("#resultsDialog").dialog("open");
-        $("#resultsDialog").html(retStr);
+        $("#ResultsDialog").dialog("open");
+        $("#ResultsDialog").html(retStr);
     });
 
 
@@ -1062,7 +1069,6 @@ function getMap(a, b) {
 
 // mapTypes DropDown
 function setMapTypes() {
-
     //TODO: call terraserver for topos and add DOQ
     var topoMapOptions = {
         getTileUrl: function (coords, zoom) {
@@ -1078,22 +1084,6 @@ function setMapTypes() {
     var topo = new google.maps.ImageMapType(topoMapOptions);
     bm2.map.mapTypes.set('topo', topo);
 
-    // WMS Raster Services
-    var cantopo = WMSTileOverlay("https://wms.ess-ws.nrcan.gc.ca/wms/toporama_en?REQUEST=GetMap&SERVICE=wms&VERSION=1.1.1&SRS=epsg:4269&WIDTH=200&HEIGHT=200&FORMAT=image/png&LAYERS=limits,vegetation,builtup_areas,designated_areas,hydrography,hypsography,water_saturated_soils,landforms,constructions,water_features,road_network,railway,populated_places,structures,power_network,feature_names", 2, 15, 0.7, true, 'Canadian Topo');
-    bm2.map.mapTypes.set('cantopo', cantopo);
-
-    var moorea = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea');
-    bm2.map.mapTypes.set('moorea', moorea);
-
-    var mooreabathy = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/moorea/moorea.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=moorea_bathy&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Moorea Bathymetry');
-    bm2.map.mapTypes.set('mooreabathy', mooreabathy);
-
-    var angelo2m = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=angelo2m_dem&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 2m DEM');
-    bm2.map.mapTypes.set('angelo2m', angelo2m);
-
-    var angelo1m = WMSTileOverlay("https://darwin.berkeley.edu/cgi-bin/mapserv?map=/data/berkeleymapperdata/angelo/angelo.map&SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=eel1mdemshd&SRS=EPSG:4326&WIDTH=200&HEIGHT=200&FORMAT=image/png", 2, 15, 0.7, true, 'Angelo 1m DEM');
-    bm2.map.mapTypes.set('angelo1m', angelo1m);
-
     bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
@@ -1101,99 +1091,11 @@ function setMapTypes() {
             mapTypeIds: [google.maps.MapTypeId.ROADMAP,
                 google.maps.MapTypeId.SATELLITE,
                 google.maps.MapTypeId.HYBRID,
-                google.maps.MapTypeId.TERRAIN,
-                'topo',
-                'cantopo',
-                'moorea',
-                'angelo2m',
-                'angelo1m']
+                google.maps.MapTypeId.TERRAIN
+                ]   
         }
     });
 }
-
-function WMSTileOverlay(urlWMS, minZ, maxZ, opacity, isPng, name) {
-    var overlayOptions = {
-        getTileUrl:
-            function WMS_GetTileUrl(coord, zoom) {
-                //var overlay = new MyOverlay(map);
-                var projection = bm2.map.getProjection();
-                var zpow = Math.pow(2, zoom);
-                var lULP = new google.maps.Point(coord.x * 256.0 / zpow, (coord.y + 1) * 256.0 / zpow);
-                var lLRP = new google.maps.Point((coord.x + 1) * 256.0 / zpow, coord.y * 256.0 / zpow);
-                var lULg = projection.fromPointToLatLng(lULP);
-                var lLRg = projection.fromPointToLatLng(lLRP);
-                var lULg_Longitude = lULg.lng();
-                var lULg_Latitude = lULg.lat();
-                var lLRg_Longitude = lLRg.lng();
-                var lLRg_Latitude = lLRg.lat();
-
-                // There seems to be a bug when crossing the -180 longitude border (tile does not render) - this check seems to fix it...
-                if (lLRg_Longitude < lULg_Longitude) {
-                    lLRg_Longitude = Math.abs(lLRg_Longitude);
-                }
-
-                // Create the Bounding Box string
-                var bbox = "&bbox=" + lULg_Longitude + "," + lULg_Latitude + "," + lLRg_Longitude + "," + lLRg_Latitude;
-                var urlResult = urlWMS + bbox;
-
-                return urlResult;
-            },
-
-        tileSize: new google.maps.Size(256, 256),
-        minZoom: minZ,
-        maxZoom: maxZ,
-        opacity: opacity,
-        name: name,
-        isPng: isPng
-    };
-
-    return new google.maps.ImageMapType(overlayOptions);
-}
-
-function PanelControl(controlDiv, pmap) {
-    controlDiv.index = -1;  // value of -1 supersedes control position of others
-    pmap.controls[google.maps.ControlPosition.TOP_LEFT].push(controlDiv);
-    var controlUI = document.createElement('DIV');
-    controlUI.style.cursor = 'pointer';
-    controlUI.style.backgroundImage = 'url(img/left-right.gif)';
-    controlUI.title = 'Show/Hide Panel';
-    controlUI.style.width = '29px';
-    controlUI.style.height = '20px';
-
-    controlDiv.appendChild(controlUI);
-
-    return controlUI;
-}
-
-function NewControl(controlDiv, pmap, title, alt) {
-
-    controlDiv.style.padding = '5px';
-    controlDiv.index = 1;
-    pmap.controls[google.maps.ControlPosition.TOP_RIGHT].push(controlDiv);
-
-
-    // Set CSS for the control border
-    var controlUI = document.createElement('DIV');
-    controlUI.style.backgroundColor = 'white';
-    controlUI.style.borderStyle = 'solid';
-    controlUI.style.borderWidth = '1px';
-    controlUI.style.cursor = 'pointer';
-    controlUI.style.textAlign = 'center';
-    controlUI.title = alt;
-    controlDiv.appendChild(controlUI);
-
-    // Set CSS for the control interior
-    var controlText = document.createElement('DIV');
-    controlText.style.fontFamily = 'Arial,sans-serif';
-    controlText.style.fontSize = '14px';
-    controlText.style.paddingLeft = '4px';
-    controlText.style.paddingRight = '4px';
-    controlText.innerHTML = '<b>' + title + '</b>';
-    controlUI.appendChild(controlText);
-
-    return controlUI;
-}
-
 
 function removeOverlay(num) {
     bm2.overlays[num].setMap(null);

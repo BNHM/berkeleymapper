@@ -86,21 +86,7 @@
 
 
 <div id="mapContainer">
-    <a href="#" id="aboutButton">
-        <button type="button">About</button>
-    </a>
-    <a href="#" id="legendButton">
-        <button type="button">Legend</button>
-    </a>
-    <a href="#" id="resultsButton">
-        <button type="button">Results</button>
-    </a>
     <div id="map"></div>
-    <div id="resultsContainer" style="visibility:hidden">
-        <div id="resultsDiv">
-            Click on MarkerClusterer or perform spatial query to see results
-        </div>
-    </div>
 </div>
 
 <div style="left:2px; bottom:2px; position:fixed;z-index:50">
@@ -109,13 +95,19 @@
 
 <div id="aboutContainer" style="visibility:hidden">
     <div id="aboutDiv">
-        <div>Welcome to <b>BerkeleyMapper</b></div>
+        <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=100 src='img/logo_medium_t.png'></a>
+        Welcome to <b>BerkeleyMapper</b>
         <div id="logos"></div>
     </div>
 </div>
 
-<div id="legendContainer" style="visibility:hidden">
+<div id="resultsContainer" style="visibility:hidden">
+    <div id="resultsDiv">
+        Click on MarkerClusterer or perform spatial query to see results
+    </div>
+</div>
 
+<div id="legendContainer" style="visibility:hidden">
     <div id="legendDiv">
 
         <div id="legendText"></div>
@@ -133,8 +125,8 @@
 
         <div id="displayOptions">
             <b>Display</b><br>
-            <label class="dropdown">
-                <select id="pointDisplayValue" style="font-size:11px;" onchange="pointDisplay(this.value);"
+            <div class="map-control">
+                <select id="pointDisplayValue" class="selector-control" onchange="pointDisplay(this.value);"
                         placeholder="44.22 -123.348">
                     <option value="markerclusteron">MarkerClusterer</option>
                     <option value="markers">Placemarks</option>
@@ -143,7 +135,7 @@
                     <option value="pointMarkersRed">Point Markers - Red</option>
                     <option value="none">None</option>
                 </select>
-            </label>
+            </div>
         </div>
 
         <div id="styleOptions">
@@ -154,7 +146,6 @@
         <div id="layers"></div>
 
         <div id="myColors"></div>
-
 
         <div id="download">
             <a href="#" onclick='downloadAll();'>Download All Viewable (tab-delimited)</a><br>

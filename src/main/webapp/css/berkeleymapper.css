@@ -1,23 +1,62 @@
-a:link {
-    text-decoration: none;
+* {
+    font-style: normal;
+    font-variant-caps: normal;
+    font-variant-ligatures: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    font-weight: 400;
+    font-stretch: normal;
     font-size: 12px;
+    line-height: normal;
+    font-family: Roboto, Arial, sans-serif;
 }
 
-;
+.ui-widget-content {
+    background: #F9F9F9;
+    border: 0.5px solid #000000;
+}
+
+.ui-dialog {
+    left: 0;
+    outline: 0 none;
+    padding: 0 !important;
+    position: absolute;
+    top: 0;
+}
+
+#success {
+    padding: 0;
+    margin: 0;
+}
+
+.ui-dialog .ui-dialog-content {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+    overflow: auto;
+    position: relative;
+    padding: 0 !important;
+}
+
+.ui-widget-header {
+    font-size: 13px;
+    #background: #f7941e;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 2 2;
+    position: relative;
+}
+
 a:visited {
     text-decoration: none;
-    font-size: 12px;
 }
 
 a:active {
     text-decoration: none;
-    font-size: 12px;
 }
 
 a:hover {
-    text-decoration: underline;
     color: red;
-    font-size: 12px;
 }
 
 #resultsDialog {
@@ -53,6 +92,33 @@ html, body, #map {
     overflow: hidden;
 }
 
+.selector-control {
+  line-height: 30px;
+  padding-left: 0px;
+  padding-right: 0px;
+    height: 25px;
+}
+.map-control {
+  background-color: #fff;
+  /*border: 1px solid #ccc;*/
+  /*box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4); */
+  margin-top: 4px;
+    margin-left: 0px;
+}
+/*#selectList {
+    backgroundColor: "#fff";
+    border: "2px solid #fff";
+    borderRadius: "3px";
+    boxShadow: "0 2px 6px rgba(0,0,0,.3)";
+    color: "rgb(25,25,25)";
+    cursor: "pointer";
+    fontFamily: "Roboto,Arial,sans-serif";
+    fontSize: "16px";
+    lineHeight: "38px";
+    margin: "8px 0 22px";
+    padding: "0 5px";
+    textAlign: "center";
+}   */
 
 #legendDialog {
     overflow-y: auto;
@@ -64,33 +130,10 @@ html, body, #map {
     z-index: 1;
 }
 
-#leftContent {
-    height: 90%;
-    overflow: auto;
-}
-
-#leftContainer {
-    padding: 8px;
-    width: 200px;
-    max-width: 200px;
-}
-
-
 select {
     font-family: inherit;
 }
 
-#content {
-    font-size: 12px;
-}
-
-#address {
-    font-size: 12px;
-}
-
-#addressbutton {
-    font-size: 12px;
-}
 
 #addressControl {
     display: none;
@@ -98,7 +141,6 @@ select {
 
 /* These are the main content elements on the left pane */
 #layers, #download, #myColors, #styleOptions, #displayOptions, #information {
-    font-size: 12px;
     margin: 5px 5px 5px 5px;
     overflow: auto;
 }
@@ -128,14 +170,12 @@ label.dropdown {
 }
 
 label.dropdown:after {
-    font-size: 12px;
     position: absolute;
     pointer-events: none;
 }
 
 
 #legendText {
-    font-size: 12px;
     margin: 5px 0px 5px 5px;
     overflow: auto;
 }
@@ -167,7 +207,6 @@ label.dropdown:after {
 
 #styleOptionsCheckboxes {
     display: none;
-    font-size: 12px;
 }
 
 .close {
@@ -180,8 +219,8 @@ tr td {
     padding: 0 !important;
     margin: 0 !important;
 }
+
 th {
-    font-size: 12px;
     padding: 2 !important;
     margin: 2 !important;
 }
