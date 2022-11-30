@@ -70,5 +70,5 @@ function initializeControls(map) {
     // Append the control to the DIV.
     mapperControlsDiv.appendChild(selectControl);
 
-    map.controls[google.maps.ControlPosition.TOP_CENTER].push(mapperControlsDiv);
+    map.controls[google.maps.ControlPosition.TOP_LEFT].push(mapperControlsDiv);
 }
