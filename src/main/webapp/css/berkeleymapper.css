@@ -102,23 +102,9 @@ html, body, #map {
   background-color: #fff;
   /*border: 1px solid #ccc;*/
   /*box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4); */
-  margin-top: 4px;
+  margin-bottom: 4px;
     margin-left: 0px;
 }
-/*#selectList {
-    backgroundColor: "#fff";
-    border: "2px solid #fff";
-    borderRadius: "3px";
-    boxShadow: "0 2px 6px rgba(0,0,0,.3)";
-    color: "rgb(25,25,25)";
-    cursor: "pointer";
-    fontFamily: "Roboto,Arial,sans-serif";
-    fontSize: "16px";
-    lineHeight: "38px";
-    margin: "8px 0 22px";
-    padding: "0 5px";
-    textAlign: "center";
-}   */
 
 #legendDialog {
     overflow-y: auto;

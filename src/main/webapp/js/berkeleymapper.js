@@ -543,7 +543,6 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
-
     initializeControls(bm2.map);
 
 }
@@ -1052,7 +1051,7 @@ function getMap(a, b) {
 
     lmap.enableKeyDragZoom({
         visualEnabled: true,
-        visualPosition: google.maps.ControlPosition.LEFT,
+        visualPosition: google.maps.ControlPosition.LEFT_TOP,
         visualPositionOffset: new google.maps.Size(35, 0),
         visualPositionIndex: null,
         visualSprite: "https://maps.gstatic.com/mapfiles/ftr/controls/dragzoom_btn.png",

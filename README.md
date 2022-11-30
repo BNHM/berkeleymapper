@@ -14,8 +14,8 @@ All external libraries are controlled by gradle, so to get started, you need to 
 # java libraries built around java 8, to use java 8, use the following:
 # (https://stackoverflow.com/questions/52524112/how-do-i-install-java-on-mac-osx-allowing-version-switching/52524114#52524114)
 # (https://sdkman.io/install)
-sdk use 8.0.352-amzn
-
+sdk use java 8.0.352-amzn
+sdk use gradle 4.10.1
 git clone {this_repo}
 # install gradle if you have not done so, then...
 gradle build
