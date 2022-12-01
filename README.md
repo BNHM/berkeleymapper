@@ -22,13 +22,11 @@ gradle build
 
 # source ~/.bashrc
 deployBerkeleymapper
-
-
 ```         
 
-The gradle build process will create a WAR file called ```dist/berkeleymapper.war```
+The gradle build process will create a WAR file called `dist/berkeleymapper.war`
 
-There is a file called config.props which you can create by copying the file ```config.props.template```
+Copy `config.properties.template` to `config.props` and enter the setting `filesLocation = /path/to/temp/directory/` to point to the directory you want temporary files stored.
 
 Certain connections require importing certificate to allow 3rd party access:
 First, obtain an exported copy of certificate. (On chrome, developer tools->security)
