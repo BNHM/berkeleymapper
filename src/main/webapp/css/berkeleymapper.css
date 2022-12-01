@@ -60,9 +60,7 @@ a:hover {
 }
 
 #resultsDialog {
-
     overflow-y: auto;
-
 }
 
 html, body, #map {
@@ -93,16 +91,15 @@ html, body, #map {
 }
 
 .selector-control {
-  line-height: 30px;
-  padding-left: 0px;
-  padding-right: 0px;
-    height: 25px;
+    line-height: 30px;
+    padding-left: 0px;
+    padding-right: 0px;
+    height: 27px;
 }
+
 .map-control {
-  background-color: #fff;
-  /*border: 1px solid #ccc;*/
-  /*box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4); */
-  margin-bottom: 4px;
+    background-color: #fff;
+    margin-top: 4px;
     margin-left: 0px;
 }
 
@@ -120,12 +117,10 @@ select {
     font-family: inherit;
 }
 
-
 #addressControl {
     display: none;
 }
 
-/* These are the main content elements on the left pane */
 #layers, #download, #myColors, #styleOptions, #displayOptions, #information {
     margin: 5px 5px 5px 5px;
     overflow: auto;
