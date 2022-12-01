@@ -26,7 +26,7 @@ deployBerkeleymapper
 
 The gradle build process will create a WAR file called `dist/berkeleymapper.war`
 
-Copy `config.properties.template` to `config.props` and enter the setting `filesLocation = /path/to/temp/directory/` to point to the directory you want temporary files stored.
+In the `src/main/resources/` directory, copy `config.properties.template` to `config.props` and enter the setting `filesLocation = /path/to/temp/directory/` to point to the directory you want temporary files stored.
 
 Certain connections require importing certificate to allow 3rd party access:
 First, obtain an exported copy of certificate. (On chrome, developer tools->security)
