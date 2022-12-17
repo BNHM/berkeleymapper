@@ -84,21 +84,12 @@
 
 <div id="loadingMsg">Loading Application ...</div>
 
-
 <div id="mapContainer">
     <div id="map"></div>
 </div>
 
-<div style="left:2px; bottom:2px; position:fixed;z-index:50">
-    <img height=100 src='img/logo_medium_t.png'>
-</div>
-
-<div id="aboutContainer" style="visibility:hidden">
-    <div id="aboutDiv">
-        <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=70 src='img/logo_medium_t.png'></a>
-        Welcome to <b>BerkeleyMapper</b>
-        <div id="logos"></div>
-    </div>
+<div style="left:0px; top:50%; position:fixed;z-index:10">
+    <img height=50 src='img/menu.png' title='open legend' onclick="openNav()">
 </div>
 
 <div id="resultsContainer" style="visibility:hidden">
@@ -107,14 +98,19 @@
     </div>
 </div>
 
-<div id="legendContainer" style="visibility:hidden">
-    <div id="legendDiv">
+<div id="mySidenav" class="sidenav">
 
+
+          <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=70 src='img/logo_medium_t.png'></a>
+          Welcome to <b>BerkeleyMapper</b>
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    
         <div id="legendText"></div>
 
         <div id="information">
-            <a href='#' onclick='toggleControls();'>Toggle map controls</a> |
-            <a href='https://github.com/BNHM/berkeleymapper' target="_blank">Help</a>
+            <a href="#" onclick='$("#ResultsDialog").dialog("open")';>Show Results</a> |
+            <a href='#' onclick='toggleControls();closeNav();'>Toggle Controls</a> |
+            <a href='https://github.com/BNHM/berkeleymapper' target="_blank">About</a>
         </div>
 
         <div id="addressControl">
@@ -152,8 +148,18 @@
             <a href="#" onclick='downloadSpatial();'>Download Subset</a><br>
             <a href="#" onclick='downloadKML();'>Open in Google Earth</a>
         </div>
-    </div>
-</div>
 
+    <div id="logos"></div>
+
+    </div>
+
+<script>
+    function openNav() {
+      document.getElementById("mySidenav").style.width = "250px";
+    }
+    function closeNav() {
+      document.getElementById("mySidenav").style.width = "0";
+    }
+</script>
 </body>
 </html>

@@ -543,7 +543,7 @@ function initialize() {
 
     // Drawing Options
     initializeDrawingManager();
-    initializeControls(bm2.map);
+    //initializeControls(bm2.map);
 
 }
 

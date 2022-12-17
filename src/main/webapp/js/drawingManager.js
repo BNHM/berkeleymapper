@@ -20,7 +20,7 @@ function initializeDrawingManager() {
         drawingMode: null,
         drawingControl: true,
         drawingControlOptions: {
-            position: google.maps.ControlPosition.TOP_LEFT,
+            position: google.maps.ControlPosition.TOP_CENTER,
             drawingModes: [
             google.maps.drawing.OverlayType.CIRCLE,
             google.maps.drawing.OverlayType.POLYLINE,
