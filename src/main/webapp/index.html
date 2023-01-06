@@ -88,10 +88,6 @@
     <div id="map"></div>
 </div>
 
-<div style="left:0px; top:50%; position:fixed;z-index:10">
-    <img height=50 src='img/menu.png' title='open legend' onclick="openNav()">
-</div>
-
 <div id="resultsContainer" style="visibility:hidden">
     <div id="resultsDiv">
         Click on MarkerClusterer or perform spatial query to see results
@@ -100,65 +96,77 @@
 
 <div id="mySidenav" class="sidenav">
 
+    <div id="closeNav" class="closeNav">
+        <img height=30 src='img/menu_left.gif' title='close legend' onclick="closeNav()">
+    </div>
+    <div id="openNav" class="openNav">
+        <img height=30 src='img/menu_right.gif' title='open legend' onclick="openNav()">
+    </div>
 
-          <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=70 src='img/logo_medium_t.png'></a>
-          Welcome to <b>BerkeleyMapper</b>
-    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    
-        <div id="legendText"></div>
+    <a href="https://github.com/BNHM/berkeleymapper" border=0><img height=100 src='img/logo_medium_t.png'></a>
+    Welcome to <b><a href='https://github.com/BNHM/berkeleymapper' target="_blank">BerkeleyMapper</a></b>
+    <div id="legendText"></div>
 
-        <div id="information">
-            <a href="#" onclick='$("#ResultsDialog").dialog("open")';>Show Results</a> |
-            <a href='#' onclick='toggleControls();closeNav();'>Toggle Controls</a> |
-            <a href='https://github.com/BNHM/berkeleymapper' target="_blank">About</a>
+    <div id="information">
+        <input type=button value="Show Results" onclick='$("#ResultsDialog").dialog("open")'>
+        <input type=button value="Toggle Controls" onclick='toggleControls();'>
+    </div>
+
+    <div id="addressControl">
+        <input id="addressbutton" type="button" value="Geocode"
+               onclick="codeAddress(document.getElementById('address').value)">
+        <input id="address" type="textbox" value="">
+    </div>
+
+    <div id="displayOptions">
+        <b>Display</b><br>
+        <div class="map-control">
+            <select id="pointDisplayValue" class="selector-control" onchange="pointDisplay(this.value);"
+                    placeholder="44.22 -123.348">
+                <option value="markerclusteron">MarkerClusterer</option>
+                <option value="markers">Placemarks</option>
+                <option value="pointMarkers">Point Markers - Blue</option>
+                <option value="pointMarkersBlack">Point Markers - Black</option>
+                <option value="pointMarkersRed">Point Markers - Red</option>
+                <option value="none">None</option>
+            </select>
         </div>
+    </div>
 
-        <div id="addressControl">
-            <input id="address" type="textbox" value="">
-            <input id="addressbutton" type="button" value="Geocode"
-                   onclick="codeAddress(document.getElementById('address').value)">
-        </div>
+    <div id="styleOptions">
+        <br><input type=checkbox id=styleOptionErrorRadius checked onclick="errorCheckBox();"/>Show Error
+        Radius
+    </div>
 
-        <div id="displayOptions">
-            <b>Display</b><br>
-            <div class="map-control">
-                <select id="pointDisplayValue" class="selector-control" onchange="pointDisplay(this.value);"
-                        placeholder="44.22 -123.348">
-                    <option value="markerclusteron">MarkerClusterer</option>
-                    <option value="markers">Placemarks</option>
-                    <option value="pointMarkers">Point Markers - Blue</option>
-                    <option value="pointMarkersBlack">Point Markers - Black</option>
-                    <option value="pointMarkersRed">Point Markers - Red</option>
-                    <option value="none">None</option>
-                </select>
-            </div>
-        </div>
+    <div id="layers"></div>
 
-        <div id="styleOptions">
-            <br><input type=checkbox id=styleOptionErrorRadius checked onclick="errorCheckBox();"/>Show Error
-            Radius
-        </div>
+    <div id="myColors"></div>
 
-        <div id="layers"></div>
-
-        <div id="myColors"></div>
-
-        <div id="download">
-            <a href="#" onclick='downloadAll();'>Download All Viewable (tab-delimited)</a><br>
-            <a href="#" onclick='downloadSpatial();'>Download Subset</a><br>
-            <a href="#" onclick='downloadKML();'>Open in Google Earth</a>
-        </div>
+    <div id="download">
+        <a href="#" onclick='downloadAll();'>Download All Viewable (tab-delimited)</a><br>
+        <a href="#" onclick='downloadSpatial();'>Download Subset</a><br>
+        <a href="#" onclick='downloadKML();'>Open in Google Earth</a>
+    </div>
 
     <div id="logos"></div>
 
-    </div>
+</div>
 
 <script>
     function openNav() {
-      document.getElementById("mySidenav").style.width = "250px";
+        document.getElementById("mySidenav").style.width = "250px";
+        document.getElementById("mySidenav").style.paddingLeft = "10px";
+        document.getElementById("map").style.left = "250px";
+        document.getElementById("closeNav").style.visibility = "visible";
+        document.getElementById("openNav").style.visibility = "hidden";
     }
+
     function closeNav() {
-      document.getElementById("mySidenav").style.width = "0";
+        document.getElementById("mySidenav").style.width = "0px";
+        document.getElementById("mySidenav").style.paddingLeft = "0px";
+        document.getElementById("map").style.left = "0px";
+        document.getElementById("closeNav").style.visibility = "hidden";
+        document.getElementById("openNav").style.visibility = "visible";
     }
 </script>
 </body>

@@ -23,7 +23,7 @@ function initializeDrawingManager() {
             position: google.maps.ControlPosition.TOP_CENTER,
             drawingModes: [
             google.maps.drawing.OverlayType.CIRCLE,
-            google.maps.drawing.OverlayType.POLYLINE,
+            google.maps.drawing.OverlayType.POLYLINE,                                                                                 
             google.maps.drawing.OverlayType.POLYGON
             ]
         },       

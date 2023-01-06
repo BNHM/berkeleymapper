@@ -1086,7 +1086,7 @@ function setMapTypes() {
     bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+           // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: [google.maps.MapTypeId.ROADMAP,
                 google.maps.MapTypeId.SATELLITE,
                 google.maps.MapTypeId.HYBRID,

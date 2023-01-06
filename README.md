@@ -20,7 +20,7 @@ git clone {this_repo}
 # install gradle if you have not done so, then...
 gradle build
 
-# source ~/.bashrc
+# source ~/.profile
 deployBerkeleymapper
 ```         
 
