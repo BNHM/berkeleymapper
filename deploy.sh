@@ -8,7 +8,7 @@
 # build the war file
 ./gradlew war
 # copy it into place on this machine
-cp dist/berkeleymapper.war /usr/local/Cellar/jetty/9.4.42.v20210604/libexec/webapps/root.war
+cp dist/berkeleymapper.war /usr/local/Cellar/jetty/9.4.50.v20221201/libexec/webapps/root.war
 # open a test page
 #/usr/bin/open -a "/Applications/Google Chrome.app" 'http://localhost:8080/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml'
 

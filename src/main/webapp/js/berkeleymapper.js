@@ -19,60 +19,40 @@ bm2.configFile = "";
 bm2.isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;  // detect safari
 bm2.showControls = true;
 bm2.colorOption = "markers";    // value to control how to color markers
+bm2.columnArray = []
 
 String.prototype.endsWith = function (suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
-// Control the look and behaviour or the table grid
-bm2.jqGridAttributes = {
-    multiboxonly: true,
-    emptyrecords: "No records to view",
-    rowNum: 1000,
-    altRows: true,
-    scroll: true,
-    height: "100%",
-    onSelectRow: function (id) {
-        var lat = $('#flexme1').getCell(id, 'Latitude');
-        var lng = $('#flexme1').getCell(id, 'Longitude');
+function showRow(p) {
+    let Cell = document.getElementById("resultsTable").rows[p.rowIndex].cells;
+    var rowData = "<div id='content'>";
 
-        var latlng = new google.maps.LatLng(lat, lng);
-        if (bm2.iw) {
-            bm2.iw.close();
-        }
-        var columnNames = $("#flexme1").jqGrid('getGridParam', 'colNames');
-        var rowData = "<div id='content'>";
-        for (i = 0; i < columnNames.length; i++) {
-            cell = $("#flexme1").getCell(id, i);
-            rowData += columnNames[i] + ":" + cell + "<br>";
+    var lat = 0;
+    var lng = 0;
+    for (i = 0; i < Cell.length; i++) {
+        if (i == bm2.columnArray.indexOf('Latitude')) {
+            lat = Cell[i].innerHTML;
+        } else if (i == bm2.columnArray.indexOf('Longitude')) {
+            lng = Cell[i].innerHTML;
+        } else {
+            rowData += "<b>" + bm2.columnArray[i] + "</b>:" + Cell[i].innerHTML + "<br>";
         }
         rowData += "</div>";
-        if (lat != 0 && lng != 0) {
-            bm2.iw = new google.maps.InfoWindow();
-            bm2.iw.setContent(rowData);
-            bm2.iw.setPosition(latlng);
-            bm2.iw.open(bm2.map);
-        }
     }
-};
 
-// Set up splitter panes
-/*$().ready(function() {
-
-   $("#bigContainer").splitter({
-        splitHorizontal: false,
-        outline: false,
-        resizeToWidth: false,
-        sizeBottom: false
-    });
-
-    // Horizontal splitter, nested in the right pane of the vertical splitter.
-    $("#topContainer").splitter({
-        splitVertical: false,
-        outline: false
-    });   
-});  */
-
+    var latlng = new google.maps.LatLng(lat, lng);
+    if (bm2.iw) {
+        bm2.iw.close();
+    }
+    if (lat != 0 && lng != 0) {
+        bm2.iw = new google.maps.InfoWindow();
+        bm2.iw.setContent(rowData);
+        bm2.iw.setPosition(latlng);
+        bm2.iw.open(bm2.map);
+    }
+}
 
 // Adjust bounds to drawn polygon
 if (!google.maps.Polygon.prototype.getBounds) {
@@ -159,7 +139,7 @@ function getLogos() {
                 }
                 $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
                 $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=80 \/>");
-                //$("#logos").append("<br>");
+                $("#logos").append("<p>");
                 counter++;
             });
 
@@ -466,9 +446,8 @@ function initialize() {
 
         // Initialize Map
         bm2.map = getMap(0, 0);
-        google.maps.event.addListener(bm2.map, 'bounds_changed', function () {
-            $('#loadingMsg').hide();
-        });
+        initializeDrawingManager();
+
         // Setup Map type Options
         setMapTypes();
 
@@ -481,70 +460,42 @@ function initialize() {
         // Draw the Points
         setJSONPoints();
         setBigBounds();
-
         getLogos();
-
-        // Special exception for amphibiaweb who doesn't want to display download links
-        //if (jQuery.url.param('amphibiaweb')) {
-        //   $("#download").hide();
-        //}
-
         $("#styleOptions").hide();
-
 
         // Plain map mode, no points passed in
     } else {
         // Try HTML5 geolocation
         if (navigator.geolocation) {
-            bm2.map = getMap();
-
             navigator.geolocation.getCurrentPosition(function (position) {
-                //var pos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-
-
-                bm2.map.setCenter(new google.maps.LatLng(position.coords.latitude, position.coords.longitude));
-                bm2.map.setZoom(10);
+                bm2.map = getMap(position.coords.latitude, position.coords.longitude,10);
+                initializeDrawingManager();
             }, function () {
                 bm2.map = getMap(0, 0);
-
                 handleNoGeolocation(true);
+                initializeDrawingManager();
             });
         } else {
             bm2.map = getMap(0, 0);
-            // Browser doesn't support Geolocation
             handleNoGeolocation(false);
+            initializeDrawingManager();
         }
-        google.maps.event.addListener(bm2.map, 'bounds_changed', function () {
-            $('#loadingMsg').hide();
-        });
 
-        /* $("#dialogWelcome").dialog('open')
-         $("#dialogWelcome").html("<html><b>Welcome to BerkeleyMapper 2.1</b><ul style='margin-top: 0px;margin-bottom: 0px;'>"+
-             "<li>This page provides an interface for working with Google's geocoding services " +
-             "(<img border=0 src='img/geocode.jpg' height=15>), in addition to tools for finding the " +
-              "latitude/longitude of a point, and measuring areas and lines (<img border=0 src='img/tools.jpg' height=15>).</li>" +
-             "<li>To include point and range mapping functions on your website, visit the " +
-             "<a href='https://code.google.com/p/berkeleymapper/'>BerkeleyMapper 2.0 code page</a> for detailed instructions " +
-             "or to contact the development team.</li></ul></html>");
+        if (!bm2.pointMode) {
+            $("#information").hide();
+        }
 
-         */
         // Show Geocoder tool
         $("#addressControl").show();
-
         // Hide bottom container
         $("#myColors").hide();
         $("#layers").hide();
         $("#download").hide();
         $("#styleOptions").hide();
-        $("#displayOptions").hide();
-
-
+        $("#displayOptions").hide()
     }
 
     // Drawing Options
-    initializeDrawingManager();
-    //initializeControls(bm2.map);
-
 }
 
 <!-- JS Script -->
@@ -789,6 +740,7 @@ function fetchRecord(line) {
 
 function fetchRecords() {
     var retStr = "";
+
     // Initialize Session
     $.ajax({
         type: "POST",
@@ -796,15 +748,15 @@ function fetchRecords() {
         url: bm2.urlRoot + "records",
         async: false,
         success: function (data) {
-
             // Header elements
-            retStr += "<table class='table table-hover .table-sm' cellspacing='0' width='100%'>";
+            retStr += "<table id='resultsTable' class='table table-hover .table-sm' cellspacing='0' width='100%'>";
             retStr += "<thead><tr>";
             row = 1;
             $.each(data, function () {
                 if (row == 1) {
                     $.each(this, function (k, v) {
                         retStr += "<th>" + k + "</th>";
+                        bm2.columnArray.push(k);
                     });
                     row++;
                 }
@@ -816,7 +768,7 @@ function fetchRecords() {
             // Loop through JSON elements to construct response
             $.each(data, function () {
                 if (row < 100) {
-                    retStr += "<tr>";
+                    retStr += "<tr onclick='showRow(this)'>";
                     $.each(this, function (k, v) {
                         //retStr += "<td width=80>" + htmlEntities(v) + "</td>";
                         // JBD removed the htmlEntities in this line on April 18th.. probably a good
@@ -1009,14 +961,14 @@ function markerClustererController() {
 
 
 // Set the initial Map
-function getMap(a, b) {
+function getMap(a, b, zoomVal = 1) {
     var lat = a;
     var lng = b;
     var myOptions;
     // Don't zoom/center if pointMode is true
     if (bm2.pointMode) {
         myOptions = {
-            zoom: 1,
+            zoom: zoomVal,
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             panControl: true,
             panControlOptions: {
@@ -1031,8 +983,8 @@ function getMap(a, b) {
         };
     } else {
         myOptions = {
-            zoom: 1,
-            center: new google.maps.LatLng(0, 0),
+            zoom: zoomVal,
+            center: new google.maps.LatLng(lat, lng),
             mapTypeId: google.maps.MapTypeId.ROADMAP,
             panControl: true,
             panControlOptions: {
@@ -1063,6 +1015,9 @@ function getMap(a, b) {
     });
     //lmap.controls[google.maps.ControlPosition.TOP_RIGHT].push($("#aboutButton"));
 
+    google.maps.event.addListener(lmap, 'bounds_changed', function () {
+        $('#loadingMsg').hide();
+    });
     return lmap;
 }
 
@@ -1086,12 +1041,12 @@ function setMapTypes() {
     bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
-           // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+            // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
             mapTypeIds: [google.maps.MapTypeId.ROADMAP,
                 google.maps.MapTypeId.SATELLITE,
                 google.maps.MapTypeId.HYBRID,
                 google.maps.MapTypeId.TERRAIN
-                ]   
+            ]
         }
     });
 }
