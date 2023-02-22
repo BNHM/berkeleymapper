@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
+
+import org.apache.commons.math3.stat.Frequency;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 /**
  * This class runs spatial operations on the given file.  It acts as
@@ -42,7 +46,7 @@ public class BMSpatialFileReader implements BMFileReader {
         setReader();
     }
 
-      /**
+    /**
      * Pass in tabData configURL (this is done the first time).  Sets the session.
      */
     public BMSpatialFileReader(String tabdata, URL configUrl) throws IOException {
@@ -77,6 +81,67 @@ public class BMSpatialFileReader implements BMFileReader {
     //public void exec() throws IOException {
     //     //To change body of implemented methods use File | Settings | File Templates.
     // }
+
+    /**
+     * Get the frequency of field values for Column for one particular column
+     *
+     * @param columnName
+     * @return
+     */
+    private StringBuilder getValueFrequencyForColumn(String columnName, String columnAlias) {
+        Iterator it = rows.iterator();
+        Frequency f = new Frequency(String.CASE_INSENSITIVE_ORDER);
+        while (it.hasNext()) {
+            BMRow row = (BMRow) it.next();
+            Iterator fieldsIt = row.getBMCoord().fields.iterator();
+
+            while (fieldsIt.hasNext()) {
+                BMField field = (BMField) fieldsIt.next();
+                if (field.getTitle().equalsIgnoreCase(columnName)) {
+                    f.addValue(field.getValue());
+                }
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n\t{ \"alias\":\"" + columnAlias + "\",\"frequencies\" : [\n");
+        //sb.append("\n\t{ \"" + columnName + "\" : [\n");
+        final Iterator<Map.Entry<Comparable<?>, Long>> iter = f.entrySetIterator();
+        while (iter.hasNext()) {
+            final Map.Entry<Comparable<?>, Long> entry = iter.next();
+            String key = entry.getKey().toString();
+            String value = entry.getValue().toString();
+            sb.append("\t\t{\"column\":\"" + key + "\",\"count\":\"" + value + "\"}");
+            if (iter.hasNext()) {
+                sb.append(",\n");
+            }
+        }
+        sb.append("]\n\t}");
+        return sb;
+    }
+
+    /**
+     * Get the BMRow at the given line number
+     *
+     * @return
+     */
+    public String getValueFrequencies() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[\n");
+        int size = columnsAlias.length;
+
+        //for (Object columnName : columnsAlias) {
+          for (int i =0 ; i<columns.length; i++) {
+            sb.append(getValueFrequencyForColumn(columns[i].toString(),columnsAlias[i].toString()));
+
+            if (i < columns.length-1) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
 
     /**
      * Get the BMRow at the given line number

@@ -16,6 +16,8 @@
     <script type="text/javascript" src="js/keydragzoom.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
     <script src="https://code.jquery.com/ui/1.13.0/jquery-ui.min.js"></script>
+    <link href="https://nightly.datatables.net/css/jquery.dataTables.css" rel="stylesheet" type="text/css" />
+       <script src="https://nightly.datatables.net/js/jquery.dataTables.js"></script>
     <script type="text/javascript" src="js/jquery.url.js"></script>
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
     <script type="text/javascript" src="js/jquery.cookie.js"></script>
@@ -93,6 +95,11 @@
         Click on MarkerClusterer or perform spatial query to see results
     </div>
 </div>
+<div id="statisticsContainer" style="visibility:hidden">
+    <div id="statisticsDiv">
+        Loading statistics ...
+    </div>
+</div>
 
 <div id="mySidenav" class="sidenav">
 
@@ -109,6 +116,7 @@
 
     <div id="information">
         <input type=button value="Show Results" onclick='$("#ResultsDialog").dialog("open")'>
+        <input type=button value="Statistics" onclick='$("#StatisticsDialog").dialog("open");fetchStatistics();'>
         <input type=button value="Toggle Controls" onclick='toggleControls();'>
     </div>
 

@@ -468,7 +468,7 @@ function initialize() {
         // Try HTML5 geolocation
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function (position) {
-                bm2.map = getMap(position.coords.latitude, position.coords.longitude,10);
+                bm2.map = getMap(position.coords.latitude, position.coords.longitude, 10);
                 initializeDrawingManager();
             }, function () {
                 bm2.map = getMap(0, 0);
@@ -738,6 +738,84 @@ function fetchRecord(line) {
     return retStr;
 }
 
+function fetchStatistics() {
+    var retStr = "";
+    var url = bm2.urlRoot + "statistics/frequencies?session=" + bm2.session;
+    console.log("fetching " + url)
+    $.ajax({
+        type: "GET",
+        url: url,
+        async: true,
+        success: function (data, success) {
+
+            var i = 0;
+
+            // headinig of buttons for each column, purpose is to show frequency table when clicked
+            $.each(data, function (k, v) {
+                retStr += "<input type=button value='" + v.alias + "' " +
+                    "onclick='" +
+                    "$(\".frequencyTable\").hide();" +
+                    "$(\"#column" + i + "\").css(\"display\", \"block\");'/>";
+                i++;
+            });
+
+            // Create a series of hidden json tables, shown when column buttons clicked
+            i = 0;
+            $.each(data, function () {
+                retStr += "<table id='column" + i + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
+                retStr += "<thead><th width='50'>count</th><th>" + this.alias + "</th></thead>";
+                retStr += "<tbody>";
+                $.each(this.frequencies, function (k, v) {
+                    retStr += "<tr><td>" + v.count + "</td><td>" + v.column + "</td></tr>";
+                });
+                retStr += "</tbody>";
+                retStr += "</table>";
+
+                i++;
+            });
+
+            $("#loadingMsg").hide();
+            $("#StatisticsDialog").html(retStr);
+            $("#column0").show();
+
+            // TODO: make this un-hardcoded
+            $(document).ready(function () {
+                $('#column0').DataTable();
+            });
+            $(document).ready(function () {
+                            $('#column1').DataTable();
+                        });
+            $(document).ready(function () {
+                                       $('#column1').DataTable();
+                                   });
+            /*
+            // something like this should work but doesn't
+            i = 0;
+            $.each(data, function () {
+                $(document).ready(function () {
+                    $('#column' + i).DataTable();
+                });
+                i++;
+            });    */
+        },
+        statusCode: {
+            204: function () {
+                retStr = "Server 204 error: unable to fetch results";
+                $("#StatisticsDialog").html(retStr);
+                $("#loadingMsg").hide();
+            }
+        },
+        error: function (req, err) {
+            retStr = "Server 500 error: an error happened fetching records from server:\n";
+            retStr += JSON.stringify(err, null, 4);
+            $("#StatisticsDialog").html(retStr);
+            $("#loadingMsg").hide();
+        }
+    });
+
+    return true;
+}
+
 function fetchRecords() {
     var retStr = "";
 
@@ -762,7 +840,6 @@ function fetchRecords() {
                 }
             });
             retStr += "</tr></thead>";
-
             // Body elements
             retStr += "<tbody>";
             // Loop through JSON elements to construct response
@@ -770,10 +847,6 @@ function fetchRecords() {
                 if (row < 100) {
                     retStr += "<tr onclick='showRow(this)'>";
                     $.each(this, function (k, v) {
-                        //retStr += "<td width=80>" + htmlEntities(v) + "</td>";
-                        // JBD removed the htmlEntities in this line on April 18th.. probably a good
-                        // reason for htmlEntities to be there but i'm not sure what it is.  I removed
-                        // this since it is breaking URL links.
                         retStr += "<td>" + v + "</td>";
                     });
                     retStr += "</tr>";
@@ -781,15 +854,10 @@ function fetchRecords() {
                 row++;
             });
             retStr += "</tbody></table>";
-
             if (row > 100) {
                 showMsg("Response truncated to 100 records");
-                //alert('result response truncated to 100 records');
             }
-
-
             $("#loadingMsg").hide();
-
         },
         statusCode: {
             204: function () {
@@ -802,12 +870,10 @@ function fetchRecords() {
         }
     });
 
-
     $(function () {
         $("#ResultsDialog").dialog("open");
         $("#ResultsDialog").html(retStr);
     });
-
 
     return true;
 }

@@ -13,4 +13,21 @@ $(function () {
 });
 
 
+// Statistics Dialog
+$(function () {
+    w = window.innerWidth;
+
+    $("#statisticsDiv").dialog({
+        "title": "Statistics",
+        height: 220,
+        width: w,
+        position: {my: 'right', at: 'bottom', of: "#map"},
+        autoOpen: false,
+    }).attr('id', 'StatisticsDialog');
+    $("#StatisticsDialog").dialog("close");
+	//fetchStatistics();
+});
+
+
+
 
