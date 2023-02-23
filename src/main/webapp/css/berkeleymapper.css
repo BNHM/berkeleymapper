@@ -249,5 +249,7 @@ th {
 
 .frequencyTable {
     display: none;
+    width: 300px;
+    align: "left";
 }
 

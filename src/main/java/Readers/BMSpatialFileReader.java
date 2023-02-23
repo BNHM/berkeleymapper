@@ -89,10 +89,10 @@ public class BMSpatialFileReader implements BMFileReader {
      * @return
      */
     private StringBuilder getValueFrequencyForColumn(String columnName, String columnAlias) {
-        Iterator it = rows.iterator();
+        Iterator allRowsIt = rows.iterator();
         Frequency f = new Frequency(String.CASE_INSENSITIVE_ORDER);
-        while (it.hasNext()) {
-            BMRow row = (BMRow) it.next();
+        while (allRowsIt.hasNext()) {
+            BMRow row = (BMRow) allRowsIt.next();
             Iterator fieldsIt = row.getBMCoord().fields.iterator();
 
             while (fieldsIt.hasNext()) {
@@ -105,7 +105,6 @@ public class BMSpatialFileReader implements BMFileReader {
 
         StringBuilder sb = new StringBuilder();
         sb.append("\n\t{ \"alias\":\"" + columnAlias + "\",\"frequencies\" : [\n");
-        //sb.append("\n\t{ \"" + columnName + "\" : [\n");
         final Iterator<Map.Entry<Comparable<?>, Long>> iter = f.entrySetIterator();
         while (iter.hasNext()) {
             final Map.Entry<Comparable<?>, Long> entry = iter.next();
@@ -121,24 +120,31 @@ public class BMSpatialFileReader implements BMFileReader {
     }
 
     /**
-     * Get the BMRow at the given line number
+     * Get all column value frequencies
      *
      * @return
      */
     public String getValueFrequencies() {
         StringBuilder sb = new StringBuilder();
         sb.append("[\n");
-        int size = columnsAlias.length;
-
-        //for (Object columnName : columnsAlias) {
-          for (int i =0 ; i<columns.length; i++) {
-            sb.append(getValueFrequencyForColumn(columns[i].toString(),columnsAlias[i].toString()));
-
-            if (i < columns.length-1) {
-                sb.append(",");
+        for (int i = 0; i < columns.length; i++) {
+            if ((boolean) viewList[i]) {
+                if (!columns[i].toString().contains("latitude") &&
+                        !columns[i].toString().contains("longitude") &&
+                        !columns[i].toString().contains("Latitude") &&
+                        !columns[i].toString().contains("Longitude")) {
+                    sb.append(getValueFrequencyForColumn(
+                            columns[i].toString(),
+                            columnsAlias[i].toString()));
+                    sb.append(",");
+                }
             }
         }
-        sb.append("]");
+        // remove trailing comman... we do not know positions of printed columns
+        // so inserting trailing comman and then deleting it each time is safest way
+        sb.deleteCharAt(sb.length() - 1);
+
+        sb.append("\n]");
         return sb.toString();
     }
 

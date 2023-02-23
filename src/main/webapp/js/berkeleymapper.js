@@ -749,54 +749,50 @@ function fetchStatistics() {
         success: function (data, success) {
 
             var i = 0;
+            $("#StatisticsDialog").html("<h3>Frequency of terms by column</h3>");
 
             // headinig of buttons for each column, purpose is to show frequency table when clicked
             $.each(data, function (k, v) {
                 retStr += "<input type=button value='" + v.alias + "' " +
                     "onclick='" +
                     "$(\".frequencyTable\").hide();" +
-                    "$(\"#column" + i + "\").css(\"display\", \"block\");'/>";
+                    "$(\"#column" + i + "\").css(\"display\", \"inline\");'/>";
                 i++;
             });
+            $("#StatisticsDialog").append(retStr);
+            $("#loadingMsg").hide();
+
 
             // Create a series of hidden json tables, shown when column buttons clicked
             i = 0;
             $.each(data, function () {
-                retStr += "<table id='column" + i + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
-                retStr += "<thead><th width='50'>count</th><th>" + this.alias + "</th></thead>";
+                var columnIndex = 'column' +i
+                retStr = "";
+                retStr += "<table id='" + columnIndex + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
+                retStr += "<thead><th width='50'>count</th><th width='250'>" + this.alias + "</th></thead>";
                 retStr += "<tbody>";
                 $.each(this.frequencies, function (k, v) {
-                    retStr += "<tr><td>" + v.count + "</td><td>" + v.column + "</td></tr>";
+                    retStr += "<tr><td width='50'>" + v.count + "</td><td width='250'>" + v.column + "</td></tr>";
                 });
                 retStr += "</tbody>";
                 retStr += "</table>";
-
-                i++;
-            });
-
-            $("#loadingMsg").hide();
-            $("#StatisticsDialog").html(retStr);
-            $("#column0").show();
-
-            // TODO: make this un-hardcoded
-            $(document).ready(function () {
-                $('#column0').DataTable();
-            });
-            $(document).ready(function () {
-                            $('#column1').DataTable();
-                        });
-            $(document).ready(function () {
-                                       $('#column1').DataTable();
-                                   });
-            /*
-            // something like this should work but doesn't
-            i = 0;
-            $.each(data, function () {
-                $(document).ready(function () {
-                    $('#column' + i).DataTable();
+                $("#StatisticsDialog").append(retStr);
+                $('#'+columnIndex).DataTable({
+                  "paging": false,
+                    "searching": false,
+                    "info":false,
+                    "bInfo": false,
+                    "language": {
+                        "info": ""
+                      } ,
+                    "order": [ 0, 'desc' ]
                 });
                 i++;
-            });    */
+            });
+
+            //$(document).ready(function () {
+            //    $('#column0').show();
+            //});
         },
         statusCode: {
             204: function () {
