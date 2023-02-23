@@ -1,14 +1,77 @@
-a:link {text-decoration: none; font-size:12px;};
-a:visited {text-decoration: none; font-size:12px;}
-a:active {text-decoration: none; font-size:12px;}
-a:hover {text-decoration: underline; color: red; font-size:12px;}
+* {
+    font-style: normal;
+    font-variant-caps: normal;
+    font-variant-ligatures: normal;
+    font-variant-numeric: normal;
+    font-variant-east-asian: normal;
+    font-weight: 400;
+    font-stretch: normal;
+    font-size: 12px;
+    line-height: normal;
+    font-family: Roboto, Arial, sans-serif;
+}
+
+.ui-widget-content {
+    background: #F9F9F9;
+    border: 0.5px solid #000000;
+}
+
+.ui-dialog {
+    left: 0;
+    outline: 0 none;
+    padding: 0 !important;
+    position: absolute;
+    top: 0;
+}
+
+#success {
+    padding: 0;
+    margin: 0;
+}
+
+.ui-dialog .ui-dialog-content {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+    overflow: auto;
+    position: relative;
+    padding: 0 !important;
+}
+
+.ui-widget-header {
+    font-size: 13px;
+    #background: #f7941e;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 2 2;
+    position: relative;
+}
+
+a:visited {
+    text-decoration: none;
+}
+
+a:active {
+    text-decoration: none;
+}
+
+a:hover {
+    color: red;
+}
+
+#resultsDialog {
+    overflow-y: auto;
+}
+#statisticsDialog {
+    overflow-y: auto;
+}
 
 html, body, #map {
     margin: 0;
     padding: 0;
     height: 100%;
     border: none;
-    overflow:hidden;
+    overflow: hidden;
 }
 
 #top, #footer {
@@ -27,126 +90,166 @@ html, body, #map {
     min-width: 500px;
     min-height: 300px;
     height: 100%;
-    overflow:hidden;
+    overflow: hidden;
 }
-.vsplitbar {
-    width: 5px;
-    background: #aaa;
+
+.selector-control {
+    line-height: 30px;
+    padding-left: 0px;
+    padding-right: 0px;
+    height: 27px;
 }
-.hsplitbar {
-    height: 5px;
-    background: #aaa;
+
+.map-control {
+    background-color: #fff;
+    margin-top: 4px;
+    margin-left: 0px;
+}
+
+#legendDialog {
+    overflow-y: auto;
 }
 
 #mapContainer {
     height: 100%;
-    overflow:auto;
-    z-index=1;
-}
-
-#leftContent {
-    height: 90%;
-    overflow:auto;
-}
-
-#leftContainer {
-    padding: 8px;
-    width: 200px;
-    max-width: 200px;
-}
-
-#bottomContainer {
-    padding-top: 8px;
-    height: 100px;
-    max-height: 300px;
-    min-height: 0px;
-    overflow:auto;
+    overflow: auto;
+    z-index: 1;
 }
 
 select {
-  font-family: inherit;
+    font-family: inherit;
 }
 
-#content {
-    font-size:12px;
-}
-#address {
-    font-size:12px;
-}
-#addressbutton {
-    font-size:12px;
-}
 #addressControl {
-    display:none;
+    display: none;
 }
-/* These are the main content elements on the left pane */
+
 #layers, #download, #myColors, #styleOptions, #displayOptions, #information {
-    font-size:12px;
     margin: 5px 5px 5px 5px;
-    overflow:auto;
+    overflow: auto;
 }
 
 label.dropdown select {
-	display: inline-block;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
-	cursor: pointer;
-	outline: none;
+    display: inline-block;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
 }
 
 label.dropdown select::-ms-expand {
-	display: none;
+    display: none;
 }
+
 label.dropdown:before {
 
-	position: absolute;
-	pointer-events: none;
-	display: block;
+    position: absolute;
+    pointer-events: none;
+    display: block;
 }
-label.dropdown { position: relative; }
+
+label.dropdown {
+    position: relative;
+}
+
 label.dropdown:after {
-	font-size: 12px;
-	position: absolute;
-	pointer-events: none;
+    position: absolute;
+    pointer-events: none;
 }
 
 
 #legendText {
-    font-size: 12px;
     margin: 5px 0px 5px 5px;
-    overflow:auto;
+    overflow: auto;
 }
 
 .markerImgDiv {
-    float:left;
+    float: left;
     padding-right: 4px;
 }
+
 .markerText {
-    float:left;
-    font-size:11px;
+    float: left;
+    font-size: 11px;
 }
+
 #markerImg {
     height: 20px;
 }
 
 #loadingMsg {
-    display:block;
-    width:180px;
-    z-index=99;
-    background-color:yellow;
-    margin:0px;
-    border-style:solid;
-    border-width:1px;
-    border-color:black;
-    //overflow-style: marquee;
-    //marquee-style: alternate;
-    //marquee-loop: infinite;
-    //overflow-x: -webkit-marquee;
-    //-webkit-marquee: backwards medium infinite alternate normal;
+    display: block;
+    width: 180px;
+    z-index: 99;
+    background-color: yellow;
+    margin: 0px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: black;
 }
 
 #styleOptionsCheckboxes {
-    display:none;
-      font-size:12px;
+    display: none;
 }
+
+.close {
+    text-indent: -99em;
+    overflow: hidden;
+}
+
+tr td {
+    font-size: 11px;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+th {
+    padding: 2 !important;
+    margin: 2 !important;
+}
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  background-color: #ffffff;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 10px;
+}
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+.closeNav {
+    left:250px;
+    visibility: hidden;
+    top:50%;
+    position:fixed;
+    z-index:10;
+}
+
+.openNav {
+    left:0px;
+    top:50%; position:fixed; z-index:10;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav a {font-size: 18px;}
+}
+
+.frequencyTable {
+    display: none;
+    width: 300px;
+    align: "left";
+}
+

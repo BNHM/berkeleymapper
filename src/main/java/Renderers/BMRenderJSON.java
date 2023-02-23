@@ -30,7 +30,6 @@ public class BMRenderJSON implements BMRendererInterface {
      * "*" means this is optional
      *
      * @param g
-     *
      * @return
      */
     public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
@@ -110,6 +109,10 @@ public class BMRenderJSON implements BMRendererInterface {
         return json.toString();
     }
 
+    public String ValueFrequencies(BMSpatialFileReader ptsFile) {
+        return ptsFile.getValueFrequencies();
+    }
+
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         StringBuilder json = new StringBuilder();
 
@@ -150,7 +153,6 @@ public class BMRenderJSON implements BMRendererInterface {
      * JSON representation of Layers
      *
      * @param f
-     *
      * @return
      */
     public String KMLLayers(BMConfigAndTabFileReader f) {
@@ -167,7 +169,7 @@ public class BMRenderJSON implements BMRendererInterface {
             json.append("{\n");
             json.append("\"link\":\"" + JSONObject.escape(layer.getUrl()) + "\",\n");
             // Add a random number to end of request to circumvent caching issues
-            json.append("\"url\":\"" + JSONObject.escape(layer.getLocation()) + "#"+ UUID.randomUUID().toString()+"\",\n");
+            json.append("\"url\":\"" + JSONObject.escape(layer.getLocation()) + "#" + UUID.randomUUID().toString() + "\",\n");
             json.append("\"title\":\"" + JSONObject.escape(layer.getTitle()) + "\",\n");
             json.append("\"visibility\":\"" + layer.getVisible() + "\",\n");
             json.append("\"zoom\":\"expand\"\n");
@@ -223,6 +225,7 @@ public class BMRenderJSON implements BMRendererInterface {
 
     /**
      * Return JSON serialization of relevant metadata elements
+     *
      * @param f
      * @return
      */

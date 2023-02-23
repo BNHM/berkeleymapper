@@ -1,5 +1,7 @@
 package Core;
 
+import Readers.BMConfigAndTabFileReader;
+import Renderers.BMRenderJSON;
 import com.eaio.uuid.UUID;
 import org.apache.commons.io.IOUtils;
 
@@ -35,7 +37,7 @@ public class BMSession {
     /**
      * Used for testing purposes only
      *
-     * @param args
+     * @param args `` `
      */
     public static void main(String args[]) {
         try {
@@ -49,9 +51,18 @@ public class BMSession {
                 System.out.println("unable to read properties file");
                 e.printStackTrace();
             }
-            BMSession bm = new BMSession(new URL("https://biscicol.org/bcid"), null);
 
-            System.out.println(bm.getFile().getAbsoluteFile());
+            // Build a sample session
+            BMSession sess = new BMSession(
+                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt"),
+                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml"));
+            System.out.println(sess.getFile().getAbsoluteFile());
+
+            // Test BMRenderJSON service
+            BMConfigAndTabFileReader file = new BMConfigAndTabFileReader(sess);
+            String output = new BMRenderJSON().ValueFrequencies(file);
+            System.out.println(output);
+            
         } catch (IOException ex) {
             Logger.getLogger(BMSession.class.getName()).log(Level.SEVERE, null, ex);
         }
