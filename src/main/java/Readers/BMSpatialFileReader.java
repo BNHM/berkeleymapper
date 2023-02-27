@@ -15,10 +15,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
+import static org.apache.commons.lang3.StringEscapeUtils.escapeJson;
 import static org.apache.commons.lang3.StringUtils.*;
 
 /**
@@ -116,6 +118,9 @@ public class BMSpatialFileReader implements BMFileReader {
             final Map.Entry<Comparable<?>, Long> entry = iter.next();
             String key = entry.getKey().toString();
             String value = entry.getValue().toString();
+            // escape json using apache commons lib
+            key = escapeJson(key);
+
             sb.append("\t\t{\"column\":\"" + key + "\",\"count\":\"" + value + "\"}");
             if (iter.hasNext()) {
                 sb.append(",\n");

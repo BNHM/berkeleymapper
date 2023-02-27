@@ -11,6 +11,7 @@
 cp dist/berkeleymapper.war /usr/local/Cellar/jetty/9.4.50.v20221201/libexec/webapps/root.war
 # open a test page
 #/usr/bin/open -a "/Applications/Google Chrome.app" 'http://localhost:8080/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml'
+#/usr/bin/open -a "/Applications/Google Chrome.app" 'http://localhost:8080/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml'
 
 
 # on deployment server
