@@ -15,8 +15,11 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.stat.Frequency;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
+import static org.apache.commons.lang3.StringUtils.*;
 
 /**
  * This class runs spatial operations on the given file.  It acts as
@@ -98,11 +101,14 @@ public class BMSpatialFileReader implements BMFileReader {
             while (fieldsIt.hasNext()) {
                 BMField field = (BMField) fieldsIt.next();
                 if (field.getTitle().equalsIgnoreCase(columnName)) {
-                    f.addValue(field.getValue());
+                    // abreviate long strings which cause big files
+                    f.addValue(abbreviate(field.getValue(), 40));
+                    //f.addValue(field.getValue());
                 }
             }
         }
 
+        
         StringBuilder sb = new StringBuilder();
         sb.append("\n\t{ \"alias\":\"" + columnAlias + "\",\"frequencies\" : [\n");
         final Iterator<Map.Entry<Comparable<?>, Long>> iter = f.entrySetIterator();
@@ -132,7 +138,8 @@ public class BMSpatialFileReader implements BMFileReader {
                 if (!columns[i].toString().contains("latitude") &&
                         !columns[i].toString().contains("longitude") &&
                         !columns[i].toString().contains("Latitude") &&
-                        !columns[i].toString().contains("Longitude")) {
+                        !columns[i].toString().contains("Longitude") &&
+                        !columns[i].toString().contains("related")) {
                     sb.append(getValueFrequencyForColumn(
                             columns[i].toString(),
                             columnsAlias[i].toString()));

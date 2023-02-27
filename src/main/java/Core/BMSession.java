@@ -54,8 +54,8 @@ public class BMSession {
 
             // Build a sample session
             BMSession sess = new BMSession(
-                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt"),
-                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml"));
+                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt"),
+                    new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml"));
             System.out.println(sess.getFile().getAbsoluteFile());
 
             // Test BMRenderJSON service
