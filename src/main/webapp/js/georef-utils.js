@@ -20,13 +20,21 @@ function removeOtherGeoref(num) {
     */
 }
 
+// set minimum zoom
+    function callFitBounds(bounds) {
+        bm2.map.fitBounds(bounds);
+        var zoom = bm2.map.getZoom();
+        if (zoom > 15) {
+            bm2.map.setZoom(15);
+        }         
+    }
 // Zoom into one of the georeferenced localities
 function zoomToGeoref(num) {
     var bounds = new google.maps.LatLngBounds();
     var b = bm2.georefCircles[num].getBounds();
     bounds.extend(b.getNorthEast());
     bounds.extend(b.getSouthWest());
-    bm2.map.fitBounds(bounds);
+    callFitBounds(bounds);
 }
 
 // Assign content to a particular marker
@@ -93,7 +101,9 @@ function codeAddress(address) {
             }
 
         }
-        bm2.map.fitBounds(bounds);
+
+        callFitBounds(bounds)
     });
 
+    
 }

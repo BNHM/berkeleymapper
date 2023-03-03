@@ -470,6 +470,8 @@ function initialize() {
             navigator.geolocation.getCurrentPosition(function (position) {
                 bm2.map = getMap(position.coords.latitude, position.coords.longitude, 10);
                 initializeDrawingManager();
+                setMapTypes();
+
             }, function () {
                 bm2.map = getMap(0, 0);
                 handleNoGeolocation(true);
@@ -496,6 +498,8 @@ function initialize() {
     }
 
     // Drawing Options
+    // Open nav drawer at end of loading places all elements nicely
+    openNav()
 }
 
 <!-- JS Script -->
@@ -766,7 +770,7 @@ function fetchStatistics() {
             // Create a series of hidden json tables, shown when column buttons clicked
             i = 0;
             $.each(data, function () {
-                var columnIndex = 'column' +i
+                var columnIndex = 'column' + i
                 retStr = "";
                 retStr += "<table id='" + columnIndex + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
                 retStr += "<thead><th width='50'>count</th><th width='250'>" + this.alias + "</th></thead>";
@@ -777,15 +781,15 @@ function fetchStatistics() {
                 retStr += "</tbody>";
                 retStr += "</table>";
                 $("#StatisticsDialog").append(retStr);
-                $('#'+columnIndex).DataTable({
-                  "paging": false,
+                $('#' + columnIndex).DataTable({
+                    "paging": false,
                     "searching": false,
-                    "info":false,
+                    "info": false,
                     "bInfo": false,
                     "language": {
                         "info": ""
-                      } ,
-                    "order": [ 0, 'desc' ]
+                    },
+                    "order": [0, 'desc']
                 });
                 i++;
             });
@@ -1100,15 +1104,25 @@ function setMapTypes() {
     var topo = new google.maps.ImageMapType(topoMapOptions);
     bm2.map.mapTypes.set('topo', topo);
 
+    /*
+
+           // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                                  mapTypeIds: [google.maps.MapTypeId.ROADMAP,
+                                      google.maps.MapTypeId.SATELLITE,
+                                      google.maps.MapTypeId.HYBRID,
+                                      google.maps.MapTypeId.TERRAIN,
+                                      "topo"
+                                  ]
+                                  mapTypeControlOptions: {
+                           style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
+                           mapTypeIds: ["roadmap", "topo"]
+                         },*/
     bm2.map.setOptions({
         mapTypeControl: true,
         mapTypeControlOptions: {
-            // style: google.maps.MapTypeControlStyle.DROPDOWN_MENU,
-            mapTypeIds: [google.maps.MapTypeId.ROADMAP,
-                google.maps.MapTypeId.SATELLITE,
-                google.maps.MapTypeId.HYBRID,
-                google.maps.MapTypeId.TERRAIN
-            ]
+            style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+            mapTypeIds: [
+                "roadmap","satellite","hybrid","terrain","topo"]
         }
     });
 }
