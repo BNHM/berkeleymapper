@@ -2,6 +2,7 @@
 	<colors method="dynamicfield" fieldname="darwin:collectioncode" label="Collection"></colors>
 	<concepts>
 		<concept viewlist="1" datatype="darwin:relatedinformation" alias="Related Information"/>
+		<concept viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
 		<concept viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
 		<concept order="3" viewlist="1" datatype="char120:2" alias="Event Type"/>
 		<concept viewlist="1" datatype="char120:3" alias="Verbatim Date"/>
@@ -10,7 +11,7 @@
 		<concept viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
 		<concept viewlist="1" datatype="darwin:coordinateuncertaintyinmeters" alias="Error (m)"/>
 		<concept viewlist="1" datatype="darwin:horizontaldatum" alias="Datum"/>
-		<concept viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
+		
 	</concepts>
 
 	<logos>
