@@ -10,10 +10,10 @@
 		<concept viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
 		<concept viewlist="1" datatype="darwin:coordinateuncertaintyinmeters" alias="Error (m)"/>
 		<concept viewlist="1" datatype="darwin:horizontaldatum" alias="Datum"/>
-		<concept viewlist="0" datatype="darwin:collectioncode" alias="Collection Code"/>
+		<concept viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
 	</concepts>
 
 	<logos>
-		<logo img="https://arctos.database.museum/images/genericHeaderIcon.gif" url="https://arctos.database.museum/"/>
+		<logo img="https://arctos.database.museum/images/arctosandwords.png" url="https://arctos.database.museum/"/>
 	</logos>
 </berkeleymapper>
