@@ -135,7 +135,7 @@ function getLogos() {
                 //$("#logos").append("<br>");
                 if (counter == 1) {
                     $("#logos").append("<br></br>");
-                    $("#logos").append("<div>Partner organizations contributing to this map</div>")
+                    $("#logos").append("<div>Powered by</div>")
                 }
                 $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
                 $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=80 \/>");
