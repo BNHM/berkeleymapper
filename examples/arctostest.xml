@@ -1,19 +1,17 @@
 ﻿<berkeleymapper>
 	<colors method="dynamicfield" fieldname="darwin:collectioncode" label="Collection"></colors>
 	<concepts>
-		<concept viewlist="1" datatype="darwin:relatedinformation" alias="Related Information"/>
-		<concept viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
-		<concept viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
-		<concept order="3" viewlist="1" datatype="char120:2" alias="Event Type"/>
-		<concept viewlist="1" datatype="char120:3" alias="Verbatim Date"/>
-		<concept viewlist="1" datatype="darwin:locality" alias="Specific Locality"/>
-		<concept viewlist="0" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
-		<concept viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
-		<concept viewlist="1" datatype="darwin:coordinateuncertaintyinmeters" alias="Error (m)"/>
-		<concept viewlist="1" datatype="darwin:horizontaldatum" alias="Datum"/>
-		
+		<concept order="2" viewlist="1" datatype="darwin:relatedinformation" alias="Related Information"/>
+		<concept order="3" viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+		<concept order="4" viewlist="1" datatype="char120:2" alias="Event Type"/>
+		<concept order="5" viewlist="1" datatype="char120:3" alias="Verbatim Date"/>
+		<concept order="9" viewlist="1" datatype="darwin:locality" alias="Specific Locality"/>
+		<concept order="12" viewlist="0" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+		<concept order="13" viewlist="0" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+		<concept order="11" viewlist="1" datatype="darwin:coordinateuncertaintyinmeters" alias="Error (m)"/>
+		<concept order="10" viewlist="1" datatype="darwin:horizontaldatum" alias="Datum"/>
+		<concept order="1" viewlist="1" datatype="darwin:collectioncode" alias="Collection Code"/>
 	</concepts>
-
 	<logos>
 		<logo img="https://arctos.database.museum/images/ArctosBlue-generic-logo.svg" url="https://arctos.database.museum/"/>
 	</logos>
