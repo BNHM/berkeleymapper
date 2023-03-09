@@ -21,7 +21,7 @@ public class BMRenderKML implements BMRendererInterface {
         StringBuilder kml = new StringBuilder();
         kml.append("");
         kml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        kml.append("<kml xmlns=\"https://earth.google.com/kml/2.2\">\n");
+        kml.append("<kml xmlns=\"http://earth.google.com/kml/2.2\">\n");
         kml.append("<Document>\n");
         kml.append("  <name>BerkeleyMapper Query</name>\n");
         kml.append("  <open>1</open>\n");
