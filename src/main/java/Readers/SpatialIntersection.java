@@ -2,13 +2,17 @@ package Readers;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 
+import Core.BMSession;
+import com.vividsolutions.jts.geom.impl.CoordinateArraySequenceFactory;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.ParseException;
@@ -16,16 +20,21 @@ import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
 
 public class SpatialIntersection {
+    static long startTime = System.nanoTime();
+    static boolean showMessages = false;
+
     /**
      * return a JSON result set of the frequency of points falling within a given polygon in a shapefile
-     * @param shapefilePath  path to shapefile
-     * @param columnName  column name to use values to assign frequency to
-     * @param pointSet   Array of points
-     * @return       JSON String
+     *
+     * @param shapefilePath path to shapefile
+     * @param columnName    column name to use values to assign frequency to
+     * @param pointSet      Array of points
+     * @return JSON String
      * @throws IOException
      */
     public static String countPointsInPolygons(String shapefilePath, String columnName, Point[] pointSet)
             throws IOException {
+        printTime("START counting points in Polygon for " + shapefilePath);
 
         File file = new File(shapefilePath);
         Map<String, Object> map = new HashMap<>();
@@ -43,28 +52,58 @@ public class SpatialIntersection {
 
         // Iterate over the features
         try (FeatureIterator<SimpleFeature> iterator = features.features()) {
-
             while (iterator.hasNext()) {
                 SimpleFeature feature = iterator.next();
-                Geometry geometry = (Geometry) feature.getDefaultGeometry();
-                String polygonName = feature.getAttribute(columnName).toString();
 
-                // Iterate over the points and check if each point falls within the polygon
+                Geometry geometry = (Geometry) feature.getDefaultGeometry();
+                Geometry boundingBox = geometry.getEnvelope();
+                String polygonName = feature.getAttribute(columnName).toString();
                 for (Point point : pointSet) {
-                    if (geometry.contains(point)) {
-                        // Increment the point count for the polygon
-                        int count = pointCountMap.getOrDefault(polygonName, 0);
-                        pointCountMap.put(polygonName, count + 1);
+                    // first check if point is within the boundary
+                    if (point.intersects(boundingBox)) {
+                        if (geometry.contains(point)) {
+                            // Increment the point count for the polygon
+                            int count = pointCountMap.getOrDefault(polygonName, 0);
+                            pointCountMap.put(polygonName, count + 1);
+                        }
                     }
                 }
             }
         }
+        dataStore.dispose();
+
+        printTime("STOP");
         // Convert the result to JSON
         return mapToJson(pointCountMap);
     }
-    
+
+    public static Envelope calculateBoundingBox(Point[] points) {
+        if (points == null || points.length == 0) {
+            throw new IllegalArgumentException("Input Point array is empty or null.");
+        }
+
+        double minX = Double.MAX_VALUE;
+        double maxX = Double.MIN_VALUE;
+        double minY = Double.MAX_VALUE;
+        double maxY = Double.MIN_VALUE;
+
+        for (Point point : points) {
+            Coordinate coordinate = point.getCoordinate();
+            double x = coordinate.getX();
+            double y = coordinate.getY();
+
+            minX = Math.min(minX, x);
+            maxX = Math.max(maxX, x);
+            minY = Math.min(minY, y);
+            maxY = Math.max(maxY, y);
+        }
+
+        return new Envelope(minX, maxX, minY, maxY);
+    }
+
     /**
      * convert map to JSON
+     *
      * @param map
      * @return
      */
@@ -86,6 +125,7 @@ public class SpatialIntersection {
 
     /**
      * create a sample set of points
+     *
      * @return
      */
     private static Point[] createSamplePointSet() {
@@ -108,18 +148,84 @@ public class SpatialIntersection {
     }
 
     /**
-        * main file provides a working sample
-        * @param args
-        * @throws IOException
-        * @throws ParseException
-        */
-       public static void main(String[] args) throws IOException, ParseException {
+     * Input a JTS MultiPoint, which the rest of BerkeleyMapper uses, and return
+     * an array of  geotools Point Coords
+     *
+     * @param multiPoint
+     * @param limit
+     * @return
+     */
+    private static Point[] createPointSetFromCoordinates(com.vividsolutions.jts.geom.MultiPoint multiPoint, int limit) {
+        com.vividsolutions.jts.geom.Coordinate[] coordinates = multiPoint.getCoordinates();
+
+        int counter = coordinates.length;
+        if (coordinates.length > limit) {
+            counter = limit;
+        }
+        Point[] points = new Point[counter];
+
+        for (int i = 0; i < counter; i++) {
+            com.vividsolutions.jts.geom.Coordinate coordinate = coordinates[i];
+            GeometryFactory geometryFactory = new GeometryFactory();
+            Point point = geometryFactory.createPoint(new Coordinate(coordinate.y, coordinate.x));
+            points[i] = point;
+        }
+        return points;
+    }
+
+    public static void printTime(String message) {
+        if (showMessages) {
+            long endTime = System.nanoTime();
+            long elapsedTime = endTime - startTime;
+            // Convert nanoseconds to seconds
+            double elapsedTimeInSeconds = elapsedTime / 1_000_000_000.0;
+            System.out.println( elapsedTimeInSeconds + " seconds. " + message);
+        }
+    }
+
+    /**
+     * main file provides a working sample
+     *
+     * @param args
+     * @throws IOException
+     * @throws ParseException
+     */
+    public static void main(String[] args) throws IOException, ParseException {
+             /*
            String shapefilePath = "/Users/jdeck/Downloads/World_Countries_Generalized/World_Countries_Generalized.shp";
            String columnName = "COUNTRY";
            Point[] pointSet = createSamplePointSet();
+           */
 
-           // Print the resultset
-           System.out.println(countPointsInPolygons(shapefilePath, columnName, pointSet));
-       }
+        // Creating a new session
+        BMSession sess = new BMSession(
+                new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt"),
+                new URL("https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml"));
+
+        BMConfigAndTabFileReader file = new BMConfigAndTabFileReader(sess);
+
+        Point[] pointSet = createPointSetFromCoordinates(file.getMultiPointGeometry(), sess.pointLimitSpatialProcessing);
+
+        // Loop each shapefile
+        Iterator it = sess.getShapeFiles().iterator();
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        while (it.hasNext()) {
+            BMSession.ShapeFile shp = (BMSession.ShapeFile) it.next();
+
+            sb.append("{\"alias\":\"" + shp.getAliasName()+"\", \"frequencies\": [");
+            sb.append(countPointsInPolygons(
+                    shp.getFileName(),
+                    shp.getColumnName(),
+                    pointSet
+            ));
+            sb.append("]}");
+            if (it.hasNext()) {
+                sb.append(",");
+            }
+        }
+        sb.append("]");
+        System.out.println(sb.toString());
+    }
 }
 

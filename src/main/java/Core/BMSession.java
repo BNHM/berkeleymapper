@@ -7,6 +7,8 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,11 +30,14 @@ public class BMSession {
     private String session = null;
     //final private String filesLocation = "/home/jdeck/webserver_tmp/berkeleymapper/";
     private static String filesLocation = "";
+    private static List<ShapeFile> shapeFiles = new ArrayList<>();
+
     private File file = null;
     private File configFile = null;
     final public static int CONFIG = 1;
     final public static int FILE = 2;
     private int mode = 2;
+    public int pointLimitSpatialProcessing;
 
     /**
      * Used for testing purposes only
@@ -150,6 +155,34 @@ public class BMSession {
             prop.load(input);
 
             this.filesLocation = prop.getProperty("filesLocation");
+            this.pointLimitSpatialProcessing = Integer.parseInt(prop.getProperty("pointLimitSpatialProcessing"));
+
+
+            int shapeIndex = 1;
+                   String shapeKey = "shapeFiles." + shapeIndex;
+
+
+                   while (prop.containsKey(shapeKey)) {
+                       String shapeValue = prop.getProperty(shapeKey);
+                       String[] values = shapeValue.split(",");
+
+                       String fileName = values[0].trim().replaceAll("^\"|\"$", "");
+                       String aliasName = values[1].trim().replaceAll("^\"|\"$", "");
+                       String columnName = values[2].trim().replaceAll("^\"|\"$", "");
+
+                       ShapeFile shapeFile = new ShapeFile(fileName, aliasName, columnName);
+                       this.shapeFiles.add(shapeFile);
+
+                       shapeIndex++;
+                       shapeKey = "shapeFiles." + shapeIndex;
+                   }
+
+
+                   //System.out.println("Shape Files:");
+                   //for (ShapeFile shapeFile : shapeFiles) {
+                    //   System.out.println(shapeFile.getFileName() + ", " + shapeFile.getAliasName() + ", " + shapeFile.getColumnName());
+                   //}
+
         } catch (IOException e) {
             System.out.println("unable to read properties file");
             e.printStackTrace();
@@ -175,6 +208,8 @@ public class BMSession {
     public String getFilesLocation() {
         return filesLocation;
     }
+
+    public List<ShapeFile> getShapeFiles() { return shapeFiles; }
 
     public String getSessionString() {
         return session;
@@ -238,5 +273,28 @@ public class BMSession {
         ChannelTools.fastChannelCopy(Channels.newChannel(url.openStream()), Channels.newChannel(output));
         // closing the channels
         inputChannel.close();
+    }
+    public class ShapeFile {
+        private String fileName;
+        private String aliasName;
+        private String columnName;
+
+        public ShapeFile(String fileName, String aliasName, String columnName) {
+            this.fileName = fileName;
+            this.aliasName = aliasName;
+            this.columnName = columnName;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getAliasName() {
+            return aliasName;
+        }
+
+        public String getColumnName() {
+            return columnName;
+        }
     }
 }
