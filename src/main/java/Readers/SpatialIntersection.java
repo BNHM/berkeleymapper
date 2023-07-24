@@ -3,6 +3,7 @@ package Readers;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import Core.BMSession;
@@ -26,19 +27,23 @@ public class SpatialIntersection {
     /**
      * return a JSON result set of the frequency of points falling within a given polygon in a shapefile
      *
-     * @param shapefilePath path to shapefile
-     * @param columnName    column name to use values to assign frequency to
      * @param pointSet      Array of points
      * @return JSON String
      * @throws IOException
      */
-    public static String countPointsInPolygons(String shapefilePath, String columnName, Point[] pointSet)
+    public static String countPointsInPolygons(BMSession.ShapeFile shp, Point[] pointSet)
             throws IOException {
+        String shapefilePath =  shp.getFileName();
+
         printTime("START counting points in Polygon for " + shapefilePath);
 
         File file = new File(shapefilePath);
         Map<String, Object> map = new HashMap<>();
         map.put("url", file.toURI().toURL());
+        // I have written shapefile using ISO8859... for some reason the communication between
+        // QGIS and geotools works better here.. does not handle UTF8
+        Charset charset = Charset.forName("ISO-8859-1");
+        map.put("charset", charset);
 
         DataStore dataStore = DataStoreFinder.getDataStore(map);
         String typeName = dataStore.getTypeNames()[0];
@@ -48,7 +53,11 @@ public class SpatialIntersection {
         SimpleFeatureCollection features = featureSource.getFeatures(query);
 
         // Create a map to store the point count for each polygon
-        Map<String, Integer> pointCountMap = new HashMap<>();
+        Map<String, Integer> countryCountMap = new HashMap<>();
+        Map<String, Integer> stateCountMap = new HashMap<>();
+        Map<String, Integer> countyCountMap = new HashMap<>();
+        Map<String, Integer> biomeCountMap = new HashMap<>();
+
 
         // Iterate over the features
         try (FeatureIterator<SimpleFeature> iterator = features.features()) {
@@ -57,14 +66,22 @@ public class SpatialIntersection {
 
                 Geometry geometry = (Geometry) feature.getDefaultGeometry();
                 Geometry boundingBox = geometry.getEnvelope();
-                String polygonName = feature.getAttribute(columnName).toString();
+                String countryName = String.format(feature.getAttribute(shp.getCountryName()).toString());
+                String stateName =   String.format(feature.getAttribute(shp.getStateName()).toString());
+                String countyName = String.format(feature.getAttribute(shp.getCountyName()).toString());
+                String biomeName =   String.format(feature.getAttribute(shp.getBiomeName()).toString());
                 for (Point point : pointSet) {
                     // first check if point is within the boundary
                     if (point.intersects(boundingBox)) {
                         if (geometry.contains(point)) {
-                            // Increment the point count for the polygon
-                            int count = pointCountMap.getOrDefault(polygonName, 0);
-                            pointCountMap.put(polygonName, count + 1);
+                            int countCountry = countryCountMap.getOrDefault(countryName, 0);
+                            countryCountMap.put(countryName, countCountry + 1);
+                            int countState = stateCountMap.getOrDefault(stateName, 0);
+                            stateCountMap.put(stateName, countState + 1);
+                            int countCounty = countyCountMap.getOrDefault(countyName, 0);
+                            countyCountMap.put(countyName, countCounty + 1);
+                            int countBiome = biomeCountMap.getOrDefault(biomeName, 0);
+                            biomeCountMap.put(biomeName, countBiome + 1);
                         }
                     }
                 }
@@ -74,7 +91,14 @@ public class SpatialIntersection {
 
         printTime("STOP");
         // Convert the result to JSON
-        return mapToJson(pointCountMap);
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        sb.append("{\"Country\": [" + mapToJson(countryCountMap) + "]},");
+        sb.append("{\"State\": [" + mapToJson(stateCountMap) + "]},");
+        sb.append("{\"County\": [" + mapToJson(countyCountMap) + "]},");
+        sb.append("{\"Biome\": [" + mapToJson(biomeCountMap) + "]}");
+        sb.append("]");
+        return sb.toString();
     }
 
     public static Envelope calculateBoundingBox(Point[] points) {
@@ -209,22 +233,21 @@ public class SpatialIntersection {
         // Loop each shapefile
         Iterator it = sess.getShapeFiles().iterator();
         StringBuilder sb = new StringBuilder();
-        sb.append("[");
+        //sb.append("[");
         while (it.hasNext()) {
             BMSession.ShapeFile shp = (BMSession.ShapeFile) it.next();
 
-            sb.append("{\"alias\":\"" + shp.getAliasName()+"\", \"frequencies\": [");
+            //sb.append("{\"alias\":\"" + shp.getAliasName()+"\", \"frequencies\": [");
             sb.append(countPointsInPolygons(
-                    shp.getFileName(),
-                    shp.getColumnName(),
+                    shp,
                     pointSet
             ));
-            sb.append("]}");
-            if (it.hasNext()) {
-                sb.append(",");
-            }
+            //sb.append("]}");
+            //if (it.hasNext()) {
+             //   sb.append(",");
+            //}
         }
-        sb.append("]");
+        //sb.append("]");
         System.out.println(sb.toString());
     }
 }

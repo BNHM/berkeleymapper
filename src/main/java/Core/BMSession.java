@@ -168,9 +168,8 @@ public class BMSession {
 
                        String fileName = values[0].trim().replaceAll("^\"|\"$", "");
                        String aliasName = values[1].trim().replaceAll("^\"|\"$", "");
-                       String columnName = values[2].trim().replaceAll("^\"|\"$", "");
 
-                       ShapeFile shapeFile = new ShapeFile(fileName, aliasName, columnName);
+                       ShapeFile shapeFile = new ShapeFile(fileName, aliasName);
                        this.shapeFiles.add(shapeFile);
 
                        shapeIndex++;
@@ -274,15 +273,38 @@ public class BMSession {
         // closing the channels
         inputChannel.close();
     }
+
+    /**
+     * ShapeFile is a gridded dataset containing country, state, county, and biome together in a single file
+     */
     public class ShapeFile {
         private String fileName;
         private String aliasName;
-        private String columnName;
 
-        public ShapeFile(String fileName, String aliasName, String columnName) {
+        public String getCountryName() {
+            return countryName;
+        }
+
+        public String getStateName() {
+            return stateName;
+        }
+
+        public String getCountyName() {
+            return countyName;
+        }
+
+        public String getBiomeName() {
+            return biomeName;
+        }
+
+        private String countryName = "Country";
+        private String stateName = "State";
+        private String countyName = "County";
+        private String biomeName = "Biome";
+
+        public ShapeFile(String fileName, String aliasName) {
             this.fileName = fileName;
             this.aliasName = aliasName;
-            this.columnName = columnName;
         }
 
         public String getFileName() {
@@ -293,8 +315,6 @@ public class BMSession {
             return aliasName;
         }
 
-        public String getColumnName() {
-            return columnName;
-        }
+
     }
 }
