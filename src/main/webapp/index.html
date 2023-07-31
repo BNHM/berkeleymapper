@@ -110,6 +110,11 @@
         Loading statistics ...
     </div>
 </div>
+<div id="spatialIntersectionContainer" style="visibility:hidden">
+    <div id="spatialIntersectionDiv">
+        Loading spatial Intersections ...
+    </div>
+</div>
 
 <div id="mySidenav" class="sidenav">
 
@@ -127,6 +132,8 @@
     <div id="information">
         <input type=button value="Show Results" onclick='$("#ResultsDialog").dialog("open")'>
         <input type=button value="Statistics" onclick='$("#StatisticsDialog").dialog("open");fetchStatistics();'>
+        <input type=button value="Spatial Intersection" onclick='$("#SpatialIntersectionDialog").dialog("open");fetchSpatialIntersection();'>
+
         <input type=button value="Toggle Controls" onclick='toggleControls();'>
     </div>
 

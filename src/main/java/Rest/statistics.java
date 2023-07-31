@@ -3,7 +3,6 @@ package Rest;
 import Core.BMSession;
 import Readers.BMConfigAndTabFileReader;
 import Renderers.BMRenderJSON;
-import com.vividsolutions.jts.geom.GeometryFactory;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -41,4 +40,6 @@ public class statistics {
         rb.header("Access-Control-Allow-Origin", "*");
         return rb.build();
     }
+
+
 }

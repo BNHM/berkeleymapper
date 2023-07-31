@@ -1,15 +1,13 @@
 package Core;
 
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMTabFileReader;
 import Renderers.BMRenderJSON;
-import Renderers.BMRenderKML;
-import Renderers.BMRenderSimpleText;
-import com.vividsolutions.jts.geom.*;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -65,7 +63,7 @@ public class test {
 
         // Output points
         //String output = new BMRenderKML().AllPoints(fs.getMultiPointGeometry(), fs);
-        String output = new BMRenderJSON().AllPoints(fs.getMultiPointGeometry(),fs);
+        String output = new BMRenderJSON().AllPoints(fs.getBMCoordinates(),fs);
         System.out.println(output);
         for (int i=10; i< 200; i++) {
         System.out.println(new BMRenderJSON().Record(i, fs));

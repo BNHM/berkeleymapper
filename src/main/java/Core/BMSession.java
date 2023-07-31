@@ -30,6 +30,7 @@ public class BMSession {
     private String session = null;
     //final private String filesLocation = "/home/jdeck/webserver_tmp/berkeleymapper/";
     private static String filesLocation = "";
+    private static Integer pointLimitSpatialProcessing  = 100000;
     private static List<ShapeFile> shapeFiles = new ArrayList<>();
 
     private File file = null;
@@ -37,7 +38,6 @@ public class BMSession {
     final public static int CONFIG = 1;
     final public static int FILE = 2;
     private int mode = 2;
-    public int pointLimitSpatialProcessing;
 
     /**
      * Used for testing purposes only
@@ -129,6 +129,8 @@ public class BMSession {
     }
 
     public BMSession(String session) {
+        setProps();
+
         this.session = session;
         this.file = new File(filesLocation + session);
         this.configFile = new File(filesLocation + session + ".xml");
@@ -155,8 +157,6 @@ public class BMSession {
             prop.load(input);
 
             this.filesLocation = prop.getProperty("filesLocation");
-            this.pointLimitSpatialProcessing = Integer.parseInt(prop.getProperty("pointLimitSpatialProcessing"));
-
 
             int shapeIndex = 1;
                    String shapeKey = "shapeFiles." + shapeIndex;
@@ -207,6 +207,7 @@ public class BMSession {
     public String getFilesLocation() {
         return filesLocation;
     }
+    public Integer getPointLimitSpatialProcessing() { return pointLimitSpatialProcessing; }
 
     public List<ShapeFile> getShapeFiles() { return shapeFiles; }
 

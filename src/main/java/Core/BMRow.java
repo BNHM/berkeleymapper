@@ -1,6 +1,7 @@
 package Core;
 
 import Readers.BMConfigAndTabFileReader;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.util.*;
 
@@ -157,8 +158,12 @@ public class BMRow {
         }
     }
 
-    public BMRowClassifier getBMCoord() {
+    public Coordinate getBMCoord() {
         return BMCoord;
+    }
+
+    public Iterator fields() {
+        return (Iterator) BMCoord.fields;
     }
 
     public static Double round(Double valueToRound, int numberOfDecimalPlaces) {

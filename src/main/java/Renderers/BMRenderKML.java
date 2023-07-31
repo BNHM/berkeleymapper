@@ -1,10 +1,11 @@
 package Renderers;
 
+import Core.BMCoordinate;
 import Core.BMRowClassifier;
 import Core.BMField;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMSpatialFileReader;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -16,7 +17,7 @@ import java.util.Iterator;
  */
 public class BMRenderKML implements BMRendererInterface {
 
-    public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
+    public String AllPoints(BMCoordinate[] bmCoordinates, BMConfigAndTabFileReader config) {
 
         StringBuilder kml = new StringBuilder();
         kml.append("");
@@ -40,13 +41,13 @@ public class BMRenderKML implements BMRendererInterface {
         kml.append("  </Style>\n");
 
         // Print Rows
-        Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
+        Iterator i2 = Arrays.asList(bmCoordinates).iterator();
         String name = "";
         // Limit numFields to display if the set of data is large
         int numFields = 15;
-        if (Arrays.asList(g.getCoordinates()).size() > 1000) {
+        if (Arrays.asList(bmCoordinates).size() > 1000) {
             numFields = 5;
-        } else if (Arrays.asList(g.getCoordinates()).size() > 500) {
+        } else if (Arrays.asList(bmCoordinates).size() > 500) {
             numFields = 8;
         }
         // System.out.println(Arrays.asList(g.getCoordinates()).size());
@@ -94,6 +95,8 @@ public class BMRenderKML implements BMRendererInterface {
         kml.append("</kml>\n");
         return kml.toString();
     }
+
+
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
         throw new UnsupportedOperationException("Not supported yet.");

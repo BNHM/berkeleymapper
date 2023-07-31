@@ -2,13 +2,9 @@ package Rest;
 
 import Core.BMSession;
 import Readers.BMConfigAndTabFileReader;
-import Readers.BMFileReader;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
-import Readers.BMTabFileReader;
+
 import Renderers.BMRenderJSON;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import java.net.MalformedURLException;
 import javax.ws.rs.*;

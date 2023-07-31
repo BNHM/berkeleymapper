@@ -1,10 +1,10 @@
 package Readers;
 
+import Core.BMCoordinate;
 import Core.BMRowClassifier;
 import Core.BMRow;
 import Core.BMSession;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPoint;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Interface for all the File Reading Classes, expects a call to exec() to run
@@ -17,7 +17,9 @@ public interface BMFileReader {
 
     public BMRow getRowAt(int i);
 
-    public MultiPoint getMultiPointGeometry();
+    public org.locationtech.jts.geom.Geometry getMultiPointGeometry();
+
+    public BMCoordinate[] getBMCoordinates();
 
     public Geometry BMPointsInPolygon(Geometry g);
 

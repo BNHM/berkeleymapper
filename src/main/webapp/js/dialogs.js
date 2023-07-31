@@ -25,9 +25,21 @@ $(function () {
         autoOpen: false,
     }).attr('id', 'StatisticsDialog');
     $("#StatisticsDialog").dialog("close");
-	//fetchStatistics();
 });
 
+// Statistics Dialog
+$(function () {
+    w = window.innerWidth;
+
+    $("#spatialIntersectionDiv").dialog({
+        "title": "Spatial Intersection",
+        height: 220,
+        width: w,
+        position: {my: 'right', at: 'bottom', of: "#map"},
+        autoOpen: false,
+    }).attr('id', 'SpatialIntersectionDialog');
+    $("#SpatialIntersectionDialog").dialog("close");
+});
 
 
 

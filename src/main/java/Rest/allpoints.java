@@ -51,7 +51,7 @@ public class allpoints {
         try {
             if (sess.getMode() == sess.CONFIG) {
                 BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
-                String output = new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), f);
+                String output = new BMRenderJSON().AllPoints(f.getBMCoordinates(), f);
                 if (gzip.equalsIgnoreCase("true")) {
                     filename = compress(output, session);
                 } else {
@@ -60,9 +60,9 @@ public class allpoints {
             } else {
                 BMFileReader f = new BMSpatialFileReader(sess);
                 if (gzip.equalsIgnoreCase("true")) {
-                    filename = compress(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null), session);
+                    filename = compress(new BMRenderJSON().AllPoints(f.getBMCoordinates(), null), session);
                 } else {
-                    filename = nocompress(new BMRenderJSON().AllPoints(f.getMultiPointGeometry(), null), session);
+                    filename = nocompress(new BMRenderJSON().AllPoints(f.getBMCoordinates(), null), session);
                 }
             }
         } catch (IOException e) {

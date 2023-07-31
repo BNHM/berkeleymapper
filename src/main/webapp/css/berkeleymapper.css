@@ -65,6 +65,9 @@ a:hover {
 #statisticsDialog {
     overflow-y: auto;
 }
+#spatialIntersectionDialog {
+    overflow-y: auto;
+}
 
 html, body, #map {
     margin: 0;

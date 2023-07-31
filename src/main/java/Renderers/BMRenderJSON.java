@@ -7,9 +7,9 @@ package Renderers;
 import Core.*;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMSpatialFileReader;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
 import org.json.simple.JSONObject;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -32,7 +32,7 @@ public class BMRenderJSON implements BMRendererInterface {
      * @param g
      * @return
      */
-    public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
+    public String AllPoints(BMCoordinate[] bmCoordinates, BMConfigAndTabFileReader config) {
         StringBuilder json = new StringBuilder();
 
         // Assign default colors
@@ -42,7 +42,7 @@ public class BMRenderJSON implements BMRendererInterface {
         }
 
         // Get an iterator for all the rows in this set
-        Iterator rows = Arrays.asList(g.getCoordinates()).iterator();
+        Iterator rows = Arrays.asList(bmCoordinates).iterator();
         json.append("[\n");
 
         int count = 0;
@@ -51,7 +51,10 @@ public class BMRenderJSON implements BMRendererInterface {
             if (count > 0) {
                 json.append(",\n");
             }
-            BMRowClassifier coord = (BMRowClassifier) rows.next();
+
+            BMCoordinate coordinate = (BMCoordinate) rows.next();
+            //BMCoordinate bmCoordinate = new BMCoordinate(coordinate.x,coordinate.y,)
+            BMRowClassifier coord = (BMRowClassifier) coordinate;
 
             // Catch any type of error for erroradiusinmeters
             Integer i = coord.errorRadiusInMeters;
@@ -89,7 +92,7 @@ public class BMRenderJSON implements BMRendererInterface {
     public String Record(int line, BMSpatialFileReader ptsFile) {
         StringBuilder json = new StringBuilder();
         BMRow r = ptsFile.getRowAt(line);
-        BMRowClassifier coord = r.getBMCoord();
+        BMRowClassifier coord = (BMRowClassifier) r.getBMCoord();
 
         Iterator fields = coord.fields.iterator();
         json.append("[\n{");

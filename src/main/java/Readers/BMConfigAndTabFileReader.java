@@ -378,7 +378,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         Iterator rowIt = rows.iterator();
         while (rowIt.hasNext()) {
             BMRow r = (BMRow) rowIt.next();
-            Iterator it = r.getBMCoord().fields.iterator();
+            Iterator it = ((BMRowClassifier)r.getBMCoord()).fields.iterator();
             Integer count = 0;
             while (it.hasNext()) {
                 BMField f = (BMField) it.next();
@@ -408,7 +408,7 @@ public class BMConfigAndTabFileReader extends BMSpatialFileReader {
         Iterator rowIt = rows.iterator();
         while (rowIt.hasNext()) {
             BMRow r = (BMRow) rowIt.next();
-            BMField f = (BMField) r.getBMCoord().fields.get(position);
+            BMField f = (BMField) ((BMRowClassifier) r.getBMCoord()).fields.get(position);
             fieldHash.add(f.getValue());
         }
 

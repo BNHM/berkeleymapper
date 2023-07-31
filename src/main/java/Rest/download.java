@@ -32,10 +32,10 @@ public class download {
         try {
             if (sess.getMode() == sess.CONFIG) {
                 BMConfigAndTabFileReader f = new BMConfigAndTabFileReader(sess);
-                rb = Response.ok(new BMRenderSimpleText().AllPoints(f.getMultiPointGeometry(), f));
+                rb = Response.ok(new BMRenderSimpleText().AllPoints(f.getBMCoordinates(), f));
             } else {
                 BMFileReader f = new BMSpatialFileReader(sess);
-                rb = Response.ok(new BMRenderSimpleText().AllPoints(f.getMultiPointGeometry(), null));
+                rb = Response.ok(new BMRenderSimpleText().AllPoints(f.getBMCoordinates(), null));
             }
         } catch (IOException e) {
             rb = Response.status(204);

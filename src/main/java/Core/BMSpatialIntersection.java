@@ -1,4 +1,4 @@
-package Readers;
+package Core;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,23 +6,22 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
 
-import Core.BMSession;
-import com.vividsolutions.jts.geom.impl.CoordinateArraySequenceFactory;
+import Readers.BMConfigAndTabFileReader;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.Query;
 import org.geotools.data.simple.SimpleFeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.geotools.geometry.jts.JTS;
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.ParseException;
 import org.geotools.data.simple.SimpleFeatureSource;
 import org.opengis.feature.simple.SimpleFeature;
 
-public class SpatialIntersection {
+public class BMSpatialIntersection {
     static long startTime = System.nanoTime();
     static boolean showMessages = false;
+    static Integer spatialProcessingLimit = 100000;
 
     /**
      * return a JSON result set of the frequency of points falling within a given polygon in a shapefile
@@ -93,10 +92,10 @@ public class SpatialIntersection {
         // Convert the result to JSON
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        sb.append("{\"Country\": [" + mapToJson(countryCountMap) + "]},");
-        sb.append("{\"State\": [" + mapToJson(stateCountMap) + "]},");
-        sb.append("{\"County\": [" + mapToJson(countyCountMap) + "]},");
-        sb.append("{\"Biome\": [" + mapToJson(biomeCountMap) + "]}");
+        sb.append("{\"alias\" : \"Country\", \"frequencies\" : [" + mapToJson(countryCountMap) + "]},");
+        sb.append("{\"alias\" : \"State\", \"frequencies\" : [" + mapToJson(stateCountMap) + "]},");
+        sb.append("{\"alias\" : \"County\", \"frequencies\": [" + mapToJson(countyCountMap) + "]},");
+        sb.append("{\"alias\" : \"Biome\", \"frequencies\" : [" + mapToJson(biomeCountMap) + "]}");
         sb.append("]");
         return sb.toString();
     }
@@ -133,17 +132,15 @@ public class SpatialIntersection {
      */
     private static String mapToJson(Map<String, Integer> map) {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
         for (Map.Entry<String, Integer> entry : map.entrySet()) {
             String key = entry.getKey();
             Integer value = entry.getValue();
-            sb.append("\"").append(key).append("\": ").append(value).append(", ");
+            sb.append("{\"key\" : \"").append(key).append("\", \"value\" : ").append(value).append("}, ");
         }
         // Remove the trailing comma and space
         if (map.size() > 0) {
             sb.setLength(sb.length() - 2);
         }
-        sb.append("}");
         return sb.toString();
     }
 
@@ -172,24 +169,20 @@ public class SpatialIntersection {
     }
 
     /**
-     * Input a JTS MultiPoint, which the rest of BerkeleyMapper uses, and return
-     * an array of  geotools Point Coords
-     *
-     * @param multiPoint
-     * @param limit
+     * Return an array of Point objects given an array of BMCoordinates,
+     * and enforce a hard limit
+     * @param bmCoordinates
      * @return
      */
-    private static Point[] createPointSetFromCoordinates(com.vividsolutions.jts.geom.MultiPoint multiPoint, int limit) {
-        com.vividsolutions.jts.geom.Coordinate[] coordinates = multiPoint.getCoordinates();
-
-        int counter = coordinates.length;
-        if (coordinates.length > limit) {
-            counter = limit;
+    public static Point[] createPointSetFromCoordinates(BMCoordinate[] bmCoordinates) {
+        int counter = bmCoordinates.length;
+        if (bmCoordinates.length > spatialProcessingLimit) {
+            counter = spatialProcessingLimit;
         }
         Point[] points = new Point[counter];
 
         for (int i = 0; i < counter; i++) {
-            com.vividsolutions.jts.geom.Coordinate coordinate = coordinates[i];
+            Coordinate coordinate = bmCoordinates[i];
             GeometryFactory geometryFactory = new GeometryFactory();
             Point point = geometryFactory.createPoint(new Coordinate(coordinate.y, coordinate.x));
             points[i] = point;
@@ -215,11 +208,6 @@ public class SpatialIntersection {
      * @throws ParseException
      */
     public static void main(String[] args) throws IOException, ParseException {
-             /*
-           String shapefilePath = "/Users/jdeck/Downloads/World_Countries_Generalized/World_Countries_Generalized.shp";
-           String columnName = "COUNTRY";
-           Point[] pointSet = createSamplePointSet();
-           */
 
         // Creating a new session
         BMSession sess = new BMSession(
@@ -228,26 +216,18 @@ public class SpatialIntersection {
 
         BMConfigAndTabFileReader file = new BMConfigAndTabFileReader(sess);
 
-        Point[] pointSet = createPointSetFromCoordinates(file.getMultiPointGeometry(), sess.pointLimitSpatialProcessing);
-
+        Point[] pointSet = createPointSetFromCoordinates(file.getBMCoordinates());
+                                                                             
         // Loop each shapefile
         Iterator it = sess.getShapeFiles().iterator();
         StringBuilder sb = new StringBuilder();
-        //sb.append("[");
         while (it.hasNext()) {
             BMSession.ShapeFile shp = (BMSession.ShapeFile) it.next();
-
-            //sb.append("{\"alias\":\"" + shp.getAliasName()+"\", \"frequencies\": [");
             sb.append(countPointsInPolygons(
                     shp,
                     pointSet
             ));
-            //sb.append("]}");
-            //if (it.hasNext()) {
-             //   sb.append(",");
-            //}
         }
-        //sb.append("]");
         System.out.println(sb.toString());
     }
 }

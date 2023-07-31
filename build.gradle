@@ -25,7 +25,7 @@ dependencies {
 	compile group: 'xerces', name:'xercesImpl', version: '2.12.0'
 	compile 'org.apache.commons:commons-math3:3.6.1'
 	// i am going to want to delete the next line
-	compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
+	//compile group: 'com.vividsolutions', name: 'jts', version: '1.13'
 	implementation 'org.locationtech.jts:jts-core:1.18.2'
 
 	implementation 'org.geotools:gt-shapefile:22.0'

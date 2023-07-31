@@ -1,11 +1,13 @@
 package Renderers;
 
+import Core.BMCoordinate;
 import Core.BMRowClassifier;
 import Core.BMField;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMSpatialFileReader;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -17,11 +19,11 @@ import java.util.Iterator;
  */
 public class BMRenderSimpleText implements BMRendererInterface {
 
-    public String AllPoints(Geometry g, BMConfigAndTabFileReader config) {
+    public String AllPoints(BMCoordinate[] bmCoordinates, BMConfigAndTabFileReader config) {
         StringBuilder strRet = new StringBuilder();
 
         // Print Header
-        Iterator i = Arrays.asList(g.getCoordinates()).iterator();
+        Iterator i = Arrays.asList(bmCoordinates).iterator();
         while (i.hasNext()) {
             BMRowClassifier coord = (BMRowClassifier) i.next();
             Iterator f = coord.fields.iterator();
@@ -34,7 +36,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         strRet.append("\n");
 
         // Print Rows
-        Iterator i2 = Arrays.asList(g.getCoordinates()).iterator();
+        Iterator i2 = Arrays.asList(bmCoordinates).iterator();
         while (i2.hasNext()) {
             try {
                 BMRowClassifier coord = (BMRowClassifier) i2.next();
@@ -51,6 +53,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         }
         return strRet.toString();
     }
+
 
     public String Record(int line, BMSpatialFileReader ptsFile) {
         throw new UnsupportedOperationException("Not supported yet.");

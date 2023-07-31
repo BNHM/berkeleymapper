@@ -9,6 +9,10 @@
 ./gradlew war
 # copy it into place on this machine
 cp dist/berkeleymapper.war /usr/local/Cellar/jetty/9.4.50.v20221201/libexec/webapps/root.war
+
+# Also, from deploying in Jetty... the server configuration does not properly deploy
+# from within Intellij so i want to follow the above every time i change code and redeploy!!
+
 # open a test page
 #/usr/bin/open -a "/Applications/Google Chrome.app" 'http://localhost:8080/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/awtest.xml'
 #/usr/bin/open -a "/Applications/Google Chrome.app" 'http://localhost:8080/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml'

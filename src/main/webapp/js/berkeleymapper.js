@@ -742,6 +742,79 @@ function fetchRecord(line) {
     return retStr;
 }
 
+function fetchSpatialIntersection() {
+    var retStr = "";
+    var url = bm2.urlRoot + "statistics/spatialIntersection?session=" + bm2.session;
+    console.log("fetching " + url)
+    $.ajax({
+        type: "GET",
+        url: url,
+        async: true,
+        success: function (data, success) {
+
+            var i = 0;
+            $("#SpatialIntersectionDialog").html("<h3>Spatial Intersection - derived by intersecting points with spatial layers</h3>");
+
+            // headinig of buttons for each column, purpose is to show frequency table when clicked
+            $.each(data, function (k, v) {
+                retStr += "<input type=button value='" + v.alias + "' " +
+                    "onclick='" +
+                    "$(\".frequencyTable\").hide();" +
+                    "$(\"#columnsi" + i + "\").css(\"display\", \"inline\");'/>";
+                i++;
+            });
+            $("#SpatialIntersectionDialog").append(retStr);
+            $("#loadingMsg").hide();
+
+
+            // Create a series of hidden json tables, shown when column buttons clicked
+            i = 0;
+            $.each(data, function () {
+                var columnIndex = 'columnsi' + i
+                retStr = "";
+                retStr += "<table id='" + columnIndex + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
+                retStr += "<thead><th width='50'>count</th><th width='250'>" + this.alias + "</th></thead>";
+                retStr += "<tbody>";
+                $.each(this.frequencies, function (k, v) {
+                    retStr += "<tr><td width='50'>" + v.key + "</td><td width='250'>" + v.value + "</td></tr>";
+                });
+                retStr += "</tbody>";
+                retStr += "</table>";
+                $("#SpatialIntersectionDialog").append(retStr);
+                $('#' + columnIndex).DataTable({
+                    "paging": false,
+                    "searching": false,
+                    "info": false,
+                    "bInfo": false,
+                    "language": {
+                        "info": ""
+                    },
+                    "order": [0, 'desc']
+                });
+                i++;
+            });
+
+            //$(document).ready(function () {
+            //    $('#column0').show();
+            //});
+        },
+        statusCode: {
+            204: function () {
+                retStr = "Server 204 error: unable to fetch results";
+                $("#SpatialIntersectionDialog").html(retStr);
+                $("#loadingMsg").hide();
+            }
+        },
+        error: function (req, err) {
+            retStr = "Server 500 error: an error happened fetching records from server:\n";
+            retStr += JSON.stringify(err, null, 4);
+            $("#SpatialIntersectionDialog").html(retStr);
+            $("#loadingMsg").hide();
+        }
+    });
+
+    return true;
+}
 function fetchStatistics() {
     var retStr = "";
     var url = bm2.urlRoot + "statistics/frequencies?session=" + bm2.session;

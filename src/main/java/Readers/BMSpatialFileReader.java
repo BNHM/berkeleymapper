@@ -1,10 +1,6 @@
 package Readers;
 
 import Core.*;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
-import com.vividsolutions.jts.geom.MultiPoint;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -15,10 +11,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.stat.Frequency;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.locationtech.jts.geom.*;
 
 import static org.apache.commons.lang3.StringEscapeUtils.escapeJson;
 import static org.apache.commons.lang3.StringUtils.*;
@@ -98,7 +93,7 @@ public class BMSpatialFileReader implements BMFileReader {
         Frequency f = new Frequency(String.CASE_INSENSITIVE_ORDER);
         while (allRowsIt.hasNext()) {
             BMRow row = (BMRow) allRowsIt.next();
-            Iterator fieldsIt = row.getBMCoord().fields.iterator();
+            Iterator fieldsIt = ((BMRowClassifier)row.getBMCoord()).fields.iterator();
 
             while (fieldsIt.hasNext()) {
                 BMField field = (BMField) fieldsIt.next();
@@ -179,7 +174,7 @@ public class BMSpatialFileReader implements BMFileReader {
         Iterator it = rows.iterator();
         while (it.hasNext()) {
             BMRow r = (BMRow) it.next();
-            if (i == r.getBMCoord().line) {
+            if (i == ((BMRowClassifier)r.getBMCoord()).line) {
                 return r;
             }
         }
@@ -187,22 +182,54 @@ public class BMSpatialFileReader implements BMFileReader {
         return null;
     }
 
+    public BMCoordinate[]  getBMCoordinates() {
+        Iterator i = rows.iterator();
+                int length = rows.toArray().length;
+                //Coordinate[] coord = new Coordinate[length];
+                BMCoordinate[] bmCoordinates = new BMCoordinate[length];
+                int count = 0;
+        while (i.hasNext()) {
+            BMRow r = (BMRow) i.next();
+            bmCoordinates[count++] = (BMCoordinate) r.getBMCoord();
+        }
+        return bmCoordinates;
+    }
     /**
      * This returns a MultiPoint geometry representation the entire set of rows.
      *
      * @return
      */
-    public MultiPoint getMultiPointGeometry() {
+    public Geometry getMultiPointGeometry() {
         Iterator i = rows.iterator();
         int length = rows.toArray().length;
-        Coordinate[] coord = new Coordinate[length];
+        //Coordinate[] coord = new Coordinate[length];
+        BMCoordinate[] coord = new BMCoordinate[length];
         int count = 0;
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+
         while (i.hasNext()) {
             BMRow r = (BMRow) i.next();
-            coord[count++] = r.getBMCoord();
+            //coord[count++] = (BMCoordinate) r.getBMCoord();
+            //coord[count++] =
+                   Point c=  geometryFactory.createPoint((BMCoordinate) r.getBMCoord());
+                   coord[count++] = (BMCoordinate) c.getCoordinate();
         }
-        return geometryFactory.createMultiPoint(coord);
+
+        return  geometryFactory.createMultiPoint(coord);
+        //return geometryFactory.createMultiPoint(expand(g));
     }
+
+    /*
+
+
+        // Create an array of Point objects from the coordinates
+        GeometryFactory geometryFactory = JTSFactoryFinder.getGeometryFactory();
+        Point[] points = new Point[coordinates.length];
+        for (int i = 0; i < coordinates.length; i++) {
+            points[i] = geometryFactory.createPoint(coordinates[i]);
+        }
+        return points;
+     */
 
     /**
      * Return full set of points that are in a polygon
@@ -222,6 +249,7 @@ public class BMSpatialFileReader implements BMFileReader {
      * sets of points along with metadata.
      *
      * @param g
+     * @return
      */
     public BMRowClassifier[] expand(Geometry g) {
         Coordinate[] c = g.getCoordinates();

@@ -1,6 +1,5 @@
 package Core;
 
-import com.vividsolutions.jts.geom.Coordinate;
 
 import java.util.ArrayList;
 

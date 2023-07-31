@@ -1,9 +1,11 @@
 package Renderers;
 
+import Core.BMCoordinate;
 import Readers.BMConfigAndTabFileReader;
 import Readers.BMFileReader;
 import Readers.BMSpatialFileReader;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
+//import com.vividsolutions.jts.geom.Geometry;
 
 /**
  * Interface for rendering output results in different formats
@@ -15,7 +17,7 @@ public interface BMRendererInterface {
      * @param g
      * @return 
      */
-    public String AllPoints(Geometry g, BMConfigAndTabFileReader f);
+    public String AllPoints(BMCoordinate[] bmCoordinates, BMConfigAndTabFileReader f);
     /**
      * Given a line number and a BMSpatialFileReader file, return a representation
      * of the fields.
