@@ -754,6 +754,8 @@ function fetchSpatialIntersection() {
 
             var i = 0;
             $("#SpatialIntersectionDialog").html("<h3>Spatial Intersection - derived by intersecting points with spatial layers</h3>");
+            $("#SpatialIntersectionDialog").append("<p>Results are derived by intersection the entire set of points with a course resolution grid, hence are useful for estimation purposes only.</p>");
+
 
             // headinig of buttons for each column, purpose is to show frequency table when clicked
             $.each(data, function (k, v) {
@@ -827,6 +829,8 @@ function fetchStatistics() {
 
             var i = 0;
             $("#StatisticsDialog").html("<h3>Frequency of terms by column</h3>");
+            $("#StatisticsDialog").append("<p>Results are derived counting the number of unique values for columns that were passed to BerkeleyMapper.</p>");
+
 
             // headinig of buttons for each column, purpose is to show frequency table when clicked
             $.each(data, function (k, v) {

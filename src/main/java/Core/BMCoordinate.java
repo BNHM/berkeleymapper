@@ -3,6 +3,7 @@ package Core;
 
 import org.locationtech.jts.geom.Coordinate;
 
+
 /**
  * BMCoordinate extends the basic notion of the JTS Coordinate to include errorRadiusInMeters and datum.
  * This is particularly useful in that we can represent Coordinates within JTS Geometries

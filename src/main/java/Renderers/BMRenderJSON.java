@@ -119,13 +119,18 @@ public class BMRenderJSON implements BMRendererInterface {
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         StringBuilder json = new StringBuilder();
 
-        Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
-        Coordinate[] coords = subset.getCoordinates();
+        //Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+        BMCoordinate[] coords = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+        //Coordinate[] coords = subset.getCoordinates();
         json.append("[\n");
         for (int i = 0; i < coords.length; i++) {
             // Limit number of records in output to 101
             if (i < 101) {
+                // org.locationtech.jts.geom.Coordinate cannot be cast to Core.BMRowClassifier
                 BMRowClassifier coord = (BMRowClassifier) coords[i];
+                /*BMRowClassifier coord2 = new BMRowClassifier(
+                        (i,coords[i].x,
+                        coords[i].y, )  */
                 Iterator fields = coord.fields.iterator();
                 if (i != 0) {
                     json.append(",");

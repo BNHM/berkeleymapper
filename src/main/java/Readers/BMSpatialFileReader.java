@@ -214,8 +214,9 @@ public class BMSpatialFileReader implements BMFileReader {
                    Point c=  geometryFactory.createPoint((BMCoordinate) r.getBMCoord());
                    coord[count++] = (BMCoordinate) c.getCoordinate();
         }
-
-        return  geometryFactory.createMultiPoint(coord);
+        Geometry g =  geometryFactory.createMultiPoint(coord);
+        return g;
+        //return  geometryFactory.createMultiPoint(coord);
         //return geometryFactory.createMultiPoint(expand(g));
     }
 
@@ -237,9 +238,11 @@ public class BMSpatialFileReader implements BMFileReader {
      * @param g
      * @return
      */
-    public Geometry BMPointsInPolygon(Geometry g) {
+    public BMRowClassifier[] BMPointsInPolygon(Geometry g) {
         Geometry uniquePoints = g.intersection(this.getMultiPointGeometry());
-        return geometryFactory.createMultiPoint(expand(uniquePoints));
+        // i want to return an array of BMCoordinate[]
+        return expand(uniquePoints);
+        //return geometryFactory.createMultiPoint(expand(uniquePoints));
     }
 
     /**

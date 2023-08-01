@@ -21,7 +21,7 @@ public interface BMFileReader {
 
     public BMCoordinate[] getBMCoordinates();
 
-    public Geometry BMPointsInPolygon(Geometry g);
+    public BMRowClassifier[] BMPointsInPolygon(Geometry g);
 
     public BMRowClassifier[] expand(Geometry g);
 

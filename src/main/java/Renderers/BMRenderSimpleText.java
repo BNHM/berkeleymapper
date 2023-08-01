@@ -61,10 +61,11 @@ public class BMRenderSimpleText implements BMRendererInterface {
 
     public String RecordsInPolygon(BMSpatialFileReader ptsFile, Geometry polygon) {
         StringBuilder tabtext = new StringBuilder();
-        Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+        //Geometry subset = ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
+        BMCoordinate[] coords =  ptsFile.BMPointsInPolygon(polygon.buffer(.00001));
          
         // Print Header
-        Iterator headIt = Arrays.asList(subset.getCoordinates()).iterator();
+        Iterator headIt = Arrays.asList(coords).iterator();
         while (headIt.hasNext()) {
             BMRowClassifier coord = (BMRowClassifier) headIt.next();
             Iterator f = coord.fields.iterator();
@@ -76,7 +77,7 @@ public class BMRenderSimpleText implements BMRendererInterface {
         }
         tabtext.append("\n");
         
-        Coordinate[] coords = subset.getCoordinates();
+       // Coordinate[] coords = subset.getCoordinates();
         for (int i = 0; i < coords.length; i++) {
             BMRowClassifier coord = (BMRowClassifier) coords[i];
             //if (i != 0) {
