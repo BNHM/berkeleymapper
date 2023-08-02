@@ -8,12 +8,8 @@ This codebase is in active development, with many new features and interface cha
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
 ## Try it out!
-Following is a test script showing a sample berkeleymapper call from Arctos
+Following shows a sample berkeleymapper call from Arctos
 
-test site:
-http://berkeleymappertest.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
-
-production site:
 http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
 
 ## Developers
