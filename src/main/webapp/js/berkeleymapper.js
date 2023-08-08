@@ -754,7 +754,7 @@ function fetchSpatialIntersection() {
 
             var i = 0;
             $("#SpatialIntersectionDialog").html("<h3>Spatial Intersection - derived by intersecting points with spatial layers</h3>");
-            $("#SpatialIntersectionDialog").append("<p>Results are derived by intersection the entire set of points with a course resolution grid, hence are useful for estimation purposes only.</p>");
+            $("#SpatialIntersectionDialog").append("<p>Results are derived by intersecting the entire set of points with a coarse resolution grid, hence are useful for estimation purposes only. For more information, visit the <a href='https://github.com/BNHM/berkeleymapper/tree/master/spatialdata'>spatial data README page</a></p>");
 
 
             // headinig of buttons for each column, purpose is to show frequency table when clicked
