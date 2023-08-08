@@ -754,14 +754,14 @@ function fetchSpatialIntersection() {
 
             var i = 0;
             $("#SpatialIntersectionDialog").html("<h3>Spatial Intersection - derived by intersecting points with spatial layers</h3>");
-            $("#SpatialIntersectionDialog").append("<p>Results are derived by intersecting the entire set of points with a coarse resolution grid, hence are useful for estimation purposes only. For more information, visit the <a href='https://github.com/BNHM/berkeleymapper/tree/master/spatialdata'>spatial data README page</a></p>");
+            $("#SpatialIntersectionDialog").append("<p>Results are derived by intersecting the entire set of points with a coarse resolution grid, hence are useful for estimation purposes only. For more information, visit the <a href='https://github.com/BNHM/berkeleymapper/tree/master/spatialdata' target='_blank'>spatial data README page</a></p>");
 
 
-            // headinig of buttons for each column, purpose is to show frequency table when clicked
+            // heading of buttons for each column, purpose is to show frequency table when clicked
             $.each(data, function (k, v) {
                 retStr += "<input type=button value='" + v.alias + "' " +
                     "onclick='" +
-                    "$(\".frequencyTable\").hide();" +
+                    "$(\".spatialIntersectionTable\").hide();" +
                     "$(\"#columnsi" + i + "\").css(\"display\", \"inline\");'/>";
                 i++;
             });
@@ -772,10 +772,10 @@ function fetchSpatialIntersection() {
             // Create a series of hidden json tables, shown when column buttons clicked
             i = 0;
             $.each(data, function () {
-                var columnIndex = 'columnsi' + i
+                var columnIndexSI = 'columnsi' + i
                 retStr = "";
-                retStr += "<table id='" + columnIndex + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
-                retStr += "<thead><th width='50'>count</th><th width='250'>" + this.alias + "</th></thead>";
+                retStr += "<table id='" + columnIndexSI + "' class='table table-striped table-bordered .table-sm spatialIntersectionTable'>";
+                retStr += "<thead><th width='50'>" + this.alias + "</th><th width='250'>Count</th></thead>";
                 retStr += "<tbody>";
                 $.each(this.frequencies, function (k, v) {
                     retStr += "<tr><td width='50'>" + v.key + "</td><td width='250'>" + v.value + "</td></tr>";
@@ -783,7 +783,7 @@ function fetchSpatialIntersection() {
                 retStr += "</tbody>";
                 retStr += "</table>";
                 $("#SpatialIntersectionDialog").append(retStr);
-                $('#' + columnIndex).DataTable({
+                $('#' + columnIndexSI).DataTable({
                     "paging": false,
                     "searching": false,
                     "info": false,
@@ -791,14 +791,10 @@ function fetchSpatialIntersection() {
                     "language": {
                         "info": ""
                     },
-                    "order": [0, 'desc']
+                    "order": [1, 'desc']
                 });
                 i++;
             });
-
-            //$(document).ready(function () {
-            //    $('#column0').show();
-            //});
         },
         statusCode: {
             204: function () {
@@ -832,7 +828,7 @@ function fetchStatistics() {
             $("#StatisticsDialog").append("<p>Results are derived counting the number of unique values for columns that were passed to BerkeleyMapper.</p>");
 
 
-            // headinig of buttons for each column, purpose is to show frequency table when clicked
+            // heading of buttons for each column, purpose is to show frequency table when clicked
             $.each(data, function (k, v) {
                 retStr += "<input type=button value='" + v.alias + "' " +
                     "onclick='" +
@@ -850,10 +846,10 @@ function fetchStatistics() {
                 var columnIndex = 'column' + i
                 retStr = "";
                 retStr += "<table id='" + columnIndex + "' class='table table-striped table-bordered .table-sm frequencyTable'>";
-                retStr += "<thead><th width='50'>count</th><th width='250'>" + this.alias + "</th></thead>";
+                retStr += "<thead><th width='50'>" + this.alias +"</th><th width='250'>Count</th></thead>";
                 retStr += "<tbody>";
                 $.each(this.frequencies, function (k, v) {
-                    retStr += "<tr><td width='50'>" + v.count + "</td><td width='250'>" + v.column + "</td></tr>";
+                    retStr += "<tr><td width='50'>" + v.column + "</td><td width='250'>" + v.count + "</td></tr>";
                 });
                 retStr += "</tbody>";
                 retStr += "</table>";
@@ -866,7 +862,7 @@ function fetchStatistics() {
                     "language": {
                         "info": ""
                     },
-                    "order": [0, 'desc']
+                    "order": [1, 'desc']
                 });
                 i++;
             });

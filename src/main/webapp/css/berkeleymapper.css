@@ -256,3 +256,9 @@ th {
     align: "left";
 }
 
+.spatialIntersectionTable {
+    display: none;
+    width: 300px;
+    align: "left";
+}
+
