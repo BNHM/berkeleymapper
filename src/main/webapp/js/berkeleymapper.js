@@ -234,27 +234,31 @@ function setKMLLayers() {
                     layer.added = false;
 
                     // Wait for success on layer load to add it to menu
-                    google.maps.event.addListener(layer, 'status_changed', function () {
-                        if (layer.getStatus() == 'OK') {
-                            if (!layer.added) {
-                                kmlObj.google = layer;
-                                kmlObj.url = kmlObj.key;
-                                bm2.kmlLayers[kmlcounter] = kmlObj;
-                                addKMLLayerToMenu(kmlcounter, layer);
-                                layer.added = true;
-                                kmlcounter++;
-                                //setBigBounds();
-                            }
-                        } else {
-                            bm2.kmlLayers[kmlcounter] = kmlObj;
-                            addKMLErrorMessageToMenu(kmlcounter);
-                            // removed the alert here for amphibiaweb since often times species maps don't have
-                            // KML layers... this way it fails silently, but this was what user requested.
-                            //alert("Unable to add layer with title="+kmlObj.title + ". (Using URL="+kmlObj.key+")");
-                        }
+google.maps.event.addListener(layer, 'status_changed', function () {
+    if (layer.getStatus() == 'OK') {
+        if (!layer.added) {
+            kmlObj.google = layer;
+            kmlObj.url = kmlObj.key;
+            bm2.kmlLayers[kmlcounter] = kmlObj;
+            addKMLLayerToMenu(kmlcounter, layer);
+            layer.added = true;
+            kmlcounter++;
+            //setBigBounds();
+        }
+    } else {
+        // Log detailed error information
+        console.error("Failed to add KML layer:", {
+            status: layer.getStatus(),
+            title: kmlObj.title,
+            url: kmlObj.key,
+            layer: layer
+        });
 
-                    });
-
+        // Optionally, provide user feedback
+        bm2.kmlLayers[kmlcounter] = kmlObj;
+        addKMLErrorMessageToMenu(kmlcounter);
+    }
+});
                 }
             });
         },
