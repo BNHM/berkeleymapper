@@ -1,0 +1,37 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<berkeleymapper>
+<metadata>
+ <name>AmphibiaWeb Configuration File</name>
+ <relatedinformation>https://amphibiaweb.org/</relatedinformation>
+ <abstract> GIS configuration file for AmphibiaWeb</abstract>
+ <legendText><![CDATA[Please read our <a href=https://amphibiaweb.org/mapdisclaimer.html target=_blank>disclaimer</a>.]]></legendText>
+ <linkbackheader location="https://amphibiaweb.org/" />
+</metadata>
+<gisdata>
+<layer title="Rana blairi Range Map" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/58562/0"><![CDATA[https://amphibiaweb.org/cgi/amphib_ws_shapefile?format=kmz&genus=Rana&species=blairi]]></layer>
+</gisdata>
+<logo img="https://amphibiaweb.org/images/Amphibiaweb_logo_90xbg.png" url="https://amphibiaweb.org/" />
+<colors method="field" fieldname="darwin:scientificname" label="scientificName">
+<dominantcolor webcolor="629ad3"/>
+<subdominantcolor webcolor="ddddff"/>
+</colors>
+<colors method="field" fieldname="darwin:basisofrecord" label="Basis of Record">
+<color key="PRESERVED_SPECIMEN" red="0" green="0" blue="255" symbol="7" label="Preserved Specimen" />
+<color key="HUMAN_OBSERVATION" red="255" green="0" blue="0" symbol="7" label="Human Observation" />
+</colors>
+<settings>
+<setting name="landsat" show="0"></setting>
+<setting name="maxerrorinmeters" show="1"></setting>
+<setting name="coloruncertainty" show="1"></setting>
+</settings>
+<recordlinkback><linkback method="pattern" linkurl="${char255:1}" text="View Details" fieldname="GBIF"/></recordlinkback>
+<concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">
+<concept order="1" viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+<concept order="6" viewlist="1" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+<concept order="7" viewlist="1" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+<concept order="3" viewlist="1" datatype="char120:1" alias="GUID"/>
+<concept order="8" viewlist="0" datatype="char255:1" alias="linkback"/>
+<concept order="9" viewlist="1" datatype="darwin:basisofrecord" alias="Basis of Record"/>
+</concepts>
+</berkeleymapper>
