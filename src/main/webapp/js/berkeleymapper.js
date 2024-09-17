@@ -234,7 +234,7 @@ function setKMLLayers() {
                     layer.added = false;
 
                     // Wait for success on layer load to add it to menu
-google.maps.event.addListener(layer, 'status_changed', function () {
+			google.maps.event.addListener(layer, 'status_changed', function () {
     if (layer.getStatus() == 'OK') {
         if (!layer.added) {
             kmlObj.google = layer;
@@ -247,11 +247,13 @@ google.maps.event.addListener(layer, 'status_changed', function () {
         }
     } else {
         // Log detailed error information
-        console.error("Failed to add KML layer:", {
-            status: layer.getStatus(),
-            title: kmlObj.title,
-            url: kmlObj.key,
-            layer: layer
+        console.log("Failed to add KML layer:", {
+            status: layer.getStatus(), // The status of the layer
+            title: kmlObj.title,        // The title of the KML layer
+            url: kmlObj.key,            // The URL of the KML layer
+            layer: layer,               // The actual layer object
+            timestamp: new Date().toISOString(), // Current timestamp
+            errorDetails: layer.getMetadata ? layer.getMetadata() : "No additional metadata available" // Any additional error details, if available
         });
 
         // Optionally, provide user feedback
@@ -259,6 +261,8 @@ google.maps.event.addListener(layer, 'status_changed', function () {
         addKMLErrorMessageToMenu(kmlcounter);
     }
 });
+
+
                 }
             });
         },

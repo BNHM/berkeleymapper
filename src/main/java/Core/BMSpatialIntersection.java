@@ -67,7 +67,7 @@ public class BMSpatialIntersection {
                 Geometry boundingBox = geometry.getEnvelope();
                 String countryName = String.format(feature.getAttribute(shp.getCountryName()).toString());
                 String stateName =   String.format(feature.getAttribute(shp.getStateName()).toString());
-                String countyName = String.format(feature.getAttribute(shp.getCountyName()).toString());
+                //String countyName = String.format(feature.getAttribute(shp.getCountyName()).toString());
                 String biomeName =   String.format(feature.getAttribute(shp.getBiomeName()).toString());
                 for (Point point : pointSet) {
                     // first check if point is within the boundary
@@ -77,8 +77,8 @@ public class BMSpatialIntersection {
                             countryCountMap.put(countryName, countCountry + 1);
                             int countState = stateCountMap.getOrDefault(stateName, 0);
                             stateCountMap.put(stateName, countState + 1);
-                            int countCounty = countyCountMap.getOrDefault(countyName, 0);
-                            countyCountMap.put(countyName, countCounty + 1);
+                            //int countCounty = countyCountMap.getOrDefault(countyName, 0);
+                            //countyCountMap.put(countyName, countCounty + 1);
                             int countBiome = biomeCountMap.getOrDefault(biomeName, 0);
                             biomeCountMap.put(biomeName, countBiome + 1);
                         }
@@ -94,7 +94,7 @@ public class BMSpatialIntersection {
         sb.append("[");
         sb.append("{\"alias\" : \"Country\", \"frequencies\" : [" + mapToJson(countryCountMap) + "]},");
         sb.append("{\"alias\" : \"State\", \"frequencies\" : [" + mapToJson(stateCountMap) + "]},");
-        sb.append("{\"alias\" : \"County\", \"frequencies\": [" + mapToJson(countyCountMap) + "]},");
+        //sb.append("{\"alias\" : \"County\", \"frequencies\": [" + mapToJson(countyCountMap) + "]},");
         sb.append("{\"alias\" : \"Biome\", \"frequencies\" : [" + mapToJson(biomeCountMap) + "]}");
         sb.append("]");
         return sb.toString();
