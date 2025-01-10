@@ -54,21 +54,32 @@ function showRow(p) {
     }
 }
 
-// Adjust bounds to drawn polygon
+// Adjust bounds to drawn polygon and markers
 if (!google.maps.Polygon.prototype.getBounds) {
-    google.maps.Polygon.prototype.getBounds = function (latLng) {
+    google.maps.Polygon.prototype.getBounds = function () {
         var bounds = new google.maps.LatLngBounds();
         var paths = this.getPaths();
         var path;
 
+        // Iterate through all paths in the polygon to extend bounds
         for (var p = 0; p < paths.getLength(); p++) {
             path = paths.getAt(p);
             for (var i = 0; i < path.getLength(); i++) {
                 bounds.extend(path.getAt(i));
             }
         }
-        return bounds;
-    }
+
+        // Extend bounds to include markers from bm2.markers array
+        if (typeof bm2 !== 'undefined' && bm2.markers) {
+            bm2.markers.forEach(function (marker) {
+                if (marker.getPosition) {
+                    bounds.extend(marker.getPosition()); // Add marker LatLng to bounds
+                }
+            });
+        }
+
+        return bounds; // Return updated bounds including polygon and markers
+    };
 }
 
 // Adjust bounds for drawn polyline
@@ -90,6 +101,17 @@ function toggleControls() {
         bm2.map.setOptions({
             mapTypeControl: false,
             overviewMapControl: false,
+            panControl: false,
+            streetViewControl: false,
+            zoomControl: false
+        });
+        bm2.map.disableKeyDragZoom();
+
+    } else {
+        bm2.showControls = true;
+        drawingManagerShow();
+        bm2.map.setOptions({
+            mapTypeControl: true,
             panControl: false,
             streetViewControl: false,
             zoomControl: false
@@ -156,7 +178,6 @@ function getLogos() {
     });
 }
 
-
 // Initialize the Array of Available KML Layers
 function setKMLLayers() {
     $("#layers").append("<b>Layers</b><br>");
@@ -165,119 +186,84 @@ function setKMLLayers() {
         return false;
     }
 
-    // Populate kmlLayers Array (loop json)
+    // Fetch KML Layers (loop through JSON data)
     $.ajax({
         url: bm2.urlRoot + "kmllayers?session=" + bm2.session,
         async: false,
         success: function (data) {
-            kmlcounter = 0;
+            let kmlcounter = 0;
+
             $.each(data, function () {
-                var url, mode, title;
-                var kmlObj = new Object();
-                $.each(this, function (k, v) {
-                    if (k == "url") kmlObj.key = v.trim();
-                    if (k == "visibility") kmlObj.visibility = v;   // visibile|hidden
-                    if (k == "zoom") kmlObj.zoom = v;               // expand|ignore
-                    if (k == "title") kmlObj.title = v;
+                let kmlObj = {};
+                $.each(this, function (key, value) {
+                    if (key === "url") kmlObj.key = value.trim();  // Trim unwanted characters
+                    if (key === "visibility") kmlObj.visibility = value;  // "visible" or "hidden"
+                    if (key === "zoom") kmlObj.zoom = value;  // "expand" or "ignore"
+                    if (key === "title") kmlObj.title = value;
                 });
 
-                // If the "KML" ends in .json then use the JSON method
-                // TEST for end in JSON
-                kmlObj.url = kmlObj.key;
-                if (kmlObj.url.includes('json')) {
-                    var promise = $.getJSON(kmlObj.url); //same as map.data.loadGeoJson();
-
-                    promise.then(function (data) {
-                        cachedGeoJson = data; //save the geojson in case we want to update its values
-                        var layer = new google.maps.Data();
+                // Handle JSON GeoJSON files
+                if (kmlObj.key.endsWith('.json')) {
+                    $.getJSON(kmlObj.key).then(function (geoJsonData) {
+                        let layer = new google.maps.Data();
                         layer.added = false;
-                        layer.addGeoJson(cachedGeoJson);
+                        layer.addGeoJson(geoJsonData);
                         layer.setMap(bm2.map);
                         kmlObj.google = layer;
-                        kmlObj.url = kmlObj.key;
                         bm2.kmlLayers[kmlcounter] = kmlObj;
                         addKMLLayerToMenu(kmlcounter, layer);
                         layer.added = true;
                         kmlcounter++;
                     });
                 }
+                // Handle KML/KMZ files
+                else if (kmlObj.key.startsWith('http')) {
+                    let sanitizedUrl = kmlObj.key.replace(/\s+/g, '');  // Remove any whitespace in URL
 
-                // ONLY Fusion Tables does not have an HTTP reference--- uses an ID
-                else if (!kmlObj.url.includes('http')) {
-                    // Set the google object
-                    // TODO: Set geometry and styleId number in configuration file
-                    var layer = new google.maps.FusionTablesLayer({
-                        query: {
-                            select: 'geometry',
-                            from: kmlObj.key
-                        },
-                        styledId: 2
+                    let layer = new google.maps.KmlLayer({
+                        url: sanitizedUrl,
+                        map: bm2.map,
+                        preserveViewport: true
                     });
-                    layer.setMap(bm2.map);
-                    kmlObj.google = layer;
-                    kmlObj.url = kmlObj.key;
-                    bm2.kmlLayers[kmlcounter] = kmlObj;
-                    addKMLLayerToMenu(kmlcounter, layer);
-                    layer.added = true;
-                    kmlcounter++;
-                }
-                // KML/KMZ
-                else {
 
-
-                    // Else proceed with KML method
-                    // Set the google object
-                    var layer = new google.maps.KmlLayer(kmlObj.key);
-                    layer.setMap(bm2.map);
-
-                    // Initialize this to false so it can be set to true once it is added
                     layer.added = false;
 
-                    // Wait for success on layer load to add it to menu
-			google.maps.event.addListener(layer, 'status_changed', function () {
-    if (layer.getStatus() == 'OK') {
-        if (!layer.added) {
-            kmlObj.google = layer;
-            kmlObj.url = kmlObj.key;
-            bm2.kmlLayers[kmlcounter] = kmlObj;
-            addKMLLayerToMenu(kmlcounter, layer);
-            layer.added = true;
-            kmlcounter++;
-            //setBigBounds();
-        }
-    } else {
-        // Log detailed error information
-        console.log("Failed to add KML layer:", {
-            status: layer.getStatus(), // The status of the layer
-            title: kmlObj.title,        // The title of the KML layer
-            url: kmlObj.key,            // The URL of the KML layer
-            layer: layer,               // The actual layer object
-            timestamp: new Date().toISOString(), // Current timestamp
-            errorDetails: layer.getMetadata ? layer.getMetadata() : "No additional metadata available" // Any additional error details, if available
-        });
-
-        // Optionally, provide user feedback
-        bm2.kmlLayers[kmlcounter] = kmlObj;
-        addKMLErrorMessageToMenu(kmlcounter);
-    }
-});
-
-
+                    google.maps.event.addListener(layer, 'status_changed', function () {
+                        if (layer.getStatus() === 'OK') {
+                            if (!layer.added) {
+                                kmlObj.google = layer;
+                                bm2.kmlLayers[kmlcounter] = kmlObj;
+                                addKMLLayerToMenu(kmlcounter, layer);
+                                layer.added = true;
+                                kmlcounter++;
+                            }
+                        } else {
+                            console.error("Failed to add KML layer:", {
+                                status: layer.getStatus(),
+                                title: kmlObj.title,
+                                url: sanitizedUrl,
+                                timestamp: new Date().toISOString(),
+                                errorDetails: layer.getMetadata ? layer.getMetadata() : "No additional metadata available"
+                            });
+                            addKMLErrorMessageToMenu(kmlcounter);
+                        }
+                    });
+                } else {
+                    console.warn("Unsupported URL format for layer:", kmlObj.key);
                 }
             });
         },
-        error: function (result) {
-            //alert("Error fetching KML");
-            return false;
+        error: function () {
+            console.error("Error fetching KML layers.");
         },
         statusCode: {
             204: function () {
-                // fail quietly
+                console.warn("No KML layers found on the server.");
             }
         }
     });
-
 }
+
 
 function addKMLErrorMessageToMenu(i) {
     // Create container
@@ -1214,17 +1200,6 @@ function setMapTypes() {
     });
 }
 
-function removeOverlay(num) {
-    bm2.overlays[num].setMap(null);
-    bm2.overlayMarkers[num].setMap(null);
-}
-
-
-function queryOverlay(num) {
-    var path = bm2.overlays[num].getPath();
-    var polygon = "POLYGON ((";
-    var firstPoint = "";
-    for (var i = 0; i < path.getLength(); i++) {
         var point = path.getAt(i);
         var lat = point.lat().toFixed(5);
         var lng = point.lng().toFixed(5);
