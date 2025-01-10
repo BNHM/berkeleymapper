@@ -8,7 +8,7 @@
  <linkbackheader location="https://amphibiaweb.org/" />
 </metadata>
 <gisdata>
-<layer title="Rana blairi Range Map" legend="1" active="1" url="https://amphibiaweb.org/cgi/amphib_ws_shapefile?format=kmz&genus=Rana&species=blairi"><![CDATA[https://amphibiaweb.org/cgi/amphib_ws_shapefile?format=kmz&genus=Rana&species=blairi]]></layer>
+<layer title="Anaxyrus canorus Range Map" legend="1" active="1" url="http://www.iucnredlist.org/apps/redlist/details/3180/0"><![CDATA[https://github.com/BNHM/berkeleymapper/raw/master/examples/awtest.kmz]]></layer>
 </gisdata>
 <logo img="https://amphibiaweb.org/images/Amphibiaweb_logo_90xbg.png" url="https://amphibiaweb.org/" />
 <colors method="field" fieldname="darwin:scientificname" label="scientificName">
