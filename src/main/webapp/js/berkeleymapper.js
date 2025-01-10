@@ -135,7 +135,7 @@ function getLogos() {
                 //$("#logos").append("<br>");
                 if (counter == 1) {
                     $("#logos").append("<br></br>");
-                    $("#logos").append("<div>Powered by</div>")
+                //    $("#logos").append("<div>Powered by</div>")
                 }
                 $("#logos").append("<a id=\"" + logoId + "\"href=\"" + logoObj.url + "\" target=\"_blank\"></a>");
                 $("#" + logoId).append("<img src=\"" + logoObj.img + "\" width=80 \/>");
@@ -643,12 +643,21 @@ function setJSONPoints() {
 
                     if (markercolor == "") markercolor = "#FF0000";
 
+					/*
                     var marker = new StyledMarker({
                         styleIcon: new StyledIcon(StyledIconTypes.MARKER, {color: markercolor}),
                         position: latlng,
                         map: null,
                         title: "point"
                     });
+					*/
+var marker = new google.maps.marker.AdvancedMarkerElement({
+    position: latlng,
+    map: bm2.map,
+    title: "point",
+    content: `<div style="background-color:${markercolor}; width: 10px; height: 10px; border-radius: 50%;"></div>` // Example of inline styling for custom markers
+});
+
                     // additional options
                     marker.line = line;
                     marker.radius = radius;
@@ -988,36 +997,25 @@ function markerController(drawMarkers, drawRadius, value) {
             var line = bm2.markers[i].line;
             var radius = bm2.markers[i].radius;
 
-            if (value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
-                var displaycolor = color;
-                if (value == "pointMarkersBlack") displaycolor = "#000000";
-                if (value == "pointMarkersRed") displaycolor = "#ff0000";
+if (value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
+    let displayColor = color;
+    if (value == "pointMarkersBlack") displayColor = "#000000";
+    if (value == "pointMarkersRed") displayColor = "#ff0000";
 
-                bm2.markers[i] = new StyledMarker({
-                    styleIcon: new StyledIcon(
-                        StyledIconTypes.CLASS,
-                        {
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                fillOpacity: 0.8,
-                                scale: 3,
-                                strokeWeight: 2,
-                                fillColor: displaycolor,
-                                strokeColor: displaycolor
-                            }
-                        }
-                    ),
-                    position: position,
-                    map: bm2.map
-                });
-            } else {
-                bm2.markers[i] = new StyledMarker(
-                    {
-                        styleIcon: new StyledIcon(StyledIconTypes.MARKER, {color: color}),
-                        position: position,
-                        map: bm2.map
-                    });
-            }
+    bm2.markers[i] = new google.maps.marker.AdvancedMarkerElement({
+        position: position,
+        map: bm2.map,
+        title: "point",
+        content: `<div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${displayColor}; border: 2px solid ${displayColor};"></div>`
+    });
+} else {
+    bm2.markers[i] = new google.maps.marker.AdvancedMarkerElement({
+        position: position,
+        map: bm2.map,
+        title: "point",
+        content: `<div style="width: 18px; height: 18px; background-color: ${color}; border-radius: 50%; border: 2px solid ${color};"></div>`
+    });
+}
 
             bm2.markers[i].setMap(null);
             bm2.markers[i].color = color;
