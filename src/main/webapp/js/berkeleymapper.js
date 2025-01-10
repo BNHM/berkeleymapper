@@ -655,12 +655,13 @@ function setJSONPoints() {
                         title: "point"
                     });
 					*/
-var marker = new google.maps.marker.AdvancedMarkerElement({
+
+			var marker = new google.maps.Marker({
     position: latlng,
-    map: bm2.map,
-    title: "point",
-    content: `<div style="background-color:${markercolor}; width: 10px; height: 10px; border-radius: 50%;"></div>` // Example of inline styling for custom markers
+    map: null,  // This keeps the marker hidden initially
+    title: "point"
 });
+
 
                     // additional options
                     marker.line = line;
@@ -1001,23 +1002,30 @@ function markerController(drawMarkers, drawRadius, value) {
             var line = bm2.markers[i].line;
             var radius = bm2.markers[i].radius;
 
-if (value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
+
+		if (value == "pointMarkersBlack" || value == "pointMarkersRed" || value == "pointMarkers") {
     let displayColor = color;
     if (value == "pointMarkersBlack") displayColor = "#000000";
     if (value == "pointMarkersRed") displayColor = "#ff0000";
 
-    bm2.markers[i] = new google.maps.marker.AdvancedMarkerElement({
+    bm2.markers[i] = new google.maps.Marker({
         position: position,
         map: bm2.map,
-        title: "point",
-        content: `<div style="width: 12px; height: 12px; border-radius: 50%; background-color: ${displayColor}; border: 2px solid ${displayColor};"></div>`
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6, // Size of the marker circle
+            fillColor: displayColor,
+            fillOpacity: 0.8,
+            strokeWeight: 2,
+            strokeColor: displayColor
+        },
+        title: "point"
     });
 } else {
-    bm2.markers[i] = new google.maps.marker.AdvancedMarkerElement({
+    bm2.markers[i] = new google.maps.Marker({
         position: position,
         map: bm2.map,
-        title: "point",
-        content: `<div style="width: 18px; height: 18px; background-color: ${color}; border-radius: 50%; border: 2px solid ${color};"></div>`
+        title: "point"
     });
 }
 
