@@ -1,15 +1,23 @@
-.idea/*
-dist/
-out/
-bin/
-build/
-gradle/
-.gradle/
-gradlew
-gradlew.bat
-src/main/resources/config.properties
+# IDE
+.idea/
+.DS_Store
+
+# Frontend / local runtime
 node_modules/
 .vite/
+dist/
 coverage/
 tmp/node-sessions/
 .netlify/
+
+# Java / Gradle legacy
+.gradle/
+gradle/
+build/
+out/
+bin/
+gradlew
+gradlew.bat
+
+# Local config
+src/main/resources/config.properties

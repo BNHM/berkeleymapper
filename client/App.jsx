@@ -834,8 +834,20 @@ function MapPointLayer({
     }
 
     marker.bringToFront();
-    marker.openPopup();
-  }, [selectedRecordId, markerRefs, shouldFocusSelection]);
+    const target = marker.getLatLng();
+    const openSelectedPopup = () => {
+      marker.openPopup();
+    };
+
+    map.once("moveend", openSelectedPopup);
+    map.flyTo(target, Math.max(map.getZoom(), 8), {
+      duration: 0.4
+    });
+
+    return () => {
+      map.off("moveend", openSelectedPopup);
+    };
+  }, [map, selectedRecordId, markerRefs, shouldFocusSelection]);
 
   return null;
 }
@@ -1234,11 +1246,13 @@ function App() {
               clearShapesRef.current = callback;
             }}
           />
-          <MapViewport
-            selectedMarker={selectedMarker}
-            selectedRecordId={selectedRecordId}
-            shouldPanToSelection={shouldPanToSelectionRef.current}
-          />
+          {pointDisplay !== "markers" ? (
+            <MapViewport
+              selectedMarker={selectedMarker}
+              selectedRecordId={selectedRecordId}
+              shouldPanToSelection={shouldPanToSelectionRef.current}
+            />
+          ) : null}
           {pointDisplay === "markers" ? (
             <MapPointLayer
               markers={markers}
