@@ -37,9 +37,25 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
+const clientLoadHostAllowlist = new Set([
+  "raw.githubusercontent.com"
+]);
+
+function canClientFetchUrl(url) {
+  if (!url) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin || clientLoadHostAllowlist.has(parsed.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 function shouldAttemptClientLoad(payload) {
-  return Boolean(payload?.tabfile) && !payload?.tabdata;
+  return Boolean(payload?.tabfile) && !payload?.tabdata && canClientFetchUrl(payload.tabfile) && canClientFetchUrl(payload.configfile);
 }
 
 async function fetchRequiredText(url, label) {
