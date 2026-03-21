@@ -1,28 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { fetchText } from "./fetchText.js";
-import { parseLegacyConfig } from "./parseLegacyConfig.js";
-import { parseTabularData } from "./parseTabularData.js";
-
-function buildDatasetPayload({ requestId, tabfile, configfile, tabdata, configdata }) {
-  const config = parseLegacyConfig(configdata);
-  const parsed = parseTabularData(tabdata, config);
-
-  return {
-    requestId,
-    source: {
-      tabfile: tabfile || "",
-      configfile: configfile || "",
-      mode: tabfile ? "remote-url" : "inline-data",
-      stateless: true
-    },
-    metadata: config.metadata,
-    colors: config.colors,
-    colorConfig: config.colorConfig,
-    logos: config.logos,
-    layers: config.layers,
-    ...parsed
-  };
-}
+import { buildDatasetPayload } from "../../shared/buildDatasetPayload.js";
 
 export async function loadLegacyDataset({ tabfile, configfile, tabdata, configdata }) {
   if (!tabfile && !tabdata) {
@@ -33,7 +10,6 @@ export async function loadLegacyDataset({ tabfile, configfile, tabdata, configda
   const nextConfigdata = configdata || (configfile ? await fetchText(configfile) : "");
 
   return buildDatasetPayload({
-    requestId: randomUUID(),
     tabfile,
     configfile,
     tabdata: nextTabdata,

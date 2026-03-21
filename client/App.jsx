@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet-draw";
 import "leaflet.markercluster";
 import brandLogo from "../src/main/webapp/img/logo_medium_t.png";
+import { buildDatasetPayload } from "../shared/buildDatasetPayload.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -36,6 +37,23 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
+
+function shouldAttemptClientLoad(payload) {
+  return Boolean(payload?.tabfile) && !payload?.tabdata;
+}
+
+async function fetchRequiredText(url, label) {
+  if (!url) {
+    return "";
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${label}: ${response.status} ${response.statusText}`);
+  }
+
+  return response.text();
+}
 
 function buildInitialForm() {
   const params = new URLSearchParams(window.location.search);
@@ -994,6 +1012,40 @@ function App() {
     });
   }, [applyQuerySelection]);
 
+  const applyLoadedDataset = useCallback((nextDataset) => {
+    setDataset(nextDataset);
+    setSelectedRecordId(nextDataset.records[0]?.id || "");
+    shouldPanToSelectionRef.current = false;
+    setActiveQuery(null);
+    setHasDrawnShapes(false);
+    setRenderProgress({ active: false, loaded: 0, total: 0 });
+    setColorBy(getInitialColorField(nextDataset));
+  }, [getInitialColorField]);
+
+  const resetLoadedDataset = useCallback(() => {
+    setDataset(null);
+    setSelectedRecordId("");
+    shouldPanToSelectionRef.current = false;
+    setActiveQuery(null);
+    setHasDrawnShapes(false);
+    setRenderProgress({ active: false, loaded: 0, total: 0 });
+    setColorBy("");
+  }, []);
+
+  const loadDatasetFromClientFiles = useCallback(async (payload) => {
+    const [tabdata, configdata] = await Promise.all([
+      fetchRequiredText(payload.tabfile, "tab file"),
+      fetchRequiredText(payload.configfile, "config file")
+    ]);
+
+    return buildDatasetPayload({
+      tabfile: payload.tabfile,
+      configfile: payload.configfile,
+      tabdata,
+      configdata
+    });
+  }, []);
+
   async function loadDataset(payload, options = {}) {
     const { manageLoading = true } = options;
 
@@ -1003,35 +1055,42 @@ function App() {
     setError("");
 
     try {
-      const response = await fetch("/api/load", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
+      let data = null;
+      let clientLoadError = null;
 
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to load dataset.");
+      if (shouldAttemptClientLoad(payload)) {
+        try {
+          data = await loadDatasetFromClientFiles(payload);
+        } catch (nextError) {
+          clientLoadError = nextError;
+        }
       }
 
-      setDataset(data);
-      setSelectedRecordId(data.records[0]?.id || "");
-      shouldPanToSelectionRef.current = false;
-      setActiveQuery(null);
-      setHasDrawnShapes(false);
-      setRenderProgress({ active: false, loaded: 0, total: 0 });
-      setColorBy(getInitialColorField(data));
+      if (!data) {
+        const response = await fetch("/api/load", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+        data = await response.json();
+
+        if (!response.ok) {
+          const serverMessage = data.error || "Unable to load dataset.";
+
+          if (clientLoadError) {
+            throw new Error(`Browser load failed (${clientLoadError.message}). Server fallback failed (${serverMessage}).`);
+          }
+
+          throw new Error(serverMessage);
+        }
+      }
+
+      applyLoadedDataset(data);
     } catch (nextError) {
       setError(nextError.message);
-      setDataset(null);
-      setSelectedRecordId("");
-      shouldPanToSelectionRef.current = false;
-      setActiveQuery(null);
-      setHasDrawnShapes(false);
-      setRenderProgress({ active: false, loaded: 0, total: 0 });
-      setColorBy("");
+      resetLoadedDataset();
     } finally {
       if (manageLoading) {
         setLoading(false);
@@ -1045,16 +1104,11 @@ function App() {
 
     try {
       setForm(arctosDemo);
-      await loadDataset(arctosDemo, { manageLoading: false });
+      const demoDataset = await loadDatasetFromClientFiles(arctosDemo);
+      applyLoadedDataset(demoDataset);
     } catch (nextError) {
       setError(nextError.message);
-      setDataset(null);
-      setSelectedRecordId("");
-      shouldPanToSelectionRef.current = false;
-      setActiveQuery(null);
-      setHasDrawnShapes(false);
-      setRenderProgress({ active: false, loaded: 0, total: 0 });
-      setColorBy("");
+      resetLoadedDataset();
     } finally {
       setLoading(false);
     }
