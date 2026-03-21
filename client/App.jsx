@@ -186,8 +186,8 @@ function buildColorAssignments(records, colorBy, colorConfig) {
   return { colorMap, legend };
 }
 
-function buildPopupHtml(record, columns) {
-  const rows = columns
+function buildPopupRowsHtml(record, columns) {
+  return columns
     .map((column) => {
       const value = record.values[column.name];
       if (!value) {
@@ -198,6 +198,10 @@ function buildPopupHtml(record, columns) {
     })
     .filter(Boolean)
     .join("");
+}
+
+function buildPopupHtml(record, columns) {
+  const rows = buildPopupRowsHtml(record, columns);
 
   return `<div class="popup-body">${rows}</div>`;
 }
@@ -207,18 +211,19 @@ function buildGroupedPopupHtml(group, columns) {
     return buildPopupHtml(group.records[0], columns);
   }
 
-  const previewItems = group.records
-    .slice(0, 8)
-    .map((record) => `<li>${escapeHtml(getRecordLabel(record, columns) || record.id)}</li>`)
-    .join("");
-  const remainder = group.records.length - Math.min(group.records.length, 8);
+  const sampleRecord = group.records[0];
+  const sampleLabel = getRecordLabel(sampleRecord, columns) || sampleRecord.id;
+  const extraCount = group.records.length - 1;
 
   return `
     <div class="popup-body">
       <div><strong>Records At This Point</strong>: ${escapeHtml(String(group.records.length))}</div>
       <div>This placemark represents multiple records with identical coordinates.</div>
-      <ul class="popup-record-list">${previewItems}</ul>
-      ${remainder > 0 ? `<div>...and ${escapeHtml(String(remainder))} more.</div>` : ""}
+      <div class="popup-record-group">
+        <div class="popup-record-heading">Sample Record: ${escapeHtml(sampleLabel)}</div>
+        ${buildPopupRowsHtml(sampleRecord, columns)}
+      </div>
+      ${extraCount > 0 ? `<div class="popup-record-note">${escapeHtml(String(extraCount))} additional record${extraCount === 1 ? "" : "s"} share this location.</div>` : ""}
     </div>
   `;
 }
@@ -596,6 +601,7 @@ function MapMarkerLayer({
   markerRefs,
   onMarkerClick,
   onClusterSelect,
+  onRenderProgress,
   shouldFocusSelection
 }) {
   const map = useMap();
@@ -633,28 +639,62 @@ function MapMarkerLayer({
 
     clusterGroup.clearLayers();
     markerRefs.current.clear();
+    if (!markers.length) {
+      onRenderProgress({ active: false, loaded: 0, total: 0 });
+      return;
+    }
 
-    markers.forEach((marker) => {
-      const leafletMarker = L.marker([marker.latitude, marker.longitude], {
-        icon: createMarkerIcon(marker.color),
-        recordId: marker.id
-      });
+    let cancelled = false;
+    let frameId = 0;
+    let index = 0;
+    const total = markers.length;
+    const chunkSize = 500;
 
-      leafletMarker.bindPopup("");
-      leafletMarker.on("popupopen", () => {
-        const popup = leafletMarker.getPopup();
-        if (popup && !popup.getContent()) {
-          popup.setContent(buildPopupHtml(marker.record, displayedColumns));
-        }
-      });
-      leafletMarker.on("click", () => {
-        onMarkerClick(marker.id);
-      });
+    onRenderProgress({ active: true, loaded: 0, total });
 
-      markerRefs.current.set(marker.id, leafletMarker);
-      clusterGroup.addLayer(leafletMarker);
-    });
-  }, [markers, displayedColumns, markerRefs, onMarkerClick]);
+    const processChunk = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const nextIndex = Math.min(index + chunkSize, total);
+      for (; index < nextIndex; index += 1) {
+        const marker = markers[index];
+        const leafletMarker = L.marker([marker.latitude, marker.longitude], {
+          icon: createMarkerIcon(marker.color),
+          recordId: marker.id
+        });
+
+        leafletMarker.bindPopup("");
+        leafletMarker.on("popupopen", () => {
+          const popup = leafletMarker.getPopup();
+          if (popup && !popup.getContent()) {
+            popup.setContent(buildPopupHtml(marker.record, displayedColumns));
+          }
+        });
+        leafletMarker.on("click", () => {
+          onMarkerClick(marker.id);
+        });
+
+        markerRefs.current.set(marker.id, leafletMarker);
+        clusterGroup.addLayer(leafletMarker);
+      }
+
+      onRenderProgress({ active: nextIndex < total, loaded: nextIndex, total });
+
+      if (nextIndex < total) {
+        frameId = window.requestAnimationFrame(processChunk);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(processChunk);
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frameId);
+      onRenderProgress({ active: false, loaded: 0, total: 0 });
+    };
+  }, [markers, displayedColumns, markerRefs, onMarkerClick, onRenderProgress]);
 
   useEffect(() => {
     const clusterGroup = clusterGroupRef.current;
@@ -678,7 +718,7 @@ function MapPointLayer({
   selectedRecordId,
   markerRefs,
   onMarkerClick,
-  onPointGroupClick,
+  onRenderProgress,
   shouldFocusSelection
 }) {
   const map = useMap();
@@ -714,36 +754,67 @@ function MapPointLayer({
     layerGroup.clearLayers();
     markerRefs.current.clear();
     previousSelectedIdRef.current = "";
+    if (!markers.length) {
+      onRenderProgress({ active: false, loaded: 0, total: 0 });
+      return;
+    }
 
-    groupedMarkers.forEach((group) => {
-      const isSelected = group.recordIds.includes(selectedRecordId);
-      const leafletMarker = L.circleMarker(
-        [group.latitude, group.longitude],
-        createPointStyle(group.color, canvasRenderer, isSelected)
-      );
+    let cancelled = false;
+    let frameId = 0;
+    let index = 0;
+    let loaded = 0;
+    const total = markers.length;
+    const chunkSize = 500;
 
-      leafletMarker.bindPopup("");
-      leafletMarker.on("popupopen", () => {
-        const popup = leafletMarker.getPopup();
-        if (popup && !popup.getContent()) {
-          popup.setContent(buildGroupedPopupHtml(group, displayedColumns));
-        }
-      });
-      leafletMarker.on("click", () => {
-        if (group.recordIds.length > 1) {
-          onPointGroupClick(group.recordIds);
-          return;
-        }
+    onRenderProgress({ active: true, loaded: 0, total });
 
-        onMarkerClick(group.recordIds[0]);
-      });
+    const processChunk = () => {
+      if (cancelled) {
+        return;
+      }
 
-      group.recordIds.forEach((recordId) => {
-        markerRefs.current.set(recordId, leafletMarker);
-      });
-      layerGroup.addLayer(leafletMarker);
-    });
-  }, [groupedMarkers, displayedColumns, markerRefs, onMarkerClick, onPointGroupClick, selectedRecordId]);
+      const nextIndex = Math.min(index + chunkSize, groupedMarkers.length);
+      for (; index < nextIndex; index += 1) {
+        const group = groupedMarkers[index];
+        const isSelected = group.recordIds.includes(selectedRecordId);
+        const leafletMarker = L.circleMarker(
+          [group.latitude, group.longitude],
+          createPointStyle(group.color, canvasRenderer, isSelected)
+        );
+
+        leafletMarker.bindPopup("");
+        leafletMarker.on("popupopen", () => {
+          const popup = leafletMarker.getPopup();
+          if (popup && !popup.getContent()) {
+            popup.setContent(buildGroupedPopupHtml(group, displayedColumns));
+          }
+        });
+        leafletMarker.on("click", () => {
+          onMarkerClick(group.recordIds[0]);
+        });
+
+        group.recordIds.forEach((recordId) => {
+          markerRefs.current.set(recordId, leafletMarker);
+        });
+        layerGroup.addLayer(leafletMarker);
+        loaded += group.recordIds.length;
+      }
+
+      onRenderProgress({ active: index < groupedMarkers.length, loaded, total });
+
+      if (index < groupedMarkers.length) {
+        frameId = window.requestAnimationFrame(processChunk);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(processChunk);
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frameId);
+      onRenderProgress({ active: false, loaded: 0, total: 0 });
+    };
+  }, [groupedMarkers, markers.length, displayedColumns, markerRefs, onMarkerClick, onRenderProgress, selectedRecordId]);
 
   useEffect(() => {
     const previousMarker = markerRefs.current.get(previousSelectedIdRef.current);
@@ -790,46 +861,31 @@ function LogoImage({ logo }) {
   );
 }
 
-function ToolDialog({ title, children, onClose }) {
-  return (
-    <div className="tool-dialog-backdrop" role="presentation" onClick={onClose}>
-      <section
-        className="tool-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="tool-dialog-header">
-          <h2>{title}</h2>
-          <button type="button" onClick={onClose} aria-label={`Close ${title}`}>
-            X
-          </button>
-        </header>
-        <div className="tool-dialog-body">{children}</div>
-      </section>
-    </div>
-  );
-}
-
 function App() {
   const [form, setForm] = useState(buildInitialForm);
   const [dataset, setDataset] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [resultsView, setResultsView] = useState("open");
+  const [windowViews, setWindowViews] = useState({
+    results: "open",
+    statistics: "hidden"
+  });
+  const [activeWindow, setActiveWindow] = useState("results");
   const [selectedRecordId, setSelectedRecordId] = useState("");
   const [colorBy, setColorBy] = useState("");
   const [pointDisplay, setPointDisplay] = useState("clustered");
   const [activeQuery, setActiveQuery] = useState(null);
   const [hasDrawnShapes, setHasDrawnShapes] = useState(false);
-  const [openDialog, setOpenDialog] = useState(null);
   const [statisticsColumnName, setStatisticsColumnName] = useState("");
   const [mapInstance, setMapInstance] = useState(null);
+  const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
+  const renderProgressFlushTimeoutRef = useRef(null);
+  const renderProgressLastCommitRef = useRef(0);
+  const pendingRenderProgressRef = useRef({ active: false, loaded: 0, total: 0 });
 
   const getInitialColorField = useCallback((nextDataset) => {
     const configuredField = nextDataset?.colorConfig?.fieldname;
@@ -861,12 +917,63 @@ function App() {
     mapInstance?.zoomOut();
   }, [mapInstance]);
 
+  const setWindowView = useCallback((windowName, nextView) => {
+    setWindowViews((current) => ({
+      ...current,
+      [windowName]: nextView
+    }));
+    if (nextView !== "hidden") {
+      setActiveWindow(windowName);
+    }
+  }, []);
+
+  const toggleWindowFullscreen = useCallback((windowName) => {
+    setWindowViews((current) => ({
+      ...current,
+      [windowName]: current[windowName] === "fullscreen" ? "open" : "fullscreen"
+    }));
+    setActiveWindow(windowName);
+  }, []);
+
+  const flushRenderProgress = useCallback(() => {
+    if (renderProgressFlushTimeoutRef.current) {
+      window.clearTimeout(renderProgressFlushTimeoutRef.current);
+      renderProgressFlushTimeoutRef.current = null;
+    }
+
+    renderProgressLastCommitRef.current = window.performance.now();
+    setRenderProgress((current) => {
+      const next = pendingRenderProgressRef.current;
+      return current.active === next.active && current.loaded === next.loaded && current.total === next.total ? current : next;
+    });
+  }, []);
+
+  const handleRenderProgress = useCallback((nextProgress) => {
+    pendingRenderProgressRef.current = nextProgress;
+
+    const isTerminal = !nextProgress.active || nextProgress.loaded >= nextProgress.total;
+    const now = window.performance.now();
+    const elapsed = now - renderProgressLastCommitRef.current;
+    const throttleMs = 160;
+
+    if (!renderProgressLastCommitRef.current || isTerminal || elapsed >= throttleMs) {
+      flushRenderProgress();
+      return;
+    }
+
+    if (renderProgressFlushTimeoutRef.current) {
+      return;
+    }
+
+    renderProgressFlushTimeoutRef.current = window.setTimeout(flushRenderProgress, throttleMs - elapsed);
+  }, [flushRenderProgress]);
+
   const applyQuerySelection = useCallback((nextQuery) => {
     shouldPanToSelectionRef.current = false;
     setActiveQuery(nextQuery);
-    setResultsView("open");
+    setWindowView("results", "open");
     setSelectedRecordId((current) => (nextQuery.recordIds.includes(current) ? current : nextQuery.recordIds[0] || ""));
-  }, []);
+  }, [setWindowView]);
 
   const handleClusterSelection = useCallback((recordIds) => {
     applyQuerySelection({
@@ -874,18 +981,6 @@ function App() {
       recordIds
     });
   }, [applyQuerySelection]);
-
-  const handlePointGroupSelection = useCallback((recordIds) => {
-    if (recordIds.length <= 1) {
-      handleRecordSelection(recordIds[0] || "");
-      return;
-    }
-
-    applyQuerySelection({
-      label: "Coordinate Query",
-      recordIds
-    });
-  }, [applyQuerySelection, handleRecordSelection]);
 
   async function loadDataset(payload, options = {}) {
     const { manageLoading = true } = options;
@@ -914,6 +1009,7 @@ function App() {
       shouldPanToSelectionRef.current = false;
       setActiveQuery(null);
       setHasDrawnShapes(false);
+      setRenderProgress({ active: false, loaded: 0, total: 0 });
       setColorBy(getInitialColorField(data));
     } catch (nextError) {
       setError(nextError.message);
@@ -922,6 +1018,7 @@ function App() {
       shouldPanToSelectionRef.current = false;
       setActiveQuery(null);
       setHasDrawnShapes(false);
+      setRenderProgress({ active: false, loaded: 0, total: 0 });
       setColorBy("");
     } finally {
       if (manageLoading) {
@@ -944,6 +1041,7 @@ function App() {
       shouldPanToSelectionRef.current = false;
       setActiveQuery(null);
       setHasDrawnShapes(false);
+      setRenderProgress({ active: false, loaded: 0, total: 0 });
       setColorBy("");
     } finally {
       setLoading(false);
@@ -1029,6 +1127,22 @@ function App() {
     const recordIdSet = new Set(queryRecordIds);
     return records.filter((record) => recordIdSet.has(record.id));
   }, [records, queryRecordIds]);
+  const resultsSummary = renderProgress.active
+    ? `Loading ${formatCount(renderProgress.loaded)} of ${formatCount(renderProgress.total)} records`
+    : recordsForResults.length
+      ? `${Math.min(recordsForResults.length, 100)} of ${recordsForResults.length} records`
+      : activeQuery
+        ? "No records matched the current query"
+        : "No records loaded";
+  const statisticsSummary = `${formatCount(recordsForResults.length)} records in scope`;
+  const resultsView = windowViews.results;
+  const statisticsView = windowViews.statistics;
+  const resultsDockedBottom = resultsView === "open" ? "min(34vh, 320px)" : resultsView === "minimized" ? "34px" : "0px";
+  const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedBottom;
+  const hiddenWindows = [
+    resultsView === "hidden" ? { key: "results", label: "Results" } : null,
+    statisticsView === "hidden" ? { key: "statistics", label: "Statistics" } : null
+  ].filter(Boolean);
   const statisticsColumns = useMemo(
     () => displayedColumns.filter((column) => !["Latitude", "Longitude"].includes(column.name)),
     [displayedColumns]
@@ -1042,16 +1156,12 @@ function App() {
   const datasetName =
     dataset?.metadata?.name && dataset.metadata.name !== "Untitled BerkeleyMapper dataset"
       ? dataset.metadata.name
-      : dataset?.source?.tabfile?.includes("arctostest")
-        ? "Arctos Example"
-        : "Untitled BerkeleyMapper dataset";
+      : "";
   const legendHtml =
     dataset?.metadata?.legendText ||
     dataset?.metadata?.abstract ||
     (dataset
-      ? dataset?.source?.tabfile?.includes("arctostest")
-        ? "Legacy Arctos example loaded from the BerkeleyMapper README dataset."
-        : "No legend text defined for this configuration."
+      ? "No legend text defined for this configuration."
       : "Load a dataset to populate the legend.");
 
   useEffect(() => {
@@ -1064,6 +1174,23 @@ function App() {
       statisticsColumns.some((column) => column.name === current) ? current : statisticsColumns[0].name
     );
   }, [statisticsColumns]);
+
+  useEffect(() => {
+    if (windowViews[activeWindow] !== "hidden") {
+      return;
+    }
+
+    const fallbackWindow = ["statistics", "results"].find((name) => windowViews[name] !== "hidden");
+    if (fallbackWindow) {
+      setActiveWindow(fallbackWindow);
+    }
+  }, [activeWindow, windowViews]);
+
+  useEffect(() => () => {
+    if (renderProgressFlushTimeoutRef.current) {
+      window.clearTimeout(renderProgressFlushTimeoutRef.current);
+    }
+  }, []);
 
   const exportAllViewable = useCallback(() => {
     downloadTextFile(
@@ -1119,7 +1246,7 @@ function App() {
               selectedRecordId={selectedRecordId}
               markerRefs={markerRefs}
               onMarkerClick={handleRecordSelection}
-              onPointGroupClick={handlePointGroupSelection}
+              onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
           ) : (
@@ -1130,6 +1257,7 @@ function App() {
               markerRefs={markerRefs}
               onMarkerClick={handleRecordSelection}
               onClusterSelect={handleClusterSelection}
+              onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
           )}
@@ -1148,7 +1276,7 @@ function App() {
           <button type="button" className="bm-map-toolbar-button" title="Zoom to all mapped points" onClick={handleZoomAll}>
             All
           </button>
-          <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setResultsView("open")}>
+          <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
             Results
           </button>
           {hasDrawnShapes ? (
@@ -1192,21 +1320,21 @@ function App() {
             {error ? <p className="status-banner error">{error}</p> : null}
             {!error && loading ? <p className="status-banner info">Loading Application ...</p> : null}
 
-            {availableColorFields.length ? (
-              <section className="panel-section">
-                <h2>Display</h2>
-                <label>
-                  Point Display
-                  <select
-                    value={pointDisplay}
-                    onChange={(event) => {
-                      setPointDisplay(event.target.value);
-                    }}
-                  >
-                    <option value="clustered">Marker Clusterer</option>
-                    <option value="markers">Placemarks</option>
-                  </select>
-                </label>
+            <section className="panel-section">
+              <h2>Display</h2>
+              <label>
+                Point Display
+                <select
+                  value={pointDisplay}
+                  onChange={(event) => {
+                    setPointDisplay(event.target.value);
+                  }}
+                >
+                  <option value="clustered">Marker Clusterer</option>
+                  <option value="markers">Placemarks</option>
+                </select>
+              </label>
+              {availableColorFields.length ? (
                 <label>
                   Color By
                   <select
@@ -1223,24 +1351,31 @@ function App() {
                     ))}
                   </select>
                 </label>
-              </section>
-            ) : null}
+              ) : null}
+            </section>
 
-            {!availableColorFields.length ? (
+            <section className="panel-section">
+              <h2>Legend</h2>
+              {dataset ? (datasetName ? <p className="meta-title">{datasetName}</p> : null) : <p className="meta-title">No dataset loaded</p>}
+              <div
+                className="legend-copy"
+                dangerouslySetInnerHTML={{
+                  __html: legendHtml
+                }}
+              />
+            </section>
+
+            {dynamicColorLegend.length ? (
               <section className="panel-section">
-                <h2>Display</h2>
-                <label>
-                  Point Display
-                  <select
-                    value={pointDisplay}
-                    onChange={(event) => {
-                      setPointDisplay(event.target.value);
-                    }}
-                  >
-                    <option value="clustered">Marker Clusterer</option>
-                    <option value="markers">Placemarks</option>
-                  </select>
-                </label>
+                <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
+                <div className="color-list">
+                  {dynamicColorLegend.map((entry) => (
+                    <div className="color-row" key={entry.value}>
+                      <span className="marker-chip" style={{ backgroundColor: entry.color }} />
+                      <span>{entry.value}</span>
+                    </div>
+                  ))}
+                </div>
               </section>
             ) : null}
 
@@ -1264,7 +1399,7 @@ function App() {
             <section className="panel-section">
               <h2>Actions</h2>
               <div className="panel-actions">
-                <button type="button" onClick={() => setOpenDialog("statistics")} disabled={!statisticsColumns.length}>
+                <button type="button" onClick={() => setWindowView("statistics", "open")} disabled={!statisticsColumns.length}>
                   Statistics
                 </button>
                 <button type="button" className="secondary" onClick={exportAllViewable} disabled={!records.length}>
@@ -1283,17 +1418,6 @@ function App() {
               </p>
             </section>
 
-            <section className="panel-section">
-              <h2>Legend</h2>
-              <p className="meta-title">{dataset ? datasetName : "No dataset loaded"}</p>
-              <div
-                className="legend-copy"
-                dangerouslySetInnerHTML={{
-                  __html: legendHtml
-                }}
-              />
-            </section>
-
             {dataset?.metadata?.disclaimer ? (
               <section className="panel-section">
                 <h2>Disclaimer</h2>
@@ -1303,20 +1427,6 @@ function App() {
                     __html: dataset.metadata.disclaimer
                   }}
                 />
-              </section>
-            ) : null}
-
-            {dynamicColorLegend.length ? (
-              <section className="panel-section">
-                <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
-                <div className="color-list">
-                  {dynamicColorLegend.map((entry) => (
-                    <div className="color-row" key={entry.value}>
-                      <span className="marker-chip" style={{ backgroundColor: entry.color }} />
-                      <span>{entry.value}</span>
-                    </div>
-                  ))}
-                </div>
               </section>
             ) : null}
 
@@ -1368,89 +1478,58 @@ function App() {
           </div>
         </aside>
 
-        {resultsView === "hidden" ? (
-          <button
-            type="button"
-            className="results-reopen"
-            onClick={() => setResultsView("open")}
-            aria-label="Show results panel"
+        {resultsView !== "hidden" ? (
+          <section
+            className={`bottom-drawer results-drawer is-${resultsView} ${activeWindow === "results" ? "is-active" : ""}`}
+            onMouseDown={() => setActiveWindow("results")}
           >
-            Results
-          </button>
-        ) : (
-          <section className={`results-drawer is-${resultsView}`}>
-            <div className="results-titlebar">
-              <div className="results-titletext">
+            <div className="window-titlebar">
+              <div className="window-titletext">
                 <strong>Results</strong>
-                <span>
-                  {recordsForResults.length
-                    ? `${Math.min(recordsForResults.length, 100)} of ${recordsForResults.length} records`
-                    : activeQuery
-                      ? "No records matched the current query"
-                      : "No records loaded"}
-                </span>
+                <span>{resultsSummary}</span>
               </div>
-              <div className="results-window-controls">
-                <button type="button" className="results-control-button" onClick={() => setResultsView("minimized")} aria-label="Minimize results panel">
+              <div className="window-controls">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("results", "minimized")} aria-label="Minimize results panel">
                   <span className="results-control-icon results-control-minimize" aria-hidden="true" />
                 </button>
                 {resultsView !== "open" ? (
-                  <button type="button" className="results-control-button" onClick={() => setResultsView("open")} aria-label="Restore results panel">
+                  <button type="button" className="results-control-button" onClick={() => setWindowView("results", "open")} aria-label="Restore results panel">
                     <span className="results-control-icon results-control-restore" aria-hidden="true" />
                   </button>
                 ) : null}
                 <button
                   type="button"
                   className="results-control-button"
-                  onClick={() => setResultsView((current) => (current === "fullscreen" ? "open" : "fullscreen"))}
+                  onClick={() => toggleWindowFullscreen("results")}
                   aria-label={resultsView === "fullscreen" ? "Exit fullscreen results" : "Fullscreen results"}
                 >
                   <span className="results-control-icon results-control-maximize" aria-hidden="true" />
                 </button>
-                <button type="button" className="results-control-button" onClick={() => setResultsView("hidden")} aria-label="Close results panel">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("results", "hidden")} aria-label="Close results panel">
                   <span className="results-control-icon results-control-close" aria-hidden="true" />
                 </button>
               </div>
             </div>
 
-            <div className="results-content">
-              <div className="results-header">
-                <h2>Results</h2>
-                <div className="results-meta">
-                  {activeQuery ? <strong>{activeQuery.label}</strong> : null}
-                  <span>
-                    {recordsForResults.length
-                      ? `${Math.min(recordsForResults.length, 100)} of ${recordsForResults.length} records`
-                      : activeQuery
-                        ? "No records matched the current query"
-                        : "No records loaded"}
-                  </span>
-                  {activeQuery ? (
-                    <button type="button" className="secondary" onClick={clearActiveQuery}>
-                      Clear Query
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
+            <div className="window-content">
               <div className="results-table">
                 <table>
                   <thead>
-                  <tr>
+                    <tr>
                       {displayedColumns.map((column) => (
                         <th key={column.name}>{column.alias}</th>
                       ))}
-                  </tr>
+                    </tr>
                   </thead>
                   <tbody>
                     {recordsForResults.slice(0, 100).map((record) => (
                       <tr
-                      key={record.id}
-                      className={record.id === selectedRecordId ? "is-selected" : ""}
-                      onClick={() => {
-                        handleRecordSelection(record.id);
-                      }}
-                    >
+                        key={record.id}
+                        className={record.id === selectedRecordId ? "is-selected" : ""}
+                        onClick={() => {
+                          handleRecordSelection(record.id);
+                        }}
+                      >
                         {displayedColumns.map((column) => (
                           <td key={`${record.id}-${column.name}`}>
                             {renderRecordValue(record.values[column.name] || "", `${record.id}-${column.name}`)}
@@ -1463,51 +1542,101 @@ function App() {
               </div>
             </div>
           </section>
-        )}
+        ) : null}
+
+        {statisticsView !== "hidden" ? (
+          <section
+            className={`bottom-drawer statistics-drawer is-${statisticsView} ${activeWindow === "statistics" ? "is-active" : ""}`}
+            style={statisticsView === "fullscreen" ? undefined : { bottom: statisticsDockedBottom }}
+            onMouseDown={() => setActiveWindow("statistics")}
+          >
+            <div className="window-titlebar">
+              <div className="window-titletext">
+                <strong>Statistics</strong>
+                <span>{statisticsSummary}</span>
+              </div>
+              <div className="window-controls">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("statistics", "minimized")} aria-label="Minimize statistics panel">
+                  <span className="results-control-icon results-control-minimize" aria-hidden="true" />
+                </button>
+                {statisticsView !== "open" ? (
+                  <button type="button" className="results-control-button" onClick={() => setWindowView("statistics", "open")} aria-label="Restore statistics panel">
+                    <span className="results-control-icon results-control-restore" aria-hidden="true" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="results-control-button"
+                  onClick={() => toggleWindowFullscreen("statistics")}
+                  aria-label={statisticsView === "fullscreen" ? "Exit fullscreen statistics" : "Fullscreen statistics"}
+                >
+                  <span className="results-control-icon results-control-maximize" aria-hidden="true" />
+                </button>
+                <button type="button" className="results-control-button" onClick={() => setWindowView("statistics", "hidden")} aria-label="Close statistics panel">
+                  <span className="results-control-icon results-control-close" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="window-content statistics-content">
+              <div className="statistics-toolbar">
+                <label>
+                  Column
+                  <select value={statisticsColumn?.name || ""} onChange={(event) => setStatisticsColumnName(event.target.value)}>
+                    {statisticsColumns.map((column) => (
+                      <option key={column.name} value={column.name}>
+                        {column.alias}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="statistics-summary">
+                  <strong>{activeQuery ? activeQuery.label : "Entire Dataset"}</strong>
+                  <span>{statisticsSummary}</span>
+                </div>
+              </div>
+
+              {statisticsColumn ? (
+                <div className="stats-table-wrap">
+                  <table className="stats-table">
+                    <thead>
+                      <tr>
+                        <th>{statisticsColumn.alias}</th>
+                        <th>Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {frequencyRows.map((row) => (
+                        <tr key={`${statisticsColumn.name}-${row.value}`}>
+                          <td>{row.value}</td>
+                          <td>{formatCount(row.count)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="statistics-empty">No visible columns are available for statistics.</p>
+              )}
+            </div>
+          </section>
+        ) : null}
       </div>
 
-      {openDialog === "statistics" ? (
-        <ToolDialog title="Statistics" onClose={() => setOpenDialog(null)}>
-          <div className="dialog-toolbar">
-            <label>
-              Column
-              <select value={statisticsColumn?.name || ""} onChange={(event) => setStatisticsColumnName(event.target.value)}>
-                {statisticsColumns.map((column) => (
-                  <option key={column.name} value={column.name}>
-                    {column.alias}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="dialog-summary">
-              <strong>{activeQuery ? activeQuery.label : "Entire Dataset"}</strong>
-              <span>{formatCount(recordsForResults.length)} records in scope</span>
-            </div>
-          </div>
-
-          {statisticsColumn ? (
-            <div className="stats-table-wrap">
-              <table className="stats-table">
-                <thead>
-                  <tr>
-                    <th>{statisticsColumn.alias}</th>
-                    <th>Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {frequencyRows.map((row) => (
-                    <tr key={`${statisticsColumn.name}-${row.value}`}>
-                      <td>{row.value}</td>
-                      <td>{formatCount(row.count)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No visible columns are available for statistics.</p>
-          )}
-        </ToolDialog>
+      {hiddenWindows.length ? (
+        <div className="window-launchers">
+          {hiddenWindows.map((windowItem) => (
+            <button
+              key={windowItem.key}
+              type="button"
+              className="window-reopen"
+              onClick={() => setWindowView(windowItem.key, "open")}
+              aria-label={`Show ${windowItem.label} panel`}
+            >
+              {windowItem.label}
+            </button>
+          ))}
+        </div>
       ) : null}
     </main>
   );
