@@ -1,0 +1,31 @@
+{
+  "name": "berkeleymapper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "JavaScript/React refactor of BerkeleyMapper",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@turf/area": "^7.3.4",
+    "@turf/boolean-point-in-polygon": "^7.3.4",
+    "fast-xml-parser": "^5.2.5",
+    "leaflet": "^1.9.4",
+    "leaflet-draw": "^1.0.4",
+    "leaflet.markercluster": "^1.5.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^5.4.19"
+  }
+}

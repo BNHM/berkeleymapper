@@ -1,9 +1,15 @@
 .idea/*
 dist/
 out/
+bin/
 build/
 gradle/
 .gradle/
 gradlew
 gradlew.bat
 src/main/resources/config.properties
+node_modules/
+.vite/
+coverage/
+tmp/node-sessions/
+.netlify/
