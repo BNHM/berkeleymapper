@@ -49,12 +49,34 @@ function looksLikeHeader(firstRow, configColumns) {
 
   for (const value of firstRow) {
     const normalized = columnMatchKey(value.trim());
-    if (configColumns.some((column) => columnMatchKey(column.name) === normalized || columnMatchKey(column.alias) === normalized)) {
+    if (configColumns.some((column) =>
+      columnMatchKey(column.name) === normalized ||
+      columnMatchKey(column.alias) === normalized ||
+      columnMatchKey(column.datatype) === normalized
+    )) {
       matches += 1;
     }
   }
 
-  return matches >= 2;
+  const requiredMatches = Math.max(2, Math.ceil(Math.min(firstRow.length, configColumns.length) / 2));
+  return matches >= requiredMatches;
+}
+
+function findConfigColumnForHeader(configColumns, headerValue, columnIndex) {
+  const normalizedHeader = columnMatchKey(headerValue);
+  if (normalizedHeader) {
+    const matchedColumn = configColumns.find((column) =>
+      columnMatchKey(column.name) === normalizedHeader ||
+      columnMatchKey(column.alias) === normalizedHeader ||
+      columnMatchKey(column.datatype) === normalizedHeader
+    );
+
+    if (matchedColumn) {
+      return matchedColumn;
+    }
+  }
+
+  return configColumns[columnIndex] || null;
 }
 
 function inferCoordinateColumns(columns) {
@@ -184,26 +206,23 @@ export function parseTabularData(tabText, config) {
   const configColumns = buildColumnsFromConfig(config.concepts || []);
   const rawFirstRow = rows[0].split("\t");
   const hasHeader = looksLikeHeader(rawFirstRow, configColumns);
-  const headers = hasHeader
-    ? rawFirstRow.map((value) => value.trim())
-    : configColumns.length
-      ? configColumns.map((column) => column.name)
-      : rawFirstRow.map((_, index) => `Column ${index + 1}`);
-
-  const parseColumns = headers.map((header, index) => {
-    const headerName = normalizeColumnName(header);
-    const configColumn = hasHeader
-      ? configColumns.find((column) => columnMatchKey(column.name) === columnMatchKey(headerName))
-      : configColumns[index];
+  const parseColumns = rawFirstRow.map((headerValue, index) => {
+    const fallbackHeader = hasHeader ? headerValue.trim() || `Column ${index + 1}` : `Column ${index + 1}`;
+    const configColumn = configColumns.length
+      ? hasHeader
+        ? findConfigColumnForHeader(configColumns, fallbackHeader, index)
+        : configColumns[index] || null
+      : null;
+    const resolvedName = configColumn?.name || normalizeColumnName(fallbackHeader);
 
     return {
-      name: headerName,
-      alias: configColumn?.alias || header,
+      name: resolvedName,
+      alias: configColumn?.alias || fallbackHeader,
       visible: configColumn?.visible ?? true,
       order: configColumn?.order,
       originalIndex: index,
       colorable: configColumn?.colorable ?? false,
-      datatype: configColumn?.datatype || headerName
+      datatype: configColumn?.datatype || resolvedName
     };
   });
 

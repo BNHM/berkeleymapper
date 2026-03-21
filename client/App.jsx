@@ -1222,8 +1222,7 @@ function App() {
   const resultsDockedBottom = resultsView === "open" ? "min(34vh, 320px)" : resultsView === "minimized" ? "34px" : "0px";
   const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedBottom;
   const hiddenWindows = [
-    resultsView === "hidden" ? { key: "results", label: "Results" } : null,
-    statisticsView === "hidden" ? { key: "statistics", label: "Statistics" } : null
+    resultsView === "hidden" ? { key: "results", label: "Results" } : null
   ].filter(Boolean);
   const statisticsColumns = useMemo(
     () => displayedColumns.filter((column) => !["Latitude", "Longitude"].includes(column.name)),
