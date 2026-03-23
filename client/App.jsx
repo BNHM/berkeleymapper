@@ -37,34 +37,45 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
-const clientLoadHostAllowlist = new Set([
-  "raw.githubusercontent.com"
-]);
-const serverProcessingHelpText = [
-  "This dataset is using server-based processing because the source host is not available for direct browser loading.",
-  "To enable browser-side loading in the future, configure the data host to allow CORS for:",
+const serverProcessingCorsOrigins = [
   "https://berkeleymapper2.netlify.app",
   "https://berkeleymapper.netlify.app",
-  "https://berkeleymapper.org",
-  "Optional API keys are stored locally in this browser and are sent with server-based load requests for future integrations."
-].join("\n");
-const apiKeyStorageKey = "berkeleymapper.serverApiKey";
+  "https://berkeleymapper.org"
+];
 
-function canClientFetchUrl(url) {
+function shouldAttemptClientLoad(payload) {
+  return Boolean(payload?.tabfile) && !payload?.tabdata;
+}
+
+function isCrossOriginUrl(url) {
   if (!url) {
-    return true;
+    return false;
   }
 
   try {
     const parsed = new URL(url, window.location.origin);
-    return parsed.origin === window.location.origin || clientLoadHostAllowlist.has(parsed.hostname.toLowerCase());
+    return parsed.origin !== window.location.origin;
   } catch {
     return false;
   }
 }
 
-function shouldAttemptClientLoad(payload) {
-  return Boolean(payload?.tabfile) && !payload?.tabdata && canClientFetchUrl(payload.tabfile) && canClientFetchUrl(payload.configfile);
+function isLikelyCorsFailure(error) {
+  if (!(error instanceof TypeError)) {
+    return false;
+  }
+
+  const message = (error.message || "").toLowerCase();
+  return message.includes("fetch") || message.includes("network") || message.includes("load");
+}
+
+function buildCorsWarningMessage(payload) {
+  const sources = [payload?.tabfile, payload?.configfile].filter(Boolean);
+  if (!sources.length) {
+    return "";
+  }
+
+  return "Direct browser loading failed. This static build requires CORS on the remote tabfile/configfile URLs.";
 }
 
 async function fetchRequiredText(url, label) {
@@ -87,10 +98,6 @@ function buildInitialForm() {
     tabfile: params.get("tabfile") || "",
     configfile: params.get("configfile") || ""
   };
-}
-
-function buildInitialApiKey() {
-  return window.localStorage.getItem(apiKeyStorageKey) || "";
 }
 
 function stripHtml(value) {
@@ -928,7 +935,9 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [windowViews, setWindowViews] = useState({
     results: "open",
-    statistics: "hidden"
+    statistics: "hidden",
+    config: "hidden",
+    help: "hidden"
   });
   const [activeWindow, setActiveWindow] = useState("results");
   const [selectedRecordId, setSelectedRecordId] = useState("");
@@ -939,8 +948,7 @@ function App() {
   const [statisticsColumnName, setStatisticsColumnName] = useState("");
   const [mapInstance, setMapInstance] = useState(null);
   const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
-  const [loadPath, setLoadPath] = useState("");
-  const [serverApiKey, setServerApiKey] = useState(buildInitialApiKey);
+  const [loadWarning, setLoadWarning] = useState("");
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1051,6 +1059,7 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
+    setLoadWarning("");
   }, [getInitialColorField]);
 
   const resetLoadedDataset = useCallback(() => {
@@ -1061,7 +1070,7 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
-    setLoadPath("");
+    setLoadWarning("");
   }, []);
 
   const loadDatasetFromClientFiles = useCallback(async (payload) => {
@@ -1087,49 +1096,18 @@ function App() {
     setError("");
 
     try {
-      let data = null;
-      let clientLoadError = null;
-      let resolvedLoadPath = "server";
-
-      if (shouldAttemptClientLoad(payload)) {
-        try {
-          data = await loadDatasetFromClientFiles(payload);
-          resolvedLoadPath = "client";
-        } catch (nextError) {
-          clientLoadError = nextError;
-        }
+      if (!shouldAttemptClientLoad(payload)) {
+        throw new Error("This static build requires browser-accessible tabfile and configfile URLs.");
       }
 
-      if (!data) {
-        const response = await fetch("/api/load", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(serverApiKey ? { "X-BerkeleyMapper-Api-Key": serverApiKey } : {})
-          },
-          body: JSON.stringify({
-            ...payload,
-            apiKey: serverApiKey || ""
-          })
-        });
-        data = await response.json();
-
-        if (!response.ok) {
-          const serverMessage = data.error || "Unable to load dataset.";
-
-          if (clientLoadError) {
-            throw new Error(`Browser load failed (${clientLoadError.message}). Server fallback failed (${serverMessage}).`);
-          }
-
-          throw new Error(serverMessage);
-        }
-      }
-
+      const data = await loadDatasetFromClientFiles(payload);
       applyLoadedDataset(data);
-      setLoadPath(resolvedLoadPath);
     } catch (nextError) {
-      setError(nextError.message);
+      const crossOriginRequest = isCrossOriginUrl(payload?.tabfile) || isCrossOriginUrl(payload?.configfile);
+      const corsWarning = crossOriginRequest && isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(payload) : "";
       resetLoadedDataset();
+      setLoadWarning(corsWarning);
+      setError(corsWarning || nextError.message);
     } finally {
       if (manageLoading) {
         setLoading(false);
@@ -1145,10 +1123,11 @@ function App() {
       setForm(arctosDemo);
       const demoDataset = await loadDatasetFromClientFiles(arctosDemo);
       applyLoadedDataset(demoDataset);
-      setLoadPath("client");
     } catch (nextError) {
-      setError(nextError.message);
+      const corsWarning = isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(arctosDemo) : "";
       resetLoadedDataset();
+      setLoadWarning(corsWarning);
+      setError(corsWarning || nextError.message);
     } finally {
       setLoading(false);
     }
@@ -1167,7 +1146,6 @@ function App() {
   const columns = dataset?.columns || [];
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
   const colorConfig = dataset?.colorConfig || null;
-  const isServerProcessing = loadPath === "server";
   const colorFields = dataset?.colorFields || [];
   const availableColorFields = useMemo(() => {
     const merged = new Map();
@@ -1244,8 +1222,22 @@ function App() {
   const statisticsSummary = `${formatCount(recordsForResults.length)} records in scope`;
   const resultsView = windowViews.results;
   const statisticsView = windowViews.statistics;
-  const resultsDockedBottom = resultsView === "open" ? "min(34vh, 320px)" : resultsView === "minimized" ? "34px" : "0px";
-  const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedBottom;
+  const configView = windowViews.config;
+  const helpView = windowViews.help;
+  const getDockedHeight = (view, openHeight) => (view === "open" ? openHeight : view === "minimized" ? "34px" : "0px");
+  const resultsDockedHeight = getDockedHeight(resultsView, "min(34vh, 320px)");
+  const statisticsDockedHeight = getDockedHeight(statisticsView, "min(30vh, 280px)");
+  const configDockedHeight = getDockedHeight(configView, "min(36vh, 360px)");
+  const resultsDockedBottom = "0px";
+  const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedHeight;
+  const configDockedBottom =
+    resultsView === "fullscreen" || statisticsView === "fullscreen"
+      ? "0px"
+      : `calc(${resultsDockedHeight} + ${statisticsDockedHeight})`;
+  const helpDockedBottom =
+    resultsView === "fullscreen" || statisticsView === "fullscreen" || configView === "fullscreen"
+      ? "0px"
+      : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${configDockedHeight})`;
   const hiddenWindows = [
     resultsView === "hidden" ? { key: "results", label: "Results" } : null
   ].filter(Boolean);
@@ -1269,6 +1261,8 @@ function App() {
     (dataset
       ? "No legend text defined for this configuration."
       : "Load a dataset to populate the legend.");
+  const configFileText = dataset?.rawConfigText || "";
+  const configWindowSummary = dataset?.source?.configfile || "Raw XML configuration";
 
   useEffect(() => {
     if (!statisticsColumns.length) {
@@ -1286,15 +1280,11 @@ function App() {
       return;
     }
 
-    const fallbackWindow = ["statistics", "results"].find((name) => windowViews[name] !== "hidden");
+    const fallbackWindow = ["help", "config", "statistics", "results"].find((name) => windowViews[name] !== "hidden");
     if (fallbackWindow) {
       setActiveWindow(fallbackWindow);
     }
   }, [activeWindow, windowViews]);
-
-  useEffect(() => {
-    window.localStorage.setItem(apiKeyStorageKey, serverApiKey);
-  }, [serverApiKey]);
 
   useEffect(() => () => {
     if (renderProgressFlushTimeoutRef.current) {
@@ -1329,12 +1319,17 @@ function App() {
   return (
     <main className="mapper-shell">
       <div className={`map-stage ${sidebarOpen ? "is-sidebar-open" : ""}`}>
-        {isServerProcessing ? (
-          <div className="processing-banner" role="status">
-            <span>This dataset is using server-based processing.</span>
-            <span className="processing-banner-help" title={serverProcessingHelpText} aria-label="More information about server-based processing">
+        {loadWarning ? (
+          <div className="top-warning-banner" role="alert">
+            <span>{loadWarning}</span>
+            <button
+              type="button"
+              className="processing-help-button"
+              onClick={() => setWindowView("help", "open")}
+              aria-label="Open help about CORS requirements"
+            >
               ?
-            </span>
+            </button>
           </div>
         ) : null}
         <MapContainer center={defaultCenter} zoom={defaultZoom} scrollWheelZoom zoomControl={false} className="map-canvas">
@@ -1428,20 +1423,23 @@ function App() {
             </section>
 
             <section className="panel-section">
-              <h2>Server Processing</h2>
-              <label>
-                API Key
-                <input
-                  type="password"
-                  value={serverApiKey}
-                  onChange={(event) => setServerApiKey(event.target.value)}
-                  placeholder="Optional"
-                  autoComplete="off"
-                />
-              </label>
-              <p className="legend-copy tool-note">
-                Stored only in this browser and sent with server-based load requests for future integrations.
+              <h2>Browser Loading</h2>
+              <p className="legend-copy processing-copy">
+                This static build loads datasets directly in your browser.
+                <button
+                  type="button"
+                  className="processing-help-button"
+                  onClick={() => setWindowView("help", "open")}
+                  aria-label="Open help about browser loading and CORS"
+                >
+                  ?
+                </button>
               </p>
+              {configFileText ? (
+                <button type="button" className="config-link-button" onClick={() => setWindowView("config", "open")}>
+                  Map Configuration File
+                </button>
+              ) : null}
             </section>
 
             {dataset?.logos?.length ? (
@@ -1755,6 +1753,102 @@ function App() {
               ) : (
                 <p className="statistics-empty">No visible columns are available for statistics.</p>
               )}
+            </div>
+          </section>
+        ) : null}
+
+        {configView !== "hidden" ? (
+          <section
+            className={`bottom-drawer config-drawer is-${configView} ${activeWindow === "config" ? "is-active" : ""}`}
+            style={configView === "fullscreen" ? undefined : { bottom: configDockedBottom }}
+            onMouseDown={() => setActiveWindow("config")}
+          >
+            <div className="window-titlebar">
+              <div className="window-titletext">
+                <strong>Configuration File</strong>
+                <span>{configWindowSummary}</span>
+              </div>
+              <div className="window-controls">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("config", "minimized")} aria-label="Minimize configuration panel">
+                  <span className="results-control-icon results-control-minimize" aria-hidden="true" />
+                </button>
+                {configView !== "open" ? (
+                  <button type="button" className="results-control-button" onClick={() => setWindowView("config", "open")} aria-label="Restore configuration panel">
+                    <span className="results-control-icon results-control-restore" aria-hidden="true" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="results-control-button"
+                  onClick={() => toggleWindowFullscreen("config")}
+                  aria-label={configView === "fullscreen" ? "Exit fullscreen configuration" : "Fullscreen configuration"}
+                >
+                  <span className="results-control-icon results-control-maximize" aria-hidden="true" />
+                </button>
+                <button type="button" className="results-control-button" onClick={() => setWindowView("config", "hidden")} aria-label="Close configuration panel">
+                  <span className="results-control-icon results-control-close" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="window-content config-content">
+              <pre className="config-file-view">{configFileText}</pre>
+            </div>
+          </section>
+        ) : null}
+
+        {helpView !== "hidden" ? (
+          <section
+            className={`bottom-drawer help-drawer is-${helpView} ${activeWindow === "help" ? "is-active" : ""}`}
+            style={helpView === "fullscreen" ? undefined : { bottom: helpDockedBottom }}
+            onMouseDown={() => setActiveWindow("help")}
+          >
+            <div className="window-titlebar">
+              <div className="window-titletext">
+                <strong>Browser Loading Help</strong>
+                <span>CORS requirements for static hosting</span>
+              </div>
+              <div className="window-controls">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("help", "minimized")} aria-label="Minimize help panel">
+                  <span className="results-control-icon results-control-minimize" aria-hidden="true" />
+                </button>
+                {helpView !== "open" ? (
+                  <button type="button" className="results-control-button" onClick={() => setWindowView("help", "open")} aria-label="Restore help panel">
+                    <span className="results-control-icon results-control-restore" aria-hidden="true" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="results-control-button"
+                  onClick={() => toggleWindowFullscreen("help")}
+                  aria-label={helpView === "fullscreen" ? "Exit fullscreen help" : "Fullscreen help"}
+                >
+                  <span className="results-control-icon results-control-maximize" aria-hidden="true" />
+                </button>
+                <button type="button" className="results-control-button" onClick={() => setWindowView("help", "hidden")} aria-label="Close help panel">
+                  <span className="results-control-icon results-control-close" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="window-content help-content">
+              <p>
+                Direct browser loading works only when the host serving the tab file and config file allows cross-origin
+                requests from BerkeleyMapper.
+              </p>
+              <p>To enable browser-side loading, configure the dataset host to allow these origins:</p>
+              <ul className="help-list">
+                {serverProcessingCorsOrigins.map((origin) => (
+                  <li key={origin}>{origin}</li>
+                ))}
+              </ul>
+              <p>
+                The files that need CORS enabled are the remote <code>tabfile</code> and <code>configfile</code> endpoints.
+              </p>
+              <p>
+                If a remote host does not return CORS headers, this static build cannot load that dataset directly in the
+                browser.
+              </p>
             </div>
           </section>
         ) : null}

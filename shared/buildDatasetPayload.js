@@ -21,6 +21,7 @@ export function buildDatasetPayload({ requestId, tabfile, configfile, tabdata, c
       mode: tabfile ? "remote-url" : "inline-data",
       stateless: true
     },
+    rawConfigText: configdata || "",
     metadata: config.metadata,
     colors: config.colors,
     colorConfig: config.colorConfig,

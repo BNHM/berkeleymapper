@@ -13,7 +13,7 @@ Following shows a sample berkeleymapper call from Arctos
 http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
 
 ## JavaScript Refactor
-The `refactor` branch now includes a JavaScript runtime that replaces the WAR-based startup path with:
+The current refactor branch now includes a JavaScript runtime that replaces the WAR-based startup path with:
 
 ```bash
 nvm use
@@ -21,23 +21,21 @@ npm install
 npm start
 ```
 
-Local development now runs through Vite only. The `/api/load` and `/api/health` endpoints are served locally by the same shared handlers that Netlify Functions use in production, so the request flow is the same in both environments.
+Local development runs through Vite only, and production output is a static site build.
 
-This React + Node slice currently ports the first part of BerkeleyMapper away from Java:
+This React slice currently ports the first part of BerkeleyMapper away from Java:
 
-- load a tab-delimited dataset from a URL or inline POST payload
-- optionally load a legacy BerkeleyMapper XML config
-- parse data in a stateless request flow with no temp-file writes
+- load a tab-delimited dataset directly in the browser from a URL
+- optionally load a legacy BerkeleyMapper XML config directly in the browser
 - parse records and coordinates in JavaScript
 - render the dataset in a React UI with a Leaflet map and records table
 
-## Netlify Deployment
-The app now works with Netlify’s static hosting plus Functions without server-side file writes or persistent session storage.
+## Static Deployment
+The app now builds to a static site and can be hosted anywhere that can serve the `dist/` directory.
 
 - client routes are static assets built by Vite
-- `/api/load` is redirected to a Netlify Function
-- the function fetches remote `tabfile` and `configfile` URLs, parses them in memory, and returns the dataset payload directly
-- inline `tabdata` and `configdata` POST bodies also work, so demo/sample loads do not depend on any writable server filesystem
+- dataset loading happens in the user's browser
+- remote `tabfile` and `configfile` hosts must support CORS for browser loading to work
 
 Build settings:
 
@@ -45,8 +43,6 @@ Build settings:
 Build command: npm run build
 Publish directory: dist
 ```
-
-Netlify config lives in `netlify.toml`.
 
 The remaining Java-only REST features are still legacy code for now and need to be ported separately:
 
