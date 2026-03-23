@@ -42,7 +42,7 @@ const browserCorsOrigins = [
   "https://berkeleymapper.netlify.app",
   "https://berkeleymapper.org"
 ];
-const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&q=";
+const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 
 function shouldAttemptClientLoad(payload) {
   return Boolean(payload?.tabfile) && !payload?.tabdata;
@@ -172,6 +172,109 @@ function getRecordLabel(record, columns) {
 
 function getDisplayedColumns(columns) {
   return columns.filter((column) => column.visible);
+}
+
+function parseDecimalDegrees(value) {
+  const parts = String(value || "")
+    .trim()
+    .split(/[\/,\s]+/)
+    .filter(Boolean);
+
+  if (parts.length < 2) {
+    return null;
+  }
+
+  const latitude = Number.parseFloat(parts[0]);
+  const longitude = Number.parseFloat(parts[1]);
+
+  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+    return null;
+  }
+
+  if (latitude > 90 || latitude < -90 || longitude > 180 || longitude < -180) {
+    return null;
+  }
+
+  return {
+    latitude,
+    longitude
+  };
+}
+
+function distanceMeters(latitudeA, longitudeA, latitudeB, longitudeB) {
+  return L.latLng(latitudeA, longitudeA).distanceTo(L.latLng(latitudeB, longitudeB));
+}
+
+function buildRadiusFromBoundingBox(boundingBox, latitude, longitude) {
+  if (!Array.isArray(boundingBox) || boundingBox.length < 4) {
+    return 0;
+  }
+
+  const south = Number.parseFloat(boundingBox[0]);
+  const north = Number.parseFloat(boundingBox[1]);
+  const west = Number.parseFloat(boundingBox[2]);
+  const east = Number.parseFloat(boundingBox[3]);
+
+  if ([south, north, west, east].some((value) => Number.isNaN(value))) {
+    return 0;
+  }
+
+  const cornerLatitude = (latitude + north) / 2;
+  const cornerLongitude = (longitude + east) / 2;
+  return Math.max(1, Math.round(distanceMeters(latitude, longitude, cornerLatitude, cornerLongitude)));
+}
+
+function normalizeGeocodeResult(result, query, index) {
+  const latitude = Number.parseFloat(result.lat);
+  const longitude = Number.parseFloat(result.lon);
+
+  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+    return null;
+  }
+
+  return {
+    id: `geocode-${Date.now()}-${index}`,
+    query,
+    label: result.display_name || query,
+    latitude,
+    longitude,
+    uncertaintyMeters: buildRadiusFromBoundingBox(result.boundingbox, latitude, longitude),
+    protocol: "OpenStreetMap Nominatim",
+    remarks: result.display_name || result.type || "Geocoded address search"
+  };
+}
+
+function formatGeocodeResult(result) {
+  return {
+    id: result.id,
+    label: result.label,
+    latitude: Number(result.latitude).toFixed(4),
+    longitude: Number(result.longitude).toFixed(4),
+    uncertaintyMeters: Math.round(result.uncertaintyMeters || 0),
+    protocol: result.protocol,
+    remarks: result.remarks
+  };
+}
+
+function buildGeocodePopupHtml(result) {
+  const formatted = formatGeocodeResult(result);
+
+  return `
+    <div class="popup-body">
+      <div><strong>${escapeHtml(result.query)}</strong></div>
+      <ul class="popup-record-list">
+        <li>Coordinate: ${escapeHtml(formatted.latitude)} / ${escapeHtml(formatted.longitude)} (${escapeHtml(String(formatted.uncertaintyMeters))} meters radius)</li>
+        <li>Datum: WGS84</li>
+        <li>Protocol: ${escapeHtml(formatted.protocol)}</li>
+        <li>Remarks: ${escapeHtml(formatted.remarks)}</li>
+      </ul>
+      <div class="popup-geocode-actions">
+        <button type="button" data-geocode-action="delete" data-geocode-id="${escapeHtml(result.id)}">Delete This</button>
+        <button type="button" data-geocode-action="delete-others" data-geocode-id="${escapeHtml(result.id)}">Delete Others</button>
+        <button type="button" data-geocode-action="zoom" data-geocode-id="${escapeHtml(result.id)}">Zoom In</button>
+      </div>
+    </div>
+  `;
 }
 
 function createMarkerIcon(color) {
@@ -542,7 +645,109 @@ function MapHomeViewport({ viewport, marker }) {
   return null;
 }
 
-function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes }) {
+function MapGeocodeLayer({ results, fitNonce, onDeleteResult, onKeepOnlyResult }) {
+  const map = useMap();
+  const layerGroupRef = useRef(null);
+
+  useEffect(() => {
+    const layerGroup = L.layerGroup();
+    layerGroupRef.current = layerGroup;
+    map.addLayer(layerGroup);
+
+    return () => {
+      map.removeLayer(layerGroup);
+      layerGroupRef.current = null;
+    };
+  }, [map]);
+
+  useEffect(() => {
+    const layerGroup = layerGroupRef.current;
+    if (!layerGroup) {
+      return;
+    }
+
+    layerGroup.clearLayers();
+
+    if (!results.length) {
+      return;
+    }
+
+    const bounds = L.latLngBounds([]);
+
+    results.forEach((result) => {
+      const center = [result.latitude, result.longitude];
+      const marker = L.marker(center, {
+        title: result.query
+      });
+      const circle = L.circle(center, {
+        radius: Math.max(1, result.uncertaintyMeters || 0),
+        fillColor: "#ff00dd",
+        fillOpacity: 0.05,
+        color: "#ff00dd",
+        weight: 1,
+        opacity: 0.5
+      });
+
+      marker.bindPopup("");
+      marker.on("popupopen", () => {
+        const popup = marker.getPopup();
+        if (!popup) {
+          return;
+        }
+
+        popup.setContent(buildGeocodePopupHtml(result));
+        window.requestAnimationFrame(() => {
+          const popupElement = popup.getElement();
+          if (!popupElement) {
+            return;
+          }
+
+          popupElement.querySelectorAll("[data-geocode-action]").forEach((button) => {
+            button.addEventListener("click", (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              const action = button.getAttribute("data-geocode-action");
+
+              if (action === "delete") {
+                onDeleteResult(result.id);
+                marker.closePopup();
+                return;
+              }
+
+              if (action === "delete-others") {
+                onKeepOnlyResult(result.id);
+                marker.closePopup();
+                return;
+              }
+
+              if (action === "zoom") {
+                map.fitBounds(circle.getBounds(), {
+                  padding: [24, 24],
+                  maxZoom: 15
+                });
+              }
+            }, { once: true });
+          });
+        });
+      });
+
+      layerGroup.addLayer(circle);
+      layerGroup.addLayer(marker);
+      bounds.extend(circle.getBounds());
+    });
+
+    if (fitNonce) {
+      map.fitBounds(bounds, {
+        padding: [36, 36],
+        maxZoom: 15
+      });
+    }
+  }, [map, results, fitNonce, onDeleteResult, onKeepOnlyResult]);
+
+  return null;
+}
+
+function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes, enableQueries }) {
   const map = useMap();
   const markersRef = useRef(markers);
   const onQueryRecordsRef = useRef(onQueryRecords);
@@ -590,7 +795,9 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
     function clearDrawnShapes() {
       drawnItems.clearLayers();
       onShapesChangeRef.current(false);
-      onClearQueryRef.current();
+      if (enableQueries) {
+        onClearQueryRef.current();
+      }
     }
 
     registerClearShapesRef.current(clearDrawnShapes);
@@ -643,10 +850,12 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
         const squareMiles = areaSqMeters * 0.000000386102159;
         const recordIds = queryMarkersInPolygon(markersRef.current, polygonFeature);
 
-        onQueryRecordsRef.current({
-          label: "Polygon Query",
-          recordIds
-        });
+        if (enableQueries) {
+          onQueryRecordsRef.current({
+            label: "Polygon Query",
+            recordIds
+          });
+        }
 
         layer.bindPopup(
           buildShapePopup("Polygon", [
@@ -665,10 +874,12 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
         const areaSqMeters = Math.PI * radiusMeters * radiusMeters;
         const recordIds = queryMarkersInCircle(map, markersRef.current, center, radiusMeters);
 
-        onQueryRecordsRef.current({
-          label: "Circle Query",
-          recordIds
-        });
+        if (enableQueries) {
+          onQueryRecordsRef.current({
+            label: "Circle Query",
+            recordIds
+          });
+        }
 
         layer.bindPopup(
           buildShapePopup("Circle", [
@@ -683,7 +894,9 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
 
     function handleDeleted() {
       onShapesChangeRef.current(drawnItems.getLayers().length > 0);
-      onClearQueryRef.current();
+      if (enableQueries) {
+        onClearQueryRef.current();
+      }
     }
 
     map.on(L.Draw.Event.CREATED, handleCreated);
@@ -697,7 +910,7 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
       map.removeLayer(drawnItems);
       registerClearShapesRef.current(null);
     };
-  }, [map]);
+  }, [map, enableQueries]);
 
   return null;
 }
@@ -1009,9 +1222,14 @@ function App() {
     animate: false
   });
   const [homeMarker, setHomeMarker] = useState(null);
+  const [geocodeResults, setGeocodeResults] = useState([]);
+  const [geocodeFitNonce, setGeocodeFitNonce] = useState(0);
   const [geocodeQuery, setGeocodeQuery] = useState("");
   const [geocodeBusy, setGeocodeBusy] = useState(false);
   const [geocodeError, setGeocodeError] = useState("");
+  const [geocodeSuggestions, setGeocodeSuggestions] = useState([]);
+  const [showGeocodeSuggestions, setShowGeocodeSuggestions] = useState(false);
+  const [shouldFitLoadedDataset, setShouldFitLoadedDataset] = useState(false);
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1115,6 +1333,7 @@ function App() {
   }, [applyQuerySelection]);
 
   const applyLoadedDataset = useCallback((nextDataset) => {
+    const shouldFitToDataset = geocodeResults.length > 0;
     setDataset(nextDataset);
     setSelectedRecordId(nextDataset.records[0]?.id || "");
     shouldPanToSelectionRef.current = false;
@@ -1123,13 +1342,14 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
     setLoadWarning("");
+    setShouldFitLoadedDataset(shouldFitToDataset);
     setWindowViews((current) => ({
       ...current,
       results: "open",
       statistics: "hidden"
     }));
     setActiveWindow("results");
-  }, [getInitialColorField]);
+  }, [geocodeResults.length, getInitialColorField]);
 
   const resetLoadedDataset = useCallback(() => {
     setDataset(null);
@@ -1209,20 +1429,28 @@ function App() {
 
   const locateUserArea = useCallback(() => {
     if (!navigator.geolocation) {
+      setGeocodeError("Geolocation is not available in this browser.");
       return;
     }
 
     setHomeMarker(null);
+    setGeocodeResults([]);
+    setGeocodeBusy(true);
+    setGeocodeError("");
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setHomeViewport({
           center: [position.coords.latitude, position.coords.longitude],
-          zoom: 11,
+          zoom: position.coords.accuracy && position.coords.accuracy < 2000 ? 13 : 11,
           animate: true
         });
+        setGeocodeBusy(false);
       },
-      () => {},
+      () => {
+        setGeocodeBusy(false);
+        setGeocodeError("Unable to determine your current location.");
+      },
       {
         enableHighAccuracy: false,
         timeout: 8000,
@@ -1243,6 +1471,25 @@ function App() {
     setGeocodeError("");
 
     try {
+      const directCoordinates = parseDecimalDegrees(query);
+      if (directCoordinates) {
+        setGeocodeResults([
+          {
+            id: `geocode-direct-${Date.now()}`,
+            query,
+            label: query,
+            latitude: directCoordinates.latitude,
+            longitude: directCoordinates.longitude,
+            uncertaintyMeters: 0,
+            protocol: "Direct coordinate entry",
+            remarks: "Coordinates entered directly by the user"
+          }
+        ]);
+        setGeocodeFitNonce((current) => current + 1);
+        setHomeMarker(null);
+        return;
+      }
+
       const response = await fetch(`${geocodeSearchUrl}${encodeURIComponent(query)}`, {
         headers: {
           Accept: "application/json"
@@ -1254,35 +1501,45 @@ function App() {
       }
 
       const results = await response.json();
-      const match = results[0];
-      if (!match) {
+      if (!Array.isArray(results) || !results.length) {
         throw new Error("No matching location was found.");
       }
 
-      const latitude = Number.parseFloat(match.lat);
-      const longitude = Number.parseFloat(match.lon);
-      if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
-        throw new Error("The geocoder returned an invalid coordinate.");
+      const normalizedResults = results.map((result, index) => normalizeGeocodeResult(result, query, index)).filter(Boolean);
+
+      if (!normalizedResults.length) {
+        throw new Error("The geocoder returned no usable coordinates.");
       }
 
-      setHomeViewport({
-        center: [latitude, longitude],
-        zoom: 13,
-        animate: true
-      });
-      setHomeMarker({
-        latitude,
-        longitude,
-        label: match.display_name || query,
-        openPopup: true,
-        persist: true
-      });
+      setGeocodeResults(normalizedResults);
+      setGeocodeFitNonce((current) => current + 1);
+      setHomeMarker(null);
+      setGeocodeSuggestions([]);
+      setShowGeocodeSuggestions(false);
     } catch (nextError) {
       setGeocodeError(nextError.message || "Unable to geocode that location.");
     } finally {
       setGeocodeBusy(false);
     }
   }, [geocodeQuery]);
+
+  const handleGeocodeSuggestionSelect = useCallback((suggestion) => {
+    setGeocodeQuery(suggestion.label);
+    setGeocodeResults([suggestion]);
+    setGeocodeFitNonce((current) => current + 1);
+    setHomeMarker(null);
+    setGeocodeError("");
+    setGeocodeSuggestions([]);
+    setShowGeocodeSuggestions(false);
+  }, []);
+
+  const handleDeleteGeocodeResult = useCallback((resultId) => {
+    setGeocodeResults((current) => current.filter((result) => result.id !== resultId));
+  }, []);
+
+  const handleKeepOnlyGeocodeResult = useCallback((resultId) => {
+    setGeocodeResults((current) => current.filter((result) => result.id === resultId));
+  }, []);
 
   useEffect(() => {
     if (form.tabfile || form.configfile) {
@@ -1293,6 +1550,56 @@ function App() {
     locateUserArea();
     // Initial load is driven once from URL parameters. Other loads happen through explicit UI actions.
   }, []);
+
+  useEffect(() => {
+    if (dataset) {
+      setGeocodeSuggestions([]);
+      setShowGeocodeSuggestions(false);
+      return;
+    }
+
+    const query = geocodeQuery.trim();
+    if (query.length < 3 || parseDecimalDegrees(query)) {
+      setGeocodeSuggestions([]);
+      setShowGeocodeSuggestions(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`${geocodeSearchUrl}${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const results = await response.json();
+        const suggestions = Array.isArray(results)
+          ? results.map((result, index) => normalizeGeocodeResult(result, query, index)).filter(Boolean)
+          : [];
+        setGeocodeSuggestions(suggestions);
+        setShowGeocodeSuggestions(Boolean(suggestions.length));
+      } catch (nextError) {
+        if (nextError.name === "AbortError") {
+          return;
+        }
+
+        setGeocodeSuggestions([]);
+        setShowGeocodeSuggestions(false);
+      }
+    }, 280);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [dataset, geocodeQuery]);
 
   const records = dataset?.records || [];
   const columns = dataset?.columns || [];
@@ -1415,7 +1722,6 @@ function App() {
       : "Load a dataset to populate the legend.");
   const configFileText = dataset?.rawConfigText || "";
   const isEmptyLandingState = !dataset && !loading && !error && !loadWarning && !form.tabfile && !form.configfile;
-  const aboutWindowSummary = datasetName || "Static BerkeleyMapper overview";
   const aboutPermissionCopy = dataset?.source?.tabfile || dataset?.source?.configfile
     ? "This dataset was requested by passing tabfile/configfile URLs into BerkeleyMapper. The application assumes those URLs were supplied with permission to retrieve and display the data."
     : "When a tabfile and configfile are supplied to BerkeleyMapper, the application assumes it has permission to retrieve and display that material directly in the browser.";
@@ -1447,6 +1753,15 @@ function App() {
       window.clearTimeout(renderProgressFlushTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!shouldFitLoadedDataset || !mapInstance || !markers.length) {
+      return;
+    }
+
+    fitMapToMarkers(mapInstance, markers);
+    setShouldFitLoadedDataset(false);
+  }, [shouldFitLoadedDataset, mapInstance, markers]);
 
   const exportAllViewable = useCallback(() => {
     downloadTextFile(
@@ -1495,17 +1810,22 @@ function App() {
           />
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
-          {dataset ? (
-            <MapTools
-              markers={markers}
-              onQueryRecords={applyQuerySelection}
-              onClearQuery={clearActiveQuery}
-              onShapesChange={setHasDrawnShapes}
-              registerClearShapes={(callback) => {
-                clearShapesRef.current = callback;
-              }}
-            />
-          ) : null}
+          <MapGeocodeLayer
+            results={geocodeResults}
+            fitNonce={geocodeFitNonce}
+            onDeleteResult={handleDeleteGeocodeResult}
+            onKeepOnlyResult={handleKeepOnlyGeocodeResult}
+          />
+          <MapTools
+            markers={markers}
+            onQueryRecords={applyQuerySelection}
+            onClearQuery={clearActiveQuery}
+            onShapesChange={setHasDrawnShapes}
+            registerClearShapes={(callback) => {
+              clearShapesRef.current = callback;
+            }}
+            enableQueries={Boolean(dataset)}
+          />
           {dataset && pointDisplay !== "markers" ? (
             <MapViewport
               selectedMarker={selectedMarker}
@@ -1546,14 +1866,18 @@ function App() {
           </button>
         </div>
 
-        {dataset ? (
+        {dataset || hasDrawnShapes ? (
           <div className="bm-action-controls">
-            <button type="button" className="bm-map-toolbar-button" title="Zoom to all mapped points" onClick={handleZoomAll}>
-              All
-            </button>
-            <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
-              Results
-            </button>
+            {dataset ? (
+              <button type="button" className="bm-map-toolbar-button" title="Zoom to all mapped points" onClick={handleZoomAll}>
+                All
+              </button>
+            ) : null}
+            {dataset ? (
+              <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
+                Results
+              </button>
+            ) : null}
             {hasDrawnShapes ? (
               <button type="button" className="bm-map-toolbar-button" title="Remove drawn shapes" onClick={clearDrawnShapes}>
                 Trash
@@ -1584,10 +1908,11 @@ function App() {
             </section>
 
             <section className="panel-section">
-              <h2>About</h2>
-              <button type="button" className="config-link-button" onClick={() => setWindowView("config", "open")}>
-                About This Application
-              </button>
+              <h2>
+                <button type="button" className="section-title-link" onClick={() => setWindowView("config", "fullscreen")}>
+                  About This Application
+                </button>
+              </h2>
               {loadWarning ? (
                 <p className="legend-copy processing-copy">
                   Unable to Load Data
@@ -1607,26 +1932,48 @@ function App() {
               <h2>Geocode</h2>
               <form className="geocode-form" onSubmit={handleGeocodeSubmit}>
                 <label>
-                  Find a place or address
+                  Find a place, address, or coordinates
                   <input
                     type="text"
                     value={geocodeQuery}
                     onChange={(event) => setGeocodeQuery(event.target.value)}
-                    placeholder="Berkeley, California"
+                    onFocus={() => {
+                      if (geocodeSuggestions.length) {
+                        setShowGeocodeSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      window.setTimeout(() => setShowGeocodeSuggestions(false), 120);
+                    }}
+                    placeholder="Berkeley, California or 37.87 -122.27"
                   />
                 </label>
+                {showGeocodeSuggestions && geocodeSuggestions.length ? (
+                  <div className="geocode-suggestions" role="listbox" aria-label="Geocode suggestions">
+                    {geocodeSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        type="button"
+                        className="geocode-suggestion"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          handleGeocodeSuggestionSelect(suggestion);
+                        }}
+                      >
+                        {suggestion.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="panel-actions">
                   <button type="submit" disabled={geocodeBusy}>
-                    {geocodeBusy ? "Searching..." : "Search"}
+                    {geocodeBusy ? "Searching..." : "Geocode"}
                   </button>
-                  <button type="button" className="secondary" onClick={locateUserArea}>
+                  <button type="button" className="secondary" onClick={locateUserArea} disabled={geocodeBusy}>
                     Use My Location
                   </button>
                 </div>
               </form>
-              <p className="legend-copy geocode-note">
-                Search uses OpenStreetMap Nominatim and centers the map on the first match.
-              </p>
               {geocodeError ? <p className="status-banner error">{geocodeError}</p> : null}
             </section>
 
@@ -1679,17 +2026,6 @@ function App() {
                   ) : null}
                 </section>
 
-                <section className="panel-section">
-                  <h2>Legend</h2>
-                  {datasetName ? <p className="meta-title">{datasetName}</p> : null}
-                  <div
-                    className="legend-copy"
-                    dangerouslySetInnerHTML={{
-                      __html: legendHtml
-                    }}
-                  />
-                </section>
-
                 {dynamicColorLegend.length ? (
                   <section className="panel-section">
                     <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
@@ -1703,23 +2039,6 @@ function App() {
                     </div>
                   </section>
                 ) : null}
-
-                <section className="panel-section">
-                  <h2>Map Tools</h2>
-                  <p className="legend-copy">
-                    Use the map toolbar to draw polylines, circles, and polygons. Line and area measurements open in a popup,
-                    and polygon or circle drawings filter the results table to matching records.
-                  </p>
-                  {activeQuery ? (
-                    <div className="query-status">
-                      <strong>{activeQuery.label}</strong>
-                      <span>{formatCount(activeQuery.recordIds.length)} matching records</span>
-                      <button type="button" className="secondary" onClick={clearActiveQuery}>
-                        Clear Query
-                      </button>
-                    </div>
-                  ) : null}
-                </section>
 
                 <section className="panel-section">
                   <h2>Actions</h2>
@@ -1958,7 +2277,7 @@ function App() {
             <div className="window-titlebar">
               <div className="window-titletext">
                 <strong>About This Application</strong>
-                <span>{aboutWindowSummary}</span>
+                {datasetName ? <span>{datasetName}</span> : null}
               </div>
               <div className="window-controls">
                 <button type="button" className="results-control-button" onClick={() => setWindowView("config", "minimized")} aria-label="Minimize configuration panel">
@@ -1984,32 +2303,116 @@ function App() {
             </div>
 
             <div className="window-content config-content">
-              <div className="help-content">
-                <p>
-                  BerkeleyMapper is a static browser application that reads a BerkeleyMapper XML configuration file together
-                  with a tab-delimited data file, then renders the resulting records on the map, in the results table, and in
-                  the statistics views.
-                </p>
-                <p>{aboutPermissionCopy}</p>
-                <p>
-                  When a dataset loads successfully, the browser parses the XML concepts, field visibility, ordering, marker
-                  colors, logos, layers, and metadata directly on the client side. Large interactive work such as clustering,
-                  placemarks, popups, and spatial query filtering also stays in the user&apos;s browser.
-                </p>
-                <p>
-                  This branch expects remote data sources to be CORS-friendly. If a host blocks cross-origin requests, the app
-                  will stop the load and show an explicit warning instead of silently falling back to a server-side proxy.
-                </p>
-                <p>
-                  Current sources:
-                  <br />
-                  <code>tabfile</code>: {dataset?.source?.tabfile || "Not loaded"}
-                  <br />
-                  <code>configfile</code>: {dataset?.source?.configfile || "Not loaded"}
-                </p>
-                <p><strong>Configuration file currently in use</strong></p>
+              <div className="about-content">
+                <section className="about-hero">
+                  <img src={brandLogo} alt="BerkeleyMapper" className="about-hero-logo" />
+                  <div className="about-hero-copy">
+                    <p>
+                      BerkeleyMapper reads a BerkeleyMapper XML configuration file together with a tab-delimited data file,
+                      then renders the records on the map, in the results window, and in the statistics tools.
+                    </p>
+                    <p>{aboutPermissionCopy}</p>
+                  </div>
+                </section>
+
+                <section className="about-grid">
+                  <article className="about-card">
+                    <h4>1. Start With A Dataset</h4>
+                    <p>
+                      Use a <strong>tabfile</strong> and <strong>configfile</strong> in the URL, or use <strong>Load Arctos Demo</strong>.
+                      The browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly from
+                      the XML configuration.
+                    </p>
+                  </article>
+
+                  <article className="about-card">
+                    <h4>2. Move Around The Map</h4>
+                    <div className="about-toolbar about-toolbar-vertical">
+                      <span className="about-tool about-tool-square">+</span>
+                      <span className="about-tool about-tool-square">-</span>
+                    </div>
+                    <p>
+                      Use the zoom controls at upper left to move in and out. After a dataset is loaded, <strong>All</strong> fits
+                      the map to the full result set and <strong>Results</strong> reopens the bottom results window.
+                    </p>
+                  </article>
+
+                  <article className="about-card">
+                    <h4>3. Measure And Draw</h4>
+                    <div className="about-toolbar">
+                      <span className="about-tool about-tool-line" />
+                      <span className="about-tool about-tool-poly" />
+                      <span className="about-tool about-tool-circle" />
+                    </div>
+                    <p>
+                      The top-center shape tools are available immediately. Draw a line to measure distance, or draw a polygon
+                      or circle to measure area and define a spatial query.
+                    </p>
+                  </article>
+
+                  <article className="about-card">
+                    <h4>4. Run Spatial Queries</h4>
+                    <div className="about-toolbar">
+                      <span className="about-chip">Polygon Query</span>
+                      <span className="about-chip">Circle Query</span>
+                    </div>
+                    <p>
+                      Once records are loaded, polygon and circle drawings filter the dataset to the matching records. Use
+                      <strong>Clear</strong> to remove the active subset, or <strong>Trash</strong> to remove drawn shapes.
+                    </p>
+                  </article>
+
+                  <article className="about-card">
+                    <h4>5. Inspect Records</h4>
+                    <div className="about-toolbar">
+                      <span className="about-chip">Results</span>
+                      <span className="about-chip">Statistics</span>
+                      <span className="about-chip">Export KML</span>
+                    </div>
+                    <p>
+                      Use the bottom windows to browse records, review statistics for the current subset, and export the
+                      currently viewable records or KML.
+                    </p>
+                  </article>
+
+                  <article className="about-card">
+                    <h4>6. Geocode Places</h4>
+                    <div className="about-toolbar about-toolbar-vertical">
+                      <span className="about-chip">Geocode</span>
+                      <span className="about-chip">Use My Location</span>
+                    </div>
+                    <p>
+                      The geocode panel can search places, addresses, or direct coordinates. Candidate results are drawn on the
+                      map with markers and uncertainty circles, and each result can be deleted, isolated, or zoomed.
+                    </p>
+                  </article>
+                </section>
+
+                <section className="about-note">
+                  <h4>Browser Loading</h4>
+                  <p>
+                    This build expects remote data sources to be CORS-friendly. If a host blocks cross-origin requests,
+                    BerkeleyMapper shows <strong>Unable to Load Data</strong> rather than silently switching to server-side
+                    processing.
+                  </p>
+                </section>
+
+                <section className="about-note">
+                  <h4>Current Sources</h4>
+                  <p>
+                    <code>tabfile</code>: {dataset?.source?.tabfile || "Not loaded"}
+                    <br />
+                    <code>configfile</code>: {dataset?.source?.configfile || "Not loaded"}
+                  </p>
+                </section>
+
+                <section className="about-note">
+                  <h4>Configuration File Currently In Use</h4>
+                  <pre className="config-file-view config-file-view-inline">
+                    {configFileText || "No configuration file is currently loaded."}
+                  </pre>
+                </section>
               </div>
-              <pre className="config-file-view">{configFileText || "No configuration file is currently loaded."}</pre>
             </div>
           </section>
         ) : null}
