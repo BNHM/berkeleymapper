@@ -40,6 +40,15 @@ const numberFormatter = new Intl.NumberFormat();
 const clientLoadHostAllowlist = new Set([
   "raw.githubusercontent.com"
 ]);
+const serverProcessingHelpText = [
+  "This dataset is using server-based processing because the source host is not available for direct browser loading.",
+  "To enable browser-side loading in the future, configure the data host to allow CORS for:",
+  "https://berkeleymapper2.netlify.app",
+  "https://berkeleymapper.netlify.app",
+  "https://berkeleymapper.org",
+  "Optional API keys are stored locally in this browser and are sent with server-based load requests for future integrations."
+].join("\n");
+const apiKeyStorageKey = "berkeleymapper.serverApiKey";
 
 function canClientFetchUrl(url) {
   if (!url) {
@@ -78,6 +87,10 @@ function buildInitialForm() {
     tabfile: params.get("tabfile") || "",
     configfile: params.get("configfile") || ""
   };
+}
+
+function buildInitialApiKey() {
+  return window.localStorage.getItem(apiKeyStorageKey) || "";
 }
 
 function stripHtml(value) {
@@ -926,6 +939,8 @@ function App() {
   const [statisticsColumnName, setStatisticsColumnName] = useState("");
   const [mapInstance, setMapInstance] = useState(null);
   const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
+  const [loadPath, setLoadPath] = useState("");
+  const [serverApiKey, setServerApiKey] = useState(buildInitialApiKey);
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1046,6 +1061,7 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
+    setLoadPath("");
   }, []);
 
   const loadDatasetFromClientFiles = useCallback(async (payload) => {
@@ -1073,10 +1089,12 @@ function App() {
     try {
       let data = null;
       let clientLoadError = null;
+      let resolvedLoadPath = "server";
 
       if (shouldAttemptClientLoad(payload)) {
         try {
           data = await loadDatasetFromClientFiles(payload);
+          resolvedLoadPath = "client";
         } catch (nextError) {
           clientLoadError = nextError;
         }
@@ -1086,9 +1104,13 @@ function App() {
         const response = await fetch("/api/load", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...(serverApiKey ? { "X-BerkeleyMapper-Api-Key": serverApiKey } : {})
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            ...payload,
+            apiKey: serverApiKey || ""
+          })
         });
         data = await response.json();
 
@@ -1104,6 +1126,7 @@ function App() {
       }
 
       applyLoadedDataset(data);
+      setLoadPath(resolvedLoadPath);
     } catch (nextError) {
       setError(nextError.message);
       resetLoadedDataset();
@@ -1122,6 +1145,7 @@ function App() {
       setForm(arctosDemo);
       const demoDataset = await loadDatasetFromClientFiles(arctosDemo);
       applyLoadedDataset(demoDataset);
+      setLoadPath("client");
     } catch (nextError) {
       setError(nextError.message);
       resetLoadedDataset();
@@ -1143,6 +1167,7 @@ function App() {
   const columns = dataset?.columns || [];
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
   const colorConfig = dataset?.colorConfig || null;
+  const isServerProcessing = loadPath === "server";
   const colorFields = dataset?.colorFields || [];
   const availableColorFields = useMemo(() => {
     const merged = new Map();
@@ -1267,6 +1292,10 @@ function App() {
     }
   }, [activeWindow, windowViews]);
 
+  useEffect(() => {
+    window.localStorage.setItem(apiKeyStorageKey, serverApiKey);
+  }, [serverApiKey]);
+
   useEffect(() => () => {
     if (renderProgressFlushTimeoutRef.current) {
       window.clearTimeout(renderProgressFlushTimeoutRef.current);
@@ -1300,6 +1329,14 @@ function App() {
   return (
     <main className="mapper-shell">
       <div className={`map-stage ${sidebarOpen ? "is-sidebar-open" : ""}`}>
+        {isServerProcessing ? (
+          <div className="processing-banner" role="status">
+            <span>This dataset is using server-based processing.</span>
+            <span className="processing-banner-help" title={serverProcessingHelpText} aria-label="More information about server-based processing">
+              ?
+            </span>
+          </div>
+        ) : null}
         <MapContainer center={defaultCenter} zoom={defaultZoom} scrollWheelZoom zoomControl={false} className="map-canvas">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -1388,6 +1425,23 @@ function App() {
                   {loading ? "Loading..." : "Load Arctos Demo"}
                 </button>
               </div>
+            </section>
+
+            <section className="panel-section">
+              <h2>Server Processing</h2>
+              <label>
+                API Key
+                <input
+                  type="password"
+                  value={serverApiKey}
+                  onChange={(event) => setServerApiKey(event.target.value)}
+                  placeholder="Optional"
+                  autoComplete="off"
+                />
+              </label>
+              <p className="legend-copy tool-note">
+                Stored only in this browser and sent with server-based load requests for future integrations.
+              </p>
             </section>
 
             {dataset?.logos?.length ? (
