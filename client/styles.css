@@ -140,6 +140,21 @@ a:hover {
   flex: 0 0 auto;
 }
 
+.processing-help-button.text-link {
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .legend-panel {
   position: absolute;
   top: 0;
@@ -296,6 +311,16 @@ a:hover {
   align-items: flex-start;
   gap: 8px;
   margin: 0;
+}
+
+.geocode-form {
+  display: grid;
+  gap: 8px;
+}
+
+.geocode-note {
+  margin: 8px 0 0;
+  color: #555;
 }
 
 .config-link-button {

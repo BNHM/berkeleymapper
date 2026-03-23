@@ -37,11 +37,12 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
-const serverProcessingCorsOrigins = [
+const browserCorsOrigins = [
   "https://berkeleymapper2.netlify.app",
   "https://berkeleymapper.netlify.app",
   "https://berkeleymapper.org"
 ];
+const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&q=";
 
 function shouldAttemptClientLoad(payload) {
   return Boolean(payload?.tabfile) && !payload?.tabdata;
@@ -75,7 +76,7 @@ function buildCorsWarningMessage(payload) {
     return "";
   }
 
-  return "Direct browser loading failed. This static build requires CORS on the remote tabfile/configfile URLs.";
+  return "Unable to Load Data";
 }
 
 async function fetchRequiredText(url, label) {
@@ -484,6 +485,59 @@ function MapInstanceBridge({ onMapReady }) {
       onMapReady(null);
     };
   }, [map, onMapReady]);
+
+  return null;
+}
+
+function MapHomeViewport({ viewport, marker }) {
+  const map = useMap();
+  const markerRef = useRef(null);
+
+  useEffect(() => {
+    if (!viewport) {
+      return;
+    }
+
+    map.setView(viewport.center, viewport.zoom, {
+      animate: viewport.animate !== false
+    });
+  }, [map, viewport]);
+
+  useEffect(() => {
+    if (!marker) {
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+      return;
+    }
+
+    if (!markerRef.current) {
+      markerRef.current = L.marker([marker.latitude, marker.longitude]);
+      markerRef.current.addTo(map);
+    } else {
+      markerRef.current.setLatLng([marker.latitude, marker.longitude]);
+    }
+
+    markerRef.current.bindPopup(escapeHtml(marker.label || "Selected location"));
+    if (marker.openPopup) {
+      markerRef.current.openPopup();
+    }
+
+    return () => {
+      if (markerRef.current && !marker.persist) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
+    };
+  }, [map, marker]);
+
+  useEffect(() => () => {
+    if (markerRef.current) {
+      map.removeLayer(markerRef.current);
+      markerRef.current = null;
+    }
+  }, [map]);
 
   return null;
 }
@@ -934,12 +988,12 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [windowViews, setWindowViews] = useState({
-    results: "open",
+    results: "hidden",
     statistics: "hidden",
     config: "hidden",
     help: "hidden"
   });
-  const [activeWindow, setActiveWindow] = useState("results");
+  const [activeWindow, setActiveWindow] = useState("help");
   const [selectedRecordId, setSelectedRecordId] = useState("");
   const [colorBy, setColorBy] = useState("");
   const [pointDisplay, setPointDisplay] = useState("clustered");
@@ -949,6 +1003,15 @@ function App() {
   const [mapInstance, setMapInstance] = useState(null);
   const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
   const [loadWarning, setLoadWarning] = useState("");
+  const [homeViewport, setHomeViewport] = useState({
+    center: defaultCenter,
+    zoom: defaultZoom,
+    animate: false
+  });
+  const [homeMarker, setHomeMarker] = useState(null);
+  const [geocodeQuery, setGeocodeQuery] = useState("");
+  const [geocodeBusy, setGeocodeBusy] = useState(false);
+  const [geocodeError, setGeocodeError] = useState("");
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1060,6 +1123,12 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
     setLoadWarning("");
+    setWindowViews((current) => ({
+      ...current,
+      results: "open",
+      statistics: "hidden"
+    }));
+    setActiveWindow("results");
   }, [getInitialColorField]);
 
   const resetLoadedDataset = useCallback(() => {
@@ -1071,6 +1140,11 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
     setLoadWarning("");
+    setWindowViews((current) => ({
+      ...current,
+      results: "hidden",
+      statistics: "hidden"
+    }));
   }, []);
 
   const loadDatasetFromClientFiles = useCallback(async (payload) => {
@@ -1107,7 +1181,7 @@ function App() {
       const corsWarning = crossOriginRequest && isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(payload) : "";
       resetLoadedDataset();
       setLoadWarning(corsWarning);
-      setError(corsWarning || nextError.message);
+      setError(corsWarning ? "" : nextError.message);
     } finally {
       if (manageLoading) {
         setLoading(false);
@@ -1127,19 +1201,97 @@ function App() {
       const corsWarning = isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(arctosDemo) : "";
       resetLoadedDataset();
       setLoadWarning(corsWarning);
-      setError(corsWarning || nextError.message);
+      setError(corsWarning ? "" : nextError.message);
     } finally {
       setLoading(false);
     }
   }
 
+  const locateUserArea = useCallback(() => {
+    if (!navigator.geolocation) {
+      return;
+    }
+
+    setHomeMarker(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setHomeViewport({
+          center: [position.coords.latitude, position.coords.longitude],
+          zoom: 11,
+          animate: true
+        });
+      },
+      () => {},
+      {
+        enableHighAccuracy: false,
+        timeout: 8000,
+        maximumAge: 300000
+      }
+    );
+  }, []);
+
+  const handleGeocodeSubmit = useCallback(async (event) => {
+    event.preventDefault();
+    const query = geocodeQuery.trim();
+    if (!query) {
+      setGeocodeError("Enter an address or place name.");
+      return;
+    }
+
+    setGeocodeBusy(true);
+    setGeocodeError("");
+
+    try {
+      const response = await fetch(`${geocodeSearchUrl}${encodeURIComponent(query)}`, {
+        headers: {
+          Accept: "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Geocode search failed: ${response.status} ${response.statusText}`);
+      }
+
+      const results = await response.json();
+      const match = results[0];
+      if (!match) {
+        throw new Error("No matching location was found.");
+      }
+
+      const latitude = Number.parseFloat(match.lat);
+      const longitude = Number.parseFloat(match.lon);
+      if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+        throw new Error("The geocoder returned an invalid coordinate.");
+      }
+
+      setHomeViewport({
+        center: [latitude, longitude],
+        zoom: 13,
+        animate: true
+      });
+      setHomeMarker({
+        latitude,
+        longitude,
+        label: match.display_name || query,
+        openPopup: true,
+        persist: true
+      });
+    } catch (nextError) {
+      setGeocodeError(nextError.message || "Unable to geocode that location.");
+    } finally {
+      setGeocodeBusy(false);
+    }
+  }, [geocodeQuery]);
+
   useEffect(() => {
-    if (form.tabfile) {
+    if (form.tabfile || form.configfile) {
       loadDataset(form);
       return;
     }
 
-    loadDemoDataset();
+    locateUserArea();
+    // Initial load is driven once from URL parameters. Other loads happen through explicit UI actions.
   }, []);
 
   const records = dataset?.records || [];
@@ -1262,7 +1414,11 @@ function App() {
       ? "No legend text defined for this configuration."
       : "Load a dataset to populate the legend.");
   const configFileText = dataset?.rawConfigText || "";
-  const configWindowSummary = dataset?.source?.configfile || "Raw XML configuration";
+  const isEmptyLandingState = !dataset && !loading && !error && !loadWarning && !form.tabfile && !form.configfile;
+  const aboutWindowSummary = datasetName || "Static BerkeleyMapper overview";
+  const aboutPermissionCopy = dataset?.source?.tabfile || dataset?.source?.configfile
+    ? "This dataset was requested by passing tabfile/configfile URLs into BerkeleyMapper. The application assumes those URLs were supplied with permission to retrieve and display the data."
+    : "When a tabfile and configfile are supplied to BerkeleyMapper, the application assumes it has permission to retrieve and display that material directly in the browser.";
 
   useEffect(() => {
     if (!statisticsColumns.length) {
@@ -1324,11 +1480,11 @@ function App() {
             <span>{loadWarning}</span>
             <button
               type="button"
-              className="processing-help-button"
+              className="processing-help-button text-link"
               onClick={() => setWindowView("help", "open")}
               aria-label="Open help about CORS requirements"
             >
-              ?
+              read more
             </button>
           </div>
         ) : null}
@@ -1338,23 +1494,26 @@ function App() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapInstanceBridge onMapReady={setMapInstance} />
-          <MapTools
-            markers={markers}
-            onQueryRecords={applyQuerySelection}
-            onClearQuery={clearActiveQuery}
-            onShapesChange={setHasDrawnShapes}
-            registerClearShapes={(callback) => {
-              clearShapesRef.current = callback;
-            }}
-          />
-          {pointDisplay !== "markers" ? (
+          {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
+          {dataset ? (
+            <MapTools
+              markers={markers}
+              onQueryRecords={applyQuerySelection}
+              onClearQuery={clearActiveQuery}
+              onShapesChange={setHasDrawnShapes}
+              registerClearShapes={(callback) => {
+                clearShapesRef.current = callback;
+              }}
+            />
+          ) : null}
+          {dataset && pointDisplay !== "markers" ? (
             <MapViewport
               selectedMarker={selectedMarker}
               selectedRecordId={selectedRecordId}
               shouldPanToSelection={shouldPanToSelectionRef.current}
             />
           ) : null}
-          {pointDisplay === "markers" ? (
+          {dataset && pointDisplay === "markers" ? (
             <MapPointLayer
               markers={markers}
               displayedColumns={displayedColumns}
@@ -1364,7 +1523,7 @@ function App() {
               onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
-          ) : (
+          ) : dataset ? (
             <MapMarkerLayer
               markers={markers}
               displayedColumns={displayedColumns}
@@ -1375,7 +1534,7 @@ function App() {
               onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
-          )}
+          ) : null}
         </MapContainer>
 
         <div className="bm-zoom-controls">
@@ -1387,24 +1546,26 @@ function App() {
           </button>
         </div>
 
-        <div className="bm-action-controls">
-          <button type="button" className="bm-map-toolbar-button" title="Zoom to all mapped points" onClick={handleZoomAll}>
-            All
-          </button>
-          <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
-            Results
-          </button>
-          {hasDrawnShapes ? (
-            <button type="button" className="bm-map-toolbar-button" title="Remove drawn shapes" onClick={clearDrawnShapes}>
-              Trash
+        {dataset ? (
+          <div className="bm-action-controls">
+            <button type="button" className="bm-map-toolbar-button" title="Zoom to all mapped points" onClick={handleZoomAll}>
+              All
             </button>
-          ) : null}
-          {activeQuery ? (
-            <button type="button" className="bm-map-toolbar-button" title="Clear active query" onClick={clearActiveQuery}>
-              Clear
+            <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
+              Results
             </button>
-          ) : null}
-        </div>
+            {hasDrawnShapes ? (
+              <button type="button" className="bm-map-toolbar-button" title="Remove drawn shapes" onClick={clearDrawnShapes}>
+                Trash
+              </button>
+            ) : null}
+            {activeQuery ? (
+              <button type="button" className="bm-map-toolbar-button" title="Clear active query" onClick={clearActiveQuery}>
+                Clear
+              </button>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className={`sidebar-toggle ${sidebarOpen ? "is-open" : ""}`}>
           <button type="button" onClick={() => setSidebarOpen((current) => !current)} aria-label="Toggle legend panel">
@@ -1423,23 +1584,50 @@ function App() {
             </section>
 
             <section className="panel-section">
-              <h2>Browser Loading</h2>
-              <p className="legend-copy processing-copy">
-                This static build loads datasets directly in your browser.
-                <button
-                  type="button"
-                  className="processing-help-button"
-                  onClick={() => setWindowView("help", "open")}
-                  aria-label="Open help about browser loading and CORS"
-                >
-                  ?
-                </button>
-              </p>
-              {configFileText ? (
-                <button type="button" className="config-link-button" onClick={() => setWindowView("config", "open")}>
-                  Map Configuration File
-                </button>
+              <h2>About</h2>
+              <button type="button" className="config-link-button" onClick={() => setWindowView("config", "open")}>
+                About This Application
+              </button>
+              {loadWarning ? (
+                <p className="legend-copy processing-copy">
+                  Unable to Load Data
+                  <button
+                    type="button"
+                    className="processing-help-button text-link"
+                    onClick={() => setWindowView("help", "open")}
+                    aria-label="Open help about browser loading and CORS"
+                  >
+                    read more
+                  </button>
+                </p>
               ) : null}
+            </section>
+
+            <section className="panel-section">
+              <h2>Geocode</h2>
+              <form className="geocode-form" onSubmit={handleGeocodeSubmit}>
+                <label>
+                  Find a place or address
+                  <input
+                    type="text"
+                    value={geocodeQuery}
+                    onChange={(event) => setGeocodeQuery(event.target.value)}
+                    placeholder="Berkeley, California"
+                  />
+                </label>
+                <div className="panel-actions">
+                  <button type="submit" disabled={geocodeBusy}>
+                    {geocodeBusy ? "Searching..." : "Search"}
+                  </button>
+                  <button type="button" className="secondary" onClick={locateUserArea}>
+                    Use My Location
+                  </button>
+                </div>
+              </form>
+              <p className="legend-copy geocode-note">
+                Search uses OpenStreetMap Nominatim and centers the map on the first match.
+              </p>
+              {geocodeError ? <p className="status-banner error">{geocodeError}</p> : null}
             </section>
 
             {dataset?.logos?.length ? (
@@ -1452,153 +1640,157 @@ function App() {
               </section>
             ) : null}
 
-            {error ? <p className="status-banner error">{error}</p> : null}
+            {!loadWarning && error ? <p className="status-banner error">{error}</p> : null}
             {!error && loading ? <p className="status-banner info">Loading Application ...</p> : null}
 
-            <section className="panel-section">
-              <h2>Display</h2>
-              <label>
-                Point Display
-                <select
-                  value={pointDisplay}
-                  onChange={(event) => {
-                    setPointDisplay(event.target.value);
-                  }}
-                >
-                  <option value="clustered">Marker Clusterer</option>
-                  <option value="markers">Placemarks</option>
-                </select>
-              </label>
-              {availableColorFields.length ? (
-                <label>
-                  Color By
-                  <select
-                    value={colorBy}
-                    onChange={(event) => {
-                      setColorBy(event.target.value);
+            {isEmptyLandingState ? null : dataset ? (
+              <>
+                <section className="panel-section">
+                  <h2>Display</h2>
+                  <label>
+                    Point Display
+                    <select
+                      value={pointDisplay}
+                      onChange={(event) => {
+                        setPointDisplay(event.target.value);
+                      }}
+                    >
+                      <option value="clustered">Marker Clusterer</option>
+                      <option value="markers">Placemarks</option>
+                    </select>
+                  </label>
+                  {availableColorFields.length ? (
+                    <label>
+                      Color By
+                      <select
+                        value={colorBy}
+                        onChange={(event) => {
+                          setColorBy(event.target.value);
+                        }}
+                      >
+                        <option value="">None</option>
+                        {availableColorFields.map((field) => (
+                          <option key={field.name} value={field.name}>
+                            {field.alias}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </section>
+
+                <section className="panel-section">
+                  <h2>Legend</h2>
+                  {datasetName ? <p className="meta-title">{datasetName}</p> : null}
+                  <div
+                    className="legend-copy"
+                    dangerouslySetInnerHTML={{
+                      __html: legendHtml
                     }}
-                  >
-                    <option value="">None</option>
-                    {availableColorFields.map((field) => (
-                      <option key={field.name} value={field.name}>
-                        {field.alias}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-            </section>
+                  />
+                </section>
 
-            <section className="panel-section">
-              <h2>Legend</h2>
-              {dataset ? (datasetName ? <p className="meta-title">{datasetName}</p> : null) : <p className="meta-title">No dataset loaded</p>}
-              <div
-                className="legend-copy"
-                dangerouslySetInnerHTML={{
-                  __html: legendHtml
-                }}
-              />
-            </section>
-
-            {dynamicColorLegend.length ? (
-              <section className="panel-section">
-                <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
-                <div className="color-list">
-                  {dynamicColorLegend.map((entry) => (
-                    <div className="color-row" key={entry.value}>
-                      <span className="marker-chip" style={{ backgroundColor: entry.color }} />
-                      <span>{entry.value}</span>
+                {dynamicColorLegend.length ? (
+                  <section className="panel-section">
+                    <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
+                    <div className="color-list">
+                      {dynamicColorLegend.map((entry) => (
+                        <div className="color-row" key={entry.value}>
+                          <span className="marker-chip" style={{ backgroundColor: entry.color }} />
+                          <span>{entry.value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </section>
+                  </section>
+                ) : null}
+
+                <section className="panel-section">
+                  <h2>Map Tools</h2>
+                  <p className="legend-copy">
+                    Use the map toolbar to draw polylines, circles, and polygons. Line and area measurements open in a popup,
+                    and polygon or circle drawings filter the results table to matching records.
+                  </p>
+                  {activeQuery ? (
+                    <div className="query-status">
+                      <strong>{activeQuery.label}</strong>
+                      <span>{formatCount(activeQuery.recordIds.length)} matching records</span>
+                      <button type="button" className="secondary" onClick={clearActiveQuery}>
+                        Clear Query
+                      </button>
+                    </div>
+                  ) : null}
+                </section>
+
+                <section className="panel-section">
+                  <h2>Actions</h2>
+                  <div className="panel-actions">
+                    <button type="button" onClick={() => setWindowView("statistics", "open")} disabled={!statisticsColumns.length}>
+                      Statistics
+                    </button>
+                    <button type="button" className="secondary" onClick={exportAllViewable} disabled={!records.length}>
+                      Download Viewable
+                    </button>
+                    <button type="button" className="secondary" onClick={exportQueryViewable} disabled={!recordsForResults.length}>
+                      Download Subset
+                    </button>
+                    <button type="button" className="secondary" onClick={exportQueryKml} disabled={!recordsForResults.length}>
+                      Export KML
+                    </button>
+                  </div>
+                  <p className="legend-copy tool-note">
+                    Statistics use the current result set. Downloads export the visible field order, and KML export follows the
+                    current subset.
+                  </p>
+                </section>
+
+                {dataset?.metadata?.disclaimer ? (
+                  <section className="panel-section">
+                    <h2>Disclaimer</h2>
+                    <div
+                      className="legend-copy disclaimer-copy"
+                      dangerouslySetInnerHTML={{
+                        __html: dataset.metadata.disclaimer
+                      }}
+                    />
+                  </section>
+                ) : null}
+
+                {dataset?.layers?.length ? (
+                  <section className="panel-section">
+                    <h2>Layers</h2>
+                    <div className="layer-list">
+                      {dataset.layers.map((layer) => (
+                        <a key={`${layer.title}-${layer.location}`} href={layer.location || layer.url} target="_blank" rel="noreferrer">
+                          {layer.title || layer.location}
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                <section className="panel-section metrics-panel">
+                  <h2>Summary</h2>
+                  <div className="metric-grid">
+                    <div className="metric-box">
+                      <span>Records</span>
+                      <strong>{dataset?.summary?.recordCount || 0}</strong>
+                    </div>
+                    <div className="metric-box">
+                      <span>Mapped Points</span>
+                      <strong>{dataset?.summary?.pointCount || 0}</strong>
+                    </div>
+                    <div className="metric-box">
+                      <span>Columns</span>
+                      <strong>{dataset?.summary?.columnCount || 0}</strong>
+                    </div>
+                    <div className="metric-box">
+                      <span>Visible Fields</span>
+                      <strong>{dataset?.summary?.visibleColumnCount || 0}</strong>
+                    </div>
+                  </div>
+                </section>
+              </>
             ) : null}
-
-            <section className="panel-section">
-              <h2>Map Tools</h2>
-              <p className="legend-copy">
-                Use the map toolbar to draw polylines, circles, and polygons. Line and area measurements open in a popup,
-                and polygon or circle drawings filter the results table to matching records.
-              </p>
-              {activeQuery ? (
-                <div className="query-status">
-                  <strong>{activeQuery.label}</strong>
-                  <span>{formatCount(activeQuery.recordIds.length)} matching records</span>
-                  <button type="button" className="secondary" onClick={clearActiveQuery}>
-                    Clear Query
-                  </button>
-                </div>
-              ) : null}
-            </section>
-
-            <section className="panel-section">
-              <h2>Actions</h2>
-              <div className="panel-actions">
-                <button type="button" onClick={() => setWindowView("statistics", "open")} disabled={!statisticsColumns.length}>
-                  Statistics
-                </button>
-                <button type="button" className="secondary" onClick={exportAllViewable} disabled={!records.length}>
-                  Download Viewable
-                </button>
-                <button type="button" className="secondary" onClick={exportQueryViewable} disabled={!recordsForResults.length}>
-                  Download Subset
-                </button>
-                <button type="button" className="secondary" onClick={exportQueryKml} disabled={!recordsForResults.length}>
-                  Export KML
-                </button>
-              </div>
-              <p className="legend-copy tool-note">
-                Statistics use the current result set. Downloads export the visible field order, and KML export follows the
-                current subset.
-              </p>
-            </section>
-
-            {dataset?.metadata?.disclaimer ? (
-              <section className="panel-section">
-                <h2>Disclaimer</h2>
-                <div
-                  className="legend-copy disclaimer-copy"
-                  dangerouslySetInnerHTML={{
-                    __html: dataset.metadata.disclaimer
-                  }}
-                />
-              </section>
-            ) : null}
-
-            {dataset?.layers?.length ? (
-              <section className="panel-section">
-                <h2>Layers</h2>
-                <div className="layer-list">
-                  {dataset.layers.map((layer) => (
-                    <a key={`${layer.title}-${layer.location}`} href={layer.location || layer.url} target="_blank" rel="noreferrer">
-                      {layer.title || layer.location}
-                    </a>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            <section className="panel-section metrics-panel">
-              <h2>Summary</h2>
-              <div className="metric-grid">
-                <div className="metric-box">
-                  <span>Records</span>
-                  <strong>{dataset?.summary?.recordCount || 0}</strong>
-                </div>
-                <div className="metric-box">
-                  <span>Mapped Points</span>
-                  <strong>{dataset?.summary?.pointCount || 0}</strong>
-                </div>
-                <div className="metric-box">
-                  <span>Columns</span>
-                  <strong>{dataset?.summary?.columnCount || 0}</strong>
-                </div>
-                <div className="metric-box">
-                  <span>Visible Fields</span>
-                  <strong>{dataset?.summary?.visibleColumnCount || 0}</strong>
-                </div>
-              </div>
-            </section>
           </div>
           <div className="legend-footer">
             <a href="https://github.com/BNHM/berkeleymapper" target="_blank" rel="noreferrer">
@@ -1765,8 +1957,8 @@ function App() {
           >
             <div className="window-titlebar">
               <div className="window-titletext">
-                <strong>Configuration File</strong>
-                <span>{configWindowSummary}</span>
+                <strong>About This Application</strong>
+                <span>{aboutWindowSummary}</span>
               </div>
               <div className="window-controls">
                 <button type="button" className="results-control-button" onClick={() => setWindowView("config", "minimized")} aria-label="Minimize configuration panel">
@@ -1792,7 +1984,32 @@ function App() {
             </div>
 
             <div className="window-content config-content">
-              <pre className="config-file-view">{configFileText}</pre>
+              <div className="help-content">
+                <p>
+                  BerkeleyMapper is a static browser application that reads a BerkeleyMapper XML configuration file together
+                  with a tab-delimited data file, then renders the resulting records on the map, in the results table, and in
+                  the statistics views.
+                </p>
+                <p>{aboutPermissionCopy}</p>
+                <p>
+                  When a dataset loads successfully, the browser parses the XML concepts, field visibility, ordering, marker
+                  colors, logos, layers, and metadata directly on the client side. Large interactive work such as clustering,
+                  placemarks, popups, and spatial query filtering also stays in the user&apos;s browser.
+                </p>
+                <p>
+                  This branch expects remote data sources to be CORS-friendly. If a host blocks cross-origin requests, the app
+                  will stop the load and show an explicit warning instead of silently falling back to a server-side proxy.
+                </p>
+                <p>
+                  Current sources:
+                  <br />
+                  <code>tabfile</code>: {dataset?.source?.tabfile || "Not loaded"}
+                  <br />
+                  <code>configfile</code>: {dataset?.source?.configfile || "Not loaded"}
+                </p>
+                <p><strong>Configuration file currently in use</strong></p>
+              </div>
+              <pre className="config-file-view">{configFileText || "No configuration file is currently loaded."}</pre>
             </div>
           </section>
         ) : null}
@@ -1838,7 +2055,7 @@ function App() {
               </p>
               <p>To enable browser-side loading, configure the dataset host to allow these origins:</p>
               <ul className="help-list">
-                {serverProcessingCorsOrigins.map((origin) => (
+                {browserCorsOrigins.map((origin) => (
                   <li key={origin}>{origin}</li>
                 ))}
               </ul>
@@ -1846,8 +2063,8 @@ function App() {
                 The files that need CORS enabled are the remote <code>tabfile</code> and <code>configfile</code> endpoints.
               </p>
               <p>
-                If a remote host does not return CORS headers, this static build cannot load that dataset directly in the
-                browser.
+                If a remote host does not return CORS headers, BerkeleyMapper will report <strong>Unable to Load Data</strong>{" "}
+                and stop before reading the dataset.
               </p>
             </div>
           </section>
