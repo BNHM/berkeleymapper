@@ -1333,7 +1333,6 @@ function App() {
   }, [applyQuerySelection]);
 
   const applyLoadedDataset = useCallback((nextDataset) => {
-    const shouldFitToDataset = geocodeResults.length > 0;
     setDataset(nextDataset);
     setSelectedRecordId(nextDataset.records[0]?.id || "");
     shouldPanToSelectionRef.current = false;
@@ -1342,14 +1341,14 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
     setLoadWarning("");
-    setShouldFitLoadedDataset(shouldFitToDataset);
+    setShouldFitLoadedDataset(true);
     setWindowViews((current) => ({
       ...current,
       results: "open",
       statistics: "hidden"
     }));
     setActiveWindow("results");
-  }, [geocodeResults.length, getInitialColorField]);
+  }, [getInitialColorField]);
 
   const resetLoadedDataset = useCallback(() => {
     setDataset(null);
