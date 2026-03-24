@@ -55,6 +55,15 @@ function toHex(red, green, blue) {
   return `#${clamp(red)}${clamp(green)}${clamp(blue)}`;
 }
 
+function decodeXmlEntities(value) {
+  return String(value || "")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", "\"")
+    .replaceAll("&#39;", "'");
+}
+
 function parseRecordLinkBack(recordLinkBackNode) {
   const linkback = recordLinkBackNode?.linkback || recordLinkBackNode;
 
@@ -73,7 +82,7 @@ function parseRecordLinkBack(recordLinkBackNode) {
 
   return {
     method: toText(linkback.method).toLowerCase(),
-    linkurl: toText(linkback.linkurl),
+    linkurl: decodeXmlEntities(toText(linkback.linkurl)),
     text: toText(linkback.text),
     fieldname: toText(linkback.fieldname) || "Link Back",
     keys
