@@ -977,6 +977,13 @@ a:hover {
   border: 1px solid #d8e1e9;
 }
 
+.help-content .config-file-view-inline {
+  max-height: none;
+  width: 100%;
+  white-space: pre-wrap;
+  word-break: normal;
+}
+
 .geojson-view {
   flex: 1;
   min-height: 0;
