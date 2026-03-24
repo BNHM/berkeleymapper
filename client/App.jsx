@@ -38,9 +38,8 @@ const markerPalette = [
 ];
 const numberFormatter = new Intl.NumberFormat();
 const browserCorsOrigins = [
-  "https://berkeleymapper2.netlify.app",
   "https://berkeleymapper.netlify.app",
-  "https://berkeleymapper.org"
+  "https://berkeleymapper.berkeley.edu"
 ];
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 
@@ -1249,6 +1248,10 @@ function App() {
   const [mapInstance, setMapInstance] = useState(null);
   const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
   const [loadWarning, setLoadWarning] = useState("");
+  const [loadWarningDetails, setLoadWarningDetails] = useState({
+    tabfile: "",
+    configfile: ""
+  });
   const [homeViewport, setHomeViewport] = useState({
     center: defaultCenter,
     zoom: defaultZoom,
@@ -1379,6 +1382,10 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
     setLoadWarning("");
+    setLoadWarningDetails({
+      tabfile: "",
+      configfile: ""
+    });
     setShouldFitLoadedDataset(true);
     setWindowViews((current) => ({
       ...current,
@@ -1397,6 +1404,10 @@ function App() {
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
     setLoadWarning("");
+    setLoadWarningDetails({
+      tabfile: "",
+      configfile: ""
+    });
     setWindowViews((current) => ({
       ...current,
       results: "hidden",
@@ -1438,6 +1449,13 @@ function App() {
       const corsWarning = crossOriginRequest && isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(payload) : "";
       resetLoadedDataset();
       setLoadWarning(corsWarning);
+      setLoadWarningDetails(corsWarning ? {
+        tabfile: payload?.tabfile || "",
+        configfile: payload?.configfile || ""
+      } : {
+        tabfile: "",
+        configfile: ""
+      });
       setError(corsWarning ? "" : nextError.message);
     } finally {
       if (manageLoading) {
@@ -1458,6 +1476,13 @@ function App() {
       const corsWarning = isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(arctosDemo) : "";
       resetLoadedDataset();
       setLoadWarning(corsWarning);
+      setLoadWarningDetails(corsWarning ? {
+        tabfile: arctosDemo.tabfile,
+        configfile: arctosDemo.configfile
+      } : {
+        tabfile: "",
+        configfile: ""
+      });
       setError(corsWarning ? "" : nextError.message);
     } finally {
       setLoading(false);
@@ -2596,6 +2621,20 @@ function App() {
                 Direct browser loading works only when the host serving the tab file and config file allows cross-origin
                 requests from BerkeleyMapper.
               </p>
+              {loadWarningDetails.tabfile || loadWarningDetails.configfile ? (
+                <>
+                  <p><strong>Exact failing request(s)</strong></p>
+                  <ul className="help-list">
+                    {loadWarningDetails.tabfile ? <li><code>tabfile</code>: {loadWarningDetails.tabfile}</li> : null}
+                    {loadWarningDetails.configfile ? <li><code>configfile</code>: {loadWarningDetails.configfile}</li> : null}
+                  </ul>
+                  <p><strong>Typical browser error</strong></p>
+                  <pre className="config-file-view config-file-view-inline">
+{`Access to fetch at '<url>' from origin '<your BerkeleyMapper site>' has been blocked by CORS policy:
+No 'Access-Control-Allow-Origin' header is present on the requested resource.`}
+                  </pre>
+                </>
+              ) : null}
               <p>To enable browser-side loading, configure the dataset host to allow these origins:</p>
               <ul className="help-list">
                 {browserCorsOrigins.map((origin) => (
@@ -2609,6 +2648,27 @@ function App() {
                 If a remote host does not return CORS headers, BerkeleyMapper will report <strong>Unable to Load Data</strong>{" "}
                 and stop before reading the dataset.
               </p>
+              <p><strong>Nginx example</strong></p>
+              <pre className="config-file-view config-file-view-inline">
+{`location / {
+    if ($http_origin ~* ^https://(berkeleymapper\\.netlify\\.app|berkeleymapper\\.berkeley\\.edu)$) {
+        add_header Access-Control-Allow-Origin $http_origin always;
+    }
+    add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
+    add_header Access-Control-Allow-Headers "Origin, Accept, Content-Type" always;
+    add_header Vary "Origin" always;
+}`}
+              </pre>
+              <p><strong>Apache example</strong></p>
+              <pre className="config-file-view config-file-view-inline">
+{`<IfModule mod_headers.c>
+    SetEnvIf Origin "^https://(berkeleymapper\\.netlify\\.app|berkeleymapper\\.berkeley\\.edu)$" ACAO=$0
+    Header always set Access-Control-Allow-Origin %{ACAO}e env=ACAO
+    Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Origin, Accept, Content-Type"
+    Header always set Vary "Origin"
+</IfModule>`}
+              </pre>
             </div>
           </section>
         ) : null}
