@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import turfArea from "@turf/area";
 import booleanPointInPolygon from "@turf/boolean-point-in-polygon";
-import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import { LayersControl, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
 import "leaflet.markercluster";
@@ -1873,10 +1873,26 @@ function App() {
           </div>
         ) : null}
         <MapContainer center={defaultCenter} zoom={defaultZoom} scrollWheelZoom zoomControl={false} className="map-canvas">
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
+          <LayersControl position="topright">
+            <LayersControl.BaseLayer checked name="Street Map">
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Topographic">
+              <TileLayer
+                attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+                url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+            <LayersControl.BaseLayer name="Imagery">
+              <TileLayer
+                attribution='Tiles &copy; Esri'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              />
+            </LayersControl.BaseLayer>
+          </LayersControl>
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
           <MapGeocodeLayer

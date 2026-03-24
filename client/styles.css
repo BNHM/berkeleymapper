@@ -545,9 +545,9 @@ a:hover {
 
 .bm-action-controls {
   position: fixed;
-  top: var(--bm-control-top);
-  right: 0;
-  left: auto;
+  top: calc(var(--bm-control-top) + 56px);
+  left: var(--bm-left-control-offset);
+  right: auto;
 }
 
 .bm-draw-controls {
@@ -555,6 +555,11 @@ a:hover {
   top: 0;
   left: calc(50vw + (var(--bm-sidebar-width) / 2));
   transform: translateX(-50%);
+}
+
+.leaflet-top.leaflet-right {
+  top: var(--bm-control-top);
+  right: 0;
 }
 
 .bm-draw-controls .leaflet-draw-toolbar {
