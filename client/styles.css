@@ -828,6 +828,12 @@ a:hover {
   background: #ffffff;
 }
 
+.geojson-content {
+  gap: 10px;
+  padding: 10px 12px 12px;
+  background: #ffffff;
+}
+
 .config-content {
   min-height: 0;
   background: #ffffff;
@@ -964,6 +970,11 @@ a:hover {
   margin-top: 10px;
   max-height: min(44vh, 360px);
   border: 1px solid #d8e1e9;
+}
+
+.geojson-view {
+  flex: 1;
+  min-height: 0;
 }
 
 .help-content {

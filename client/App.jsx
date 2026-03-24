@@ -562,6 +562,10 @@ function downloadTextFile(filename, content, mimeType) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+function serializeGeoJson(feature) {
+  return `${JSON.stringify(feature, null, 2)}\n`;
+}
+
 function MapViewport({ selectedMarker, selectedRecordId, shouldPanToSelection }) {
   const map = useMap();
 
@@ -747,13 +751,14 @@ function MapGeocodeLayer({ results, fitNonce, onDeleteResult, onKeepOnlyResult }
   return null;
 }
 
-function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes, enableQueries }) {
+function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes, enableQueries, onSaveGeoJson }) {
   const map = useMap();
   const markersRef = useRef(markers);
   const onQueryRecordsRef = useRef(onQueryRecords);
   const onClearQueryRef = useRef(onClearQuery);
   const onShapesChangeRef = useRef(onShapesChange);
   const registerClearShapesRef = useRef(registerClearShapes);
+  const onSaveGeoJsonRef = useRef(onSaveGeoJson);
 
   useEffect(() => {
     markersRef.current = markers;
@@ -761,7 +766,8 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
     onClearQueryRef.current = onClearQuery;
     onShapesChangeRef.current = onShapesChange;
     registerClearShapesRef.current = registerClearShapes;
-  }, [markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes]);
+    onSaveGeoJsonRef.current = onSaveGeoJson;
+  }, [markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes, onSaveGeoJson]);
 
   useEffect(() => {
     const drawnItems = new L.FeatureGroup();
@@ -807,17 +813,21 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
       return `${label} matched ${formatCount(count)} record${count === 1 ? "" : "s"}.`;
     }
 
-    function buildShapePopup(layerType, measurementRows, recordIds) {
+    function buildShapePopup(layerType, measurementRows, recordIds, options = {}) {
       const queryCopy =
         recordIds === null
           ? ""
           : `<div><strong>Query</strong>: ${escapeHtml(describeQueryResult("Spatial query", recordIds))}</div>`;
+      const actionCopy = options.includeGeoJsonAction
+        ? `<div class="popup-geocode-actions"><button type="button" data-shape-action="save-geojson">Save GeoJSON</button></div>`
+        : "";
 
       return `
         <div class="popup-body">
           <div><strong>Shape</strong>: ${escapeHtml(layerType)}</div>
           ${measurementRows.join("")}
           ${queryCopy}
+          ${actionCopy}
           <div>Use Trash with All and Results to remove shapes.</div>
         </div>
       `;
@@ -862,8 +872,30 @@ function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, regis
             `<div><strong>Sq Meters</strong>: ${escapeHtml(formatMeasure(areaSqMeters))}</div>`,
             `<div><strong>Acres</strong>: ${escapeHtml(formatMeasure(acres, 2))}</div>`,
             `<div><strong>Sq Miles</strong>: ${escapeHtml(formatMeasure(squareMiles, 5))}</div>`
-          ], recordIds)
+          ], recordIds, { includeGeoJsonAction: true })
         );
+        layer.on("popupopen", () => {
+          const popup = layer.getPopup();
+          const popupElement = popup?.getElement();
+          if (!popupElement) {
+            return;
+          }
+
+          const saveButton = popupElement.querySelector("[data-shape-action='save-geojson']");
+          if (!saveButton) {
+            return;
+          }
+
+          saveButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onSaveGeoJsonRef.current({
+              title: "Polygon Query",
+              filename: `polygon-query-${Date.now()}.geojson`,
+              text: serializeGeoJson(polygonFeature)
+            });
+          }, { once: true });
+        });
         layer.openPopup();
         return;
       }
@@ -1203,6 +1235,7 @@ function App() {
   const [windowViews, setWindowViews] = useState({
     results: "hidden",
     statistics: "hidden",
+    geojson: "hidden",
     config: "hidden",
     help: "hidden"
   });
@@ -1230,6 +1263,11 @@ function App() {
   const [geocodeSuggestions, setGeocodeSuggestions] = useState([]);
   const [showGeocodeSuggestions, setShowGeocodeSuggestions] = useState(false);
   const [shouldFitLoadedDataset, setShouldFitLoadedDataset] = useState(false);
+  const [geoJsonExport, setGeoJsonExport] = useState({
+    title: "",
+    filename: "shape.geojson",
+    text: ""
+  });
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1540,6 +1578,15 @@ function App() {
     setGeocodeResults((current) => current.filter((result) => result.id === resultId));
   }, []);
 
+  const handleSaveGeoJson = useCallback((payload) => {
+    setGeoJsonExport({
+      title: payload.title || "GeoJSON Export",
+      filename: payload.filename || "shape.geojson",
+      text: payload.text || ""
+    });
+    setWindowView("geojson", "open");
+  }, [setWindowView]);
+
   useEffect(() => {
     if (form.tabfile || form.configfile) {
       loadDataset(form);
@@ -1680,24 +1727,31 @@ function App() {
   const statisticsSummary = `${formatCount(recordsForResults.length)} records in scope`;
   const resultsView = windowViews.results;
   const statisticsView = windowViews.statistics;
+  const geoJsonView = windowViews.geojson;
   const configView = windowViews.config;
   const helpView = windowViews.help;
   const getDockedHeight = (view, openHeight) => (view === "open" ? openHeight : view === "minimized" ? "34px" : "0px");
   const resultsDockedHeight = getDockedHeight(resultsView, "min(34vh, 320px)");
   const statisticsDockedHeight = getDockedHeight(statisticsView, "min(30vh, 280px)");
+  const geoJsonDockedHeight = getDockedHeight(geoJsonView, "min(30vh, 280px)");
   const configDockedHeight = getDockedHeight(configView, "min(36vh, 360px)");
   const resultsDockedBottom = "0px";
   const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedHeight;
-  const configDockedBottom =
+  const geoJsonDockedBottom =
     resultsView === "fullscreen" || statisticsView === "fullscreen"
       ? "0px"
       : `calc(${resultsDockedHeight} + ${statisticsDockedHeight})`;
-  const helpDockedBottom =
-    resultsView === "fullscreen" || statisticsView === "fullscreen" || configView === "fullscreen"
+  const configDockedBottom =
+    resultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen"
       ? "0px"
-      : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${configDockedHeight})`;
+      : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${geoJsonDockedHeight})`;
+  const helpDockedBottom =
+    resultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen" || configView === "fullscreen"
+      ? "0px"
+      : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${geoJsonDockedHeight} + ${configDockedHeight})`;
   const hiddenWindows = [
-    resultsView === "hidden" ? { key: "results", label: "Results" } : null
+    resultsView === "hidden" ? { key: "results", label: "Results" } : null,
+    geoJsonView === "hidden" && geoJsonExport.text ? { key: "geojson", label: "GeoJSON" } : null
   ].filter(Boolean);
   const statisticsColumns = useMemo(
     () => displayedColumns.filter((column) => !["Latitude", "Longitude"].includes(column.name)),
@@ -1741,7 +1795,7 @@ function App() {
       return;
     }
 
-    const fallbackWindow = ["help", "config", "statistics", "results"].find((name) => windowViews[name] !== "hidden");
+    const fallbackWindow = ["help", "config", "geojson", "statistics", "results"].find((name) => windowViews[name] !== "hidden");
     if (fallbackWindow) {
       setActiveWindow(fallbackWindow);
     }
@@ -1786,6 +1840,22 @@ function App() {
     );
   }, [datasetName, recordsForResults, displayedColumns]);
 
+  const downloadGeoJsonExport = useCallback(() => {
+    if (!geoJsonExport.text) {
+      return;
+    }
+
+    downloadTextFile(geoJsonExport.filename, geoJsonExport.text, "application/geo+json;charset=utf-8");
+  }, [geoJsonExport]);
+
+  const copyGeoJsonExport = useCallback(async () => {
+    if (!geoJsonExport.text || !navigator.clipboard?.writeText) {
+      return;
+    }
+
+    await navigator.clipboard.writeText(geoJsonExport.text);
+  }, [geoJsonExport]);
+
   return (
     <main className="mapper-shell">
       <div className={`map-stage ${sidebarOpen ? "is-sidebar-open" : ""}`}>
@@ -1824,6 +1894,7 @@ function App() {
               clearShapesRef.current = callback;
             }}
             enableQueries={Boolean(dataset)}
+            onSaveGeoJson={handleSaveGeoJson}
           />
           {dataset && pointDisplay !== "markers" ? (
             <MapViewport
@@ -2263,6 +2334,60 @@ function App() {
               ) : (
                 <p className="statistics-empty">No visible columns are available for statistics.</p>
               )}
+            </div>
+          </section>
+        ) : null}
+
+        {geoJsonView !== "hidden" ? (
+          <section
+            className={`bottom-drawer geojson-drawer is-${geoJsonView} ${activeWindow === "geojson" ? "is-active" : ""}`}
+            style={geoJsonView === "fullscreen" ? undefined : { bottom: geoJsonDockedBottom }}
+            onMouseDown={() => setActiveWindow("geojson")}
+          >
+            <div className="window-titlebar">
+              <div className="window-titletext">
+                <strong>GeoJSON</strong>
+                <span>{geoJsonExport.title || geoJsonExport.filename}</span>
+              </div>
+              <div className="window-controls">
+                <button type="button" className="results-control-button" onClick={() => setWindowView("geojson", "minimized")} aria-label="Minimize GeoJSON panel">
+                  <span className="results-control-icon results-control-minimize" aria-hidden="true" />
+                </button>
+                {geoJsonView !== "open" ? (
+                  <button type="button" className="results-control-button" onClick={() => setWindowView("geojson", "open")} aria-label="Restore GeoJSON panel">
+                    <span className="results-control-icon results-control-restore" aria-hidden="true" />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="results-control-button"
+                  onClick={() => toggleWindowFullscreen("geojson")}
+                  aria-label={geoJsonView === "fullscreen" ? "Exit fullscreen GeoJSON" : "Fullscreen GeoJSON"}
+                >
+                  <span className="results-control-icon results-control-maximize" aria-hidden="true" />
+                </button>
+                <button type="button" className="results-control-button" onClick={() => setWindowView("geojson", "hidden")} aria-label="Close GeoJSON panel">
+                  <span className="results-control-icon results-control-close" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="window-content geojson-content">
+              <div className="statistics-toolbar">
+                <div className="statistics-summary">
+                  <strong>{geoJsonExport.filename}</strong>
+                  <span>{geoJsonExport.text ? "Polygon GeoJSON ready" : "No GeoJSON generated yet"}</span>
+                </div>
+                <div className="panel-actions">
+                  <button type="button" onClick={copyGeoJsonExport} disabled={!geoJsonExport.text || !navigator.clipboard?.writeText}>
+                    Copy To Clipboard
+                  </button>
+                  <button type="button" className="secondary" onClick={downloadGeoJsonExport} disabled={!geoJsonExport.text}>
+                    Download GeoJSON
+                  </button>
+                </div>
+              </div>
+              <pre className="config-file-view geojson-view">{geoJsonExport.text || "Draw a polygon and use Save GeoJSON from the popup."}</pre>
             </div>
           </section>
         ) : null}
