@@ -20,4 +20,5 @@ gradlew
 gradlew.bat
 
 # Local config
+.env
 src/main/resources/config.properties
