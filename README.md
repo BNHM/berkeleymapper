@@ -12,6 +12,45 @@ Following shows a sample berkeleymapper call from Arctos
 
 http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
 
+## JavaScript Refactor
+The current refactor branch now includes a JavaScript runtime that replaces the WAR-based startup path with:
+
+```bash
+nvm use
+npm install
+npm start
+```
+
+Local development runs through Vite only, and production output is a static site build.
+
+This React slice currently ports the first part of BerkeleyMapper away from Java:
+
+- load a tab-delimited dataset directly in the browser from a URL
+- optionally load a legacy BerkeleyMapper XML config directly in the browser
+- parse records and coordinates in JavaScript
+- render the dataset in a React UI with a Leaflet map and records table
+
+## Static Deployment
+The app now builds to a static site and can be hosted anywhere that can serve the `dist/` directory.
+
+- client routes are static assets built by Vite
+- the production Node server exposes `/api/dataset` and loads remote `tabfile` / `configfile` URLs server-side
+- remote dataset hosts no longer need browser CORS headers when accessed through that server endpoint
+
+Build settings:
+
+```bash
+Build command: npm run build
+Publish directory: dist
+```
+
+The remaining Java-only REST features are still legacy code for now and need to be ported separately:
+
+- polygon and spatial intersection processing
+- downloads and KML export
+- shapefile-backed spatial lookups
+- the rest of the config-driven feature surface
+
 ## Developers
 All external libraries are controlled by gradle, so to get started, you need to just:
 
@@ -40,4 +79,3 @@ Second, import into keystore using the keytool program
 keytool -import -alias example -keystore /etc/ssl/certs/java/cacerts -file {FILEAME}
 ```
 Note that cert files are stored in ~jdeck/certs
-

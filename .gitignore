@@ -1,9 +1,24 @@
-.idea/*
+# IDE
+.idea/
+.DS_Store
+
+# Frontend / local runtime
+node_modules/
+.vite/
 dist/
-out/
-build/
-gradle/
+coverage/
+tmp/node-sessions/
+.netlify/
+
+# Java / Gradle legacy
 .gradle/
+gradle/
+build/
+out/
+bin/
 gradlew
 gradlew.bat
+
+# Local config
+.env
 src/main/resources/config.properties

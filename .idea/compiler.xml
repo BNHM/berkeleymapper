@@ -13,5 +13,6 @@
       <entry name="?*.tld" />
       <entry name="?*.ftl" />
     </wildcardResourcePatterns>
+    <bytecodeTargetLevel target="11" />
   </component>
 </project>

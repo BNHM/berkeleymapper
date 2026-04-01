@@ -1,0 +1,56 @@
+Anaxyrus canorus (Camp, 1916)	38.49078	-119.80266	MVZ:Herp:223335	https://www.gbif.org/occurrence/5147307601	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.76605	-119.25599	MVZ:Herp:240746	https://www.gbif.org/occurrence/5147446330	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.93290	-119.36415	MVZ:Herp:5721	https://www.gbif.org/occurrence/5146985539	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.76103	-119.28047	MVZ:Herp:5754	https://www.gbif.org/occurrence/5146985540	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.87941	-119.39498	MVZ:Herp:15967	https://www.gbif.org/occurrence/5146985969	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.84628	-119.42673	MVZ:Herp:15970	https://www.gbif.org/occurrence/5146985970	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.80526	-119.55632	MVZ:Herp:5744	https://www.gbif.org/occurrence/5146982541	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.78762	-119.34099	MVZ:Herp:6044	https://www.gbif.org/occurrence/5146982554	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.88116	-119.26587	MVZ:Herp:11274	https://www.gbif.org/occurrence/5146982772	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.84818	-119.59531	MVZ:Herp:16062	https://www.gbif.org/occurrence/5146982971	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.58876	-119.05508	MVZ:Herp:45997	https://www.gbif.org/occurrence/5146995215	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.87917	-119.27594	MVZ:Herp:40935	https://www.gbif.org/occurrence/5146994006	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91116	-119.25679	MVZ:Herp:46809	https://www.gbif.org/occurrence/5146994249	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.66873	-119.62260	MVZ:Herp:60880	https://www.gbif.org/occurrence/5147005841	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:62563	https://www.gbif.org/occurrence/5147005910	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:62596	https://www.gbif.org/occurrence/5147005911	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:62626	https://www.gbif.org/occurrence/5147005912	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.29130	-119.10180	MVZ:Herp:62659	https://www.gbif.org/occurrence/5147005913	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.90571	-119.25064	MVZ:Herp:62662	https://www.gbif.org/occurrence/5147005914	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.90571	-119.25064	MVZ:Herp:62695	https://www.gbif.org/occurrence/5147005915	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.29130	-119.10180	MVZ:Herp:64507	https://www.gbif.org/occurrence/5147005992	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	38.53638	-119.79241	MVZ:Herp:64903	https://www.gbif.org/occurrence/5147006008	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	38.32755	-119.61461	MVZ:Herp:72526	https://www.gbif.org/occurrence/5147015323	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:61794	https://www.gbif.org/occurrence/5147003872	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91082	-119.25799	MVZ:Herp:62553	https://www.gbif.org/occurrence/5147003905	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:62586	https://www.gbif.org/occurrence/5147003906	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.91209	-119.25518	MVZ:Herp:62616	https://www.gbif.org/occurrence/5147003907	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.29130	-119.10180	MVZ:Herp:62649	https://www.gbif.org/occurrence/5147003908	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	37.29130	-119.10180	MVZ:Herp:62652	https://www.gbif.org/occurrence/5147003909	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	38.49078	-119.80266	MVZ:Herp:62685	https://www.gbif.org/occurrence/5147003910	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.87542	-119.36269	A-9004	https://www.gbif.org/occurrence/476545660	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.29134	-119.10215	A-48729	https://www.gbif.org/occurrence/476594659	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.87542	-119.36269	A-9005	https://www.gbif.org/occurrence/476545661	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.29134	-119.10215	A-48727	https://www.gbif.org/occurrence/476594657	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.87542	-119.36269	A-9003	https://www.gbif.org/occurrence/476545659	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.87536	-119.36271	USNM 118613	https://www.gbif.org/occurrence/1318002517	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.91076	-119.25771	USNM 311299	https://www.gbif.org/occurrence/1320165120	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.64427	-119.32571	USNM 89848	https://www.gbif.org/occurrence/1322400186	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	37.91820	-119.25900	USNM 209449	https://www.gbif.org/occurrence/1322762061	PRESERVED_SPECIMEN
+Bufo canorus Camp, 1916	38.32805	-119.63672	USNM 542168	https://www.gbif.org/occurrence/1319800398	PRESERVED_SPECIMEN
+Anaxyrus canorus (Camp, 1916)	38.52302	-119.99334	296174691	https://www.gbif.org/occurrence/5216628324	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.56244	-118.89591	297177852	https://www.gbif.org/occurrence/5231664562	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.86312	-119.30714	55745937	https://www.gbif.org/occurrence/2851244758	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.32284	-119.07449	41015895	https://www.gbif.org/occurrence/2596328817	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.98653	-119.49213	5061254	https://www.gbif.org/occurrence/1453404300	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	38.26163	-119.64399	118729884	https://www.gbif.org/occurrence/3858169220	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.38270	-119.19417	5095370	https://www.gbif.org/occurrence/1453419216	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.32966	-119.03869	5095375	https://www.gbif.org/occurrence/1453419215	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.89566	-119.22875	86222406	https://www.gbif.org/occurrence/4852757964	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.98197	-119.20139	236191227	https://www.gbif.org/occurrence/5187645361	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.93042	-119.77028	15796642	https://www.gbif.org/occurrence/1898834800	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.97464	-119.28514	85559865	https://www.gbif.org/occurrence/3325841857	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.85123	-119.24842	85496828	https://www.gbif.org/occurrence/3325670788	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.99722	-119.36041	90153421	https://www.gbif.org/occurrence/3337577875	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.39299	-118.92064	187370744	https://www.gbif.org/occurrence/4430597696	HUMAN_OBSERVATION
+Anaxyrus canorus (Camp, 1916)	37.80939	-119.33096	234342496	https://www.gbif.org/occurrence/4923756845	HUMAN_OBSERVATION
