@@ -22,6 +22,7 @@ const arctosDemo = {
   tabfile: "https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt",
   configfile: "https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml"
 };
+const arctosDemoHref = `?${new URLSearchParams(arctosDemo).toString()}`;
 const anchorTagPattern = /^<a\s+[^>]*href=(["'])(.*?)\1[^>]*>(.*?)<\/a>$/i;
 const urlPattern = /^https?:\/\/\S+$/i;
 const markerPalette = [
@@ -1466,38 +1467,6 @@ function App() {
     }
   }
 
-  async function loadDemoDataset() {
-    setLoading(true);
-    setError("");
-
-    try {
-      setForm(arctosDemo);
-      let demoDataset;
-
-      try {
-        demoDataset = await loadDatasetFromServerFiles(arctosDemo);
-      } catch (serverError) {
-        if (import.meta.env.DEV) {
-          demoDataset = await loadDatasetFromClientFiles(arctosDemo);
-        } else {
-          throw serverError;
-        }
-      }
-
-      applyLoadedDataset(demoDataset);
-    } catch (nextError) {
-      resetLoadedDataset();
-      setLoadWarning("Unable to Load Data");
-      setLoadWarningDetails({
-        tabfile: arctosDemo.tabfile,
-        configfile: arctosDemo.configfile
-      });
-      setError(nextError instanceof Error ? nextError.message : "Unable to load dataset.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const locateUserArea = useCallback(() => {
     if (!navigator.geolocation) {
       setGeocodeError("Geolocation is not available in this browser.");
@@ -2020,14 +1989,6 @@ function App() {
         <aside className={`legend-panel ${sidebarOpen ? "is-open" : ""}`}>
           <div className="legend-scroll">
             <section className="panel-section">
-              <div className="panel-actions">
-                <button type="button" onClick={loadDemoDataset} disabled={loading}>
-                  {loading ? "Loading..." : "Load Arctos Demo"}
-                </button>
-              </div>
-            </section>
-
-            <section className="panel-section">
               <h2>
                 <button type="button" className="section-title-link" onClick={() => setWindowView("config", "fullscreen")}>
                   About This Application
@@ -2493,9 +2454,9 @@ function App() {
                   <article className="about-card">
                     <h4>1. Start With A Dataset</h4>
                     <p>
-                      Use a <strong>tabfile</strong> and <strong>configfile</strong> in the URL, or use <strong>Load Arctos Demo</strong>.
-                      The browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly from
-                      the XML configuration.
+                      Use a <strong>tabfile</strong> and <strong>configfile</strong> in the URL, or use{" "}
+                      <a href={arctosDemoHref}>Load Arctos Demo</a>. The browser parses field order, aliases, logos, marker
+                      colors, layers, and visibility rules directly from the XML configuration.
                     </p>
                   </article>
 
