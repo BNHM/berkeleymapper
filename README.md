@@ -34,8 +34,8 @@ This React slice currently ports the first part of BerkeleyMapper away from Java
 The app now builds to a static site and can be hosted anywhere that can serve the `dist/` directory.
 
 - client routes are static assets built by Vite
-- dataset loading happens in the user's browser
-- remote `tabfile` and `configfile` hosts must support CORS for browser loading to work
+- the production Node server exposes `/api/dataset` and loads remote `tabfile` / `configfile` URLs server-side
+- remote dataset hosts no longer need browser CORS headers when accessed through that server endpoint
 
 Build settings:
 

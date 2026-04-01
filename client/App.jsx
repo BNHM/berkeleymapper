@@ -37,45 +37,10 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
-const browserCorsOrigins = [
-  "https://berkeleymapper.netlify.app",
-  "https://berkeleymapper.berkeley.edu"
-];
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 
-function shouldAttemptClientLoad(payload) {
+function shouldAttemptServerLoad(payload) {
   return Boolean(payload?.tabfile) && !payload?.tabdata;
-}
-
-function isCrossOriginUrl(url) {
-  if (!url) {
-    return false;
-  }
-
-  try {
-    const parsed = new URL(url, window.location.origin);
-    return parsed.origin !== window.location.origin;
-  } catch {
-    return false;
-  }
-}
-
-function isLikelyCorsFailure(error) {
-  if (!(error instanceof TypeError)) {
-    return false;
-  }
-
-  const message = (error.message || "").toLowerCase();
-  return message.includes("fetch") || message.includes("network") || message.includes("load");
-}
-
-function buildCorsWarningMessage(payload) {
-  const sources = [payload?.tabfile, payload?.configfile].filter(Boolean);
-  if (!sources.length) {
-    return "";
-  }
-
-  return "Unable to Load Data";
 }
 
 async function fetchRequiredText(url, label) {
@@ -1429,6 +1394,35 @@ function App() {
     });
   }, []);
 
+  const loadDatasetFromServerFiles = useCallback(async (payload) => {
+    const params = new URLSearchParams();
+    params.set("tabfile", payload.tabfile);
+
+    if (payload.configfile) {
+      params.set("configfile", payload.configfile);
+    }
+
+    const response = await fetch(`/api/dataset?${params.toString()}`);
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody?.error || `Unable to load dataset: ${response.status} ${response.statusText}`);
+      }
+
+      return responseBody;
+    }
+
+    const responseText = await response.text();
+    if (!response.ok) {
+      throw new Error(responseText || `Unable to load dataset: ${response.status} ${response.statusText}`);
+    }
+
+    throw new Error("Dataset service returned an unexpected response.");
+  }, []);
+
   async function loadDataset(payload, options = {}) {
     const { manageLoading = true } = options;
 
@@ -1438,25 +1432,33 @@ function App() {
     setError("");
 
     try {
-      if (!shouldAttemptClientLoad(payload)) {
-        throw new Error("This static build requires browser-accessible tabfile and configfile URLs.");
+      let data;
+
+      if (shouldAttemptServerLoad(payload)) {
+        try {
+          data = await loadDatasetFromServerFiles(payload);
+        } catch (serverError) {
+          if (import.meta.env.DEV) {
+            data = await loadDatasetFromClientFiles(payload);
+          } else {
+            throw serverError;
+          }
+        }
+      } else if (payload?.tabdata) {
+        data = buildDatasetPayload(payload);
+      } else {
+        throw new Error("Provide a tabfile URL and, optionally, a configfile URL.");
       }
 
-      const data = await loadDatasetFromClientFiles(payload);
       applyLoadedDataset(data);
     } catch (nextError) {
-      const crossOriginRequest = isCrossOriginUrl(payload?.tabfile) || isCrossOriginUrl(payload?.configfile);
-      const corsWarning = crossOriginRequest && isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(payload) : "";
       resetLoadedDataset();
-      setLoadWarning(corsWarning);
-      setLoadWarningDetails(corsWarning ? {
+      setLoadWarning("Unable to Load Data");
+      setLoadWarningDetails({
         tabfile: payload?.tabfile || "",
         configfile: payload?.configfile || ""
-      } : {
-        tabfile: "",
-        configfile: ""
       });
-      setError(corsWarning ? "" : nextError.message);
+      setError(nextError instanceof Error ? nextError.message : "Unable to load dataset.");
     } finally {
       if (manageLoading) {
         setLoading(false);
@@ -1470,20 +1472,27 @@ function App() {
 
     try {
       setForm(arctosDemo);
-      const demoDataset = await loadDatasetFromClientFiles(arctosDemo);
+      let demoDataset;
+
+      try {
+        demoDataset = await loadDatasetFromServerFiles(arctosDemo);
+      } catch (serverError) {
+        if (import.meta.env.DEV) {
+          demoDataset = await loadDatasetFromClientFiles(arctosDemo);
+        } else {
+          throw serverError;
+        }
+      }
+
       applyLoadedDataset(demoDataset);
     } catch (nextError) {
-      const corsWarning = isLikelyCorsFailure(nextError) ? buildCorsWarningMessage(arctosDemo) : "";
       resetLoadedDataset();
-      setLoadWarning(corsWarning);
-      setLoadWarningDetails(corsWarning ? {
+      setLoadWarning("Unable to Load Data");
+      setLoadWarningDetails({
         tabfile: arctosDemo.tabfile,
         configfile: arctosDemo.configfile
-      } : {
-        tabfile: "",
-        configfile: ""
       });
-      setError(corsWarning ? "" : nextError.message);
+      setError(nextError instanceof Error ? nextError.message : "Unable to load dataset.");
     } finally {
       setLoading(false);
     }
@@ -1891,7 +1900,7 @@ function App() {
               type="button"
               className="processing-help-button text-link"
               onClick={() => setWindowView("help", "open")}
-              aria-label="Open help about CORS requirements"
+              aria-label="Open help about server-side loading"
             >
               read more
             </button>
@@ -2031,7 +2040,7 @@ function App() {
                     type="button"
                     className="processing-help-button text-link"
                     onClick={() => setWindowView("help", "open")}
-                    aria-label="Open help about browser loading and CORS"
+                    aria-label="Open help about server-side loading"
                   >
                     read more
                   </button>
@@ -2554,11 +2563,10 @@ function App() {
                 </section>
 
                 <section className="about-note">
-                  <h4>Browser Loading</h4>
+                  <h4>Server Loading</h4>
                   <p>
-                    This build expects remote data sources to be CORS-friendly. If a host blocks cross-origin requests,
-                    BerkeleyMapper shows <strong>Unable to Load Data</strong> rather than silently switching to server-side
-                    processing.
+                    This deployment loads remote <code>tabfile</code> and <code>configfile</code> URLs on the server, so
+                    browser CORS headers are no longer required for those dataset requests.
                   </p>
                 </section>
 
@@ -2590,8 +2598,8 @@ function App() {
           >
             <div className="window-titlebar">
               <div className="window-titletext">
-                <strong>Browser Loading Help</strong>
-                <span>CORS requirements for static hosting</span>
+                <strong>Server Loading Help</strong>
+                <span>How BerkeleyMapper retrieves remote tabfile and configfile URLs</span>
               </div>
               <div className="window-controls">
                 <button type="button" className="results-control-button" onClick={() => setWindowView("help", "minimized")} aria-label="Minimize help panel">
@@ -2618,8 +2626,8 @@ function App() {
 
             <div className="window-content help-content">
               <p>
-                Direct browser loading works only when the host serving the tab file and config file allows cross-origin
-                requests from BerkeleyMapper.
+                BerkeleyMapper now fetches remote <code>tabfile</code> and <code>configfile</code> URLs on the server and
+                returns the parsed dataset to the browser.
               </p>
               {loadWarningDetails.tabfile || loadWarningDetails.configfile ? (
                 <>
@@ -2628,47 +2636,27 @@ function App() {
                     {loadWarningDetails.tabfile ? <li><code>tabfile</code>: {loadWarningDetails.tabfile}</li> : null}
                     {loadWarningDetails.configfile ? <li><code>configfile</code>: {loadWarningDetails.configfile}</li> : null}
                   </ul>
-                  <p><strong>Typical browser error</strong></p>
+                  <p><strong>Common causes</strong></p>
                   <pre className="config-file-view config-file-view-inline">
-{`Access to fetch at '<url>' from origin '<your BerkeleyMapper site>' has been blocked by CORS policy:
-No 'Access-Control-Allow-Origin' header is present on the requested resource.`}
+{`- the remote host is unreachable from the BerkeleyMapper server
+- the URL returns 404/403/500 instead of the dataset
+- the remote server has TLS/certificate issues
+- the tabfile or configfile contents are invalid`}
                   </pre>
                 </>
               ) : null}
-              <p>To enable browser-side loading, configure the dataset host to allow these origins:</p>
-              <ul className="help-list">
-                {browserCorsOrigins.map((origin) => (
-                  <li key={origin}>{origin}</li>
-                ))}
-              </ul>
               <p>
-                The files that need CORS enabled are the remote <code>tabfile</code> and <code>configfile</code> endpoints.
+                Relative source URLs are resolved against the BerkeleyMapper server origin. Absolute source URLs must use
+                <code> http://</code> or <code>https://</code>.
               </p>
               <p>
-                If a remote host does not return CORS headers, BerkeleyMapper will report <strong>Unable to Load Data</strong>{" "}
-                and stop before reading the dataset.
+                When a load fails, check the BerkeleyMapper server logs first. The Node service will report the upstream
+                fetch or parsing error directly.
               </p>
-              <p><strong>Nginx example</strong></p>
-              <pre className="config-file-view config-file-view-inline">
-{`location / {
-    if ($http_origin ~* ^https://(berkeleymapper\\.netlify\\.app|berkeleymapper\\.berkeley\\.edu)$) {
-        add_header Access-Control-Allow-Origin $http_origin always;
-    }
-    add_header Access-Control-Allow-Methods "GET, OPTIONS" always;
-    add_header Access-Control-Allow-Headers "Origin, Accept, Content-Type" always;
-    add_header Vary "Origin" always;
-}`}
-              </pre>
-              <p><strong>Apache example</strong></p>
-              <pre className="config-file-view config-file-view-inline">
-{`<IfModule mod_headers.c>
-    SetEnvIf Origin "^https://(berkeleymapper\\.netlify\\.app|berkeleymapper\\.berkeley\\.edu)$" ACAO=$0
-    Header always set Access-Control-Allow-Origin %{ACAO}e env=ACAO
-    Header always set Access-Control-Allow-Methods "GET, OPTIONS"
-    Header always set Access-Control-Allow-Headers "Origin, Accept, Content-Type"
-    Header always set Vary "Origin"
-</IfModule>`}
-              </pre>
+              <p>
+                Local development still falls back to browser-side loading when the dataset API is not running, so CORS can
+                still matter in that environment.
+              </p>
             </div>
           </section>
         ) : null}
