@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { dirname, extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildDatasetPayload } from "../shared/buildDatasetPayload.js";
+import { handleDatasetRequest, handleLayerRequest } from "./lib/apiHandlers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,97 +31,6 @@ const contentTypes = {
 function sendError(response, statusCode, message) {
   response.writeHead(statusCode, { "Content-Type": "text/plain; charset=utf-8" });
   response.end(message);
-}
-
-function sendJson(response, statusCode, payload) {
-  response.writeHead(statusCode, {
-    "Cache-Control": "no-store",
-    "Content-Type": "application/json; charset=utf-8"
-  });
-  response.end(JSON.stringify(payload));
-}
-
-function getRequestOrigin(request) {
-  const forwardedProtocol = request.headers["x-forwarded-proto"];
-  const protocol = typeof forwardedProtocol === "string"
-    ? forwardedProtocol.split(",")[0].trim()
-    : "http";
-
-  return `${protocol}://${request.headers.host || `${host}:${port}`}`;
-}
-
-function resolveSourceUrl(rawValue, request) {
-  const value = String(rawValue || "").trim();
-
-  if (!value) {
-    return "";
-  }
-
-  const resolved = new URL(value, getRequestOrigin(request));
-
-  if (!["http:", "https:"].includes(resolved.protocol)) {
-    throw new Error("Only http and https source URLs are supported.");
-  }
-
-  if (resolved.username || resolved.password) {
-    throw new Error("Source URLs with embedded credentials are not supported.");
-  }
-
-  return resolved.toString();
-}
-
-async function fetchRequiredText(url, label) {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(`Unable to load ${label}: ${response.status} ${response.statusText}`);
-  }
-
-  return response.text();
-}
-
-async function handleDatasetRequest(request, response, url) {
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    sendJson(response, 405, { error: "Method not allowed" });
-    return;
-  }
-
-  try {
-    const tabfile = resolveSourceUrl(url.searchParams.get("tabfile"), request);
-    const configfile = resolveSourceUrl(url.searchParams.get("configfile"), request);
-
-    if (!tabfile) {
-      sendJson(response, 400, { error: "Missing required query parameter: tabfile" });
-      return;
-    }
-
-    const [tabdata, configdata] = await Promise.all([
-      fetchRequiredText(tabfile, "tab file"),
-      configfile ? fetchRequiredText(configfile, "config file") : Promise.resolve("")
-    ]);
-
-    const payload = buildDatasetPayload({
-      tabfile,
-      configfile,
-      tabdata,
-      configdata
-    });
-
-    if (request.method === "HEAD") {
-      response.writeHead(200, {
-        "Cache-Control": "no-store",
-        "Content-Type": "application/json; charset=utf-8"
-      });
-      response.end();
-      return;
-    }
-
-    sendJson(response, 200, payload);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Dataset API error:", error);
-    sendJson(response, 502, { error: message });
-  }
 }
 
 async function resolveRequestPath(urlPath) {
@@ -171,7 +80,16 @@ const server = createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
 
     if (url.pathname === "/api/dataset") {
-      await handleDatasetRequest(request, response, url);
+      await handleDatasetRequest(request, response, url, {
+        fallbackHost: `${host}:${port}`
+      });
+      return;
+    }
+
+    if (url.pathname === "/api/layer") {
+      await handleLayerRequest(request, response, url, {
+        fallbackHost: `${host}:${port}`
+      });
       return;
     }
 

@@ -444,6 +444,51 @@ a:hover {
   gap: 6px;
 }
 
+.layer-card {
+  display: grid;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid #d6dee6;
+  background: #f8fbfd;
+}
+
+.layer-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.layer-toggle input {
+  margin: 1px 0 0;
+}
+
+.layer-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.layer-detail-link {
+  color: #174e96;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+.layer-status {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #4f6274;
+  word-break: break-word;
+}
+
+.layer-status.error {
+  color: #8c1414;
+}
+
 .color-row {
   display: flex;
   align-items: center;

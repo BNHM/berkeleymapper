@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet-draw";
 import "leaflet.markercluster";
 import brandLogo from "../src/main/webapp/img/logo_medium_t.png";
+import { getLayerSourceUrl, loadLayerGeoJson } from "./layerUtils.js";
 import { buildDatasetPayload } from "../shared/buildDatasetPayload.js";
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -23,6 +24,11 @@ const arctosDemo = {
   configfile: "https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml"
 };
 const arctosDemoHref = `?${new URLSearchParams(arctosDemo).toString()}`;
+const amphibiawebDemo = {
+  tabfile: "/sampledata/amphibiaweb.txt",
+  configfile: "/sampledata/amphibiaweb.xml"
+};
+const amphibiawebDemoHref = `?${new URLSearchParams(amphibiawebDemo).toString()}`;
 const anchorTagPattern = /^<a\s+[^>]*href=(["'])(.*?)\1[^>]*>(.*?)<\/a>$/i;
 const urlPattern = /^https?:\/\/\S+$/i;
 const markerPalette = [
@@ -39,6 +45,17 @@ const markerPalette = [
 ];
 const numberFormatter = new Intl.NumberFormat();
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
+
+function buildInitialLayerStates(layers = []) {
+  return layers.map((layer) => ({
+    visible: Boolean(layer?.active),
+    loading: false,
+    loaded: false,
+    error: "",
+    zoomNonce: 0,
+    loadNonce: 0
+  }));
+}
 
 function shouldAttemptServerLoad(payload) {
   return Boolean(payload?.tabfile) && !payload?.tabdata;
@@ -77,6 +94,63 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll("\"", "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function buildLayerFeaturePopupHtml(title, properties = {}) {
+  const rows = Object.entries(properties)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .slice(0, 6);
+
+  if (!rows.length) {
+    return title ? `<div><strong>${escapeHtml(title)}</strong></div>` : "";
+  }
+
+  return [
+    title ? `<div><strong>${escapeHtml(title)}</strong></div>` : "",
+    ...rows.map(([key, value]) => `<div><strong>${escapeHtml(key)}</strong>: ${escapeHtml(String(value))}</div>`)
+  ].join("");
+}
+
+function createLeafletDataLayer(geoJson, layer, index) {
+  const color = markerPalette[index % markerPalette.length];
+
+  return L.geoJSON(geoJson, {
+    style(feature) {
+      const geometryType = feature?.geometry?.type || "";
+
+      if (geometryType.includes("Polygon")) {
+        return {
+          color,
+          weight: 2,
+          opacity: 0.9,
+          fillColor: color,
+          fillOpacity: 0.12
+        };
+      }
+
+      return {
+        color,
+        weight: 2,
+        opacity: 0.95
+      };
+    },
+    pointToLayer(feature, latlng) {
+      return L.circleMarker(latlng, {
+        radius: 5,
+        color,
+        weight: 1.5,
+        fillColor: color,
+        fillOpacity: 0.3
+      });
+    },
+    onEachFeature(feature, leafletLayer) {
+      const popupHtml = buildLayerFeaturePopupHtml(layer?.title, feature?.properties || {});
+
+      if (popupHtml) {
+        leafletLayer.bindPopup(popupHtml);
+      }
+    }
+  });
 }
 
 function parseLinkValue(value) {
@@ -716,6 +790,147 @@ function MapGeocodeLayer({ results, fitNonce, onDeleteResult, onKeepOnlyResult }
   return null;
 }
 
+function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
+  const map = useMap();
+  const layerGroupRef = useRef(null);
+  const layerCacheRef = useRef(new Map());
+
+  useEffect(() => {
+    const layerGroup = L.featureGroup();
+    layerGroupRef.current = layerGroup;
+    map.addLayer(layerGroup);
+
+    return () => {
+      map.removeLayer(layerGroup);
+      layerGroupRef.current = null;
+      layerCacheRef.current.clear();
+    };
+  }, [map]);
+
+  useEffect(() => {
+    const layerGroup = layerGroupRef.current;
+
+    if (!layerGroup) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function ensureLayerLoaded(layer, index, state) {
+      const cacheKey = `${index}:${getLayerSourceUrl(layer)}`;
+      const cached = layerCacheRef.current.get(cacheKey);
+
+      if (cached?.status === "loading") {
+        return;
+      }
+
+      if (cached?.status === "error" && cached.loadNonce === state.loadNonce) {
+        return;
+      }
+
+      layerCacheRef.current.set(cacheKey, {
+        ...cached,
+        status: "loading",
+        loadNonce: state.loadNonce
+      });
+      onLayerStateChange(index, {
+        loading: true,
+        error: ""
+      });
+
+      try {
+        const geoJson = await loadLayerGeoJson(layer);
+
+        if (cancelled) {
+          return;
+        }
+
+        const leafletLayer = createLeafletDataLayer(geoJson, layer, index);
+        const bounds = leafletLayer.getBounds?.() || L.latLngBounds([]);
+
+        layerCacheRef.current.set(cacheKey, {
+          status: "loaded",
+          leafletLayer,
+          bounds,
+          loadNonce: state.loadNonce,
+          zoomNonce: 0
+        });
+
+        if (state.visible) {
+          layerGroup.addLayer(leafletLayer);
+        }
+
+        onLayerStateChange(index, {
+          loading: false,
+          loaded: true,
+          error: ""
+        });
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "Unable to load layer.";
+        layerCacheRef.current.set(cacheKey, {
+          ...cached,
+          status: "error",
+          error: message,
+          loadNonce: state.loadNonce
+        });
+        onLayerStateChange(index, {
+          loading: false,
+          loaded: false,
+          error: message
+        });
+      }
+    }
+
+    layers.forEach((layer, index) => {
+      const state = layerStates[index] || buildInitialLayerStates([layer])[0];
+      const cacheKey = `${index}:${getLayerSourceUrl(layer)}`;
+      const cached = layerCacheRef.current.get(cacheKey);
+
+      if (state.visible) {
+        if (cached?.status === "loaded" && cached.leafletLayer && !layerGroup.hasLayer(cached.leafletLayer)) {
+          layerGroup.addLayer(cached.leafletLayer);
+        }
+
+        if (!cached || cached.status === "loading") {
+          if (!cached) {
+            ensureLayerLoaded(layer, index, state);
+          }
+        } else if (cached.status === "error" || cached.status === "idle") {
+          ensureLayerLoaded(layer, index, state);
+        }
+      } else if (cached?.status === "loaded" && cached.leafletLayer && layerGroup.hasLayer(cached.leafletLayer)) {
+        layerGroup.removeLayer(cached.leafletLayer);
+      }
+
+      if (
+        cached?.status === "loaded" &&
+        cached.bounds?.isValid?.() &&
+        state.zoomNonce > (cached.zoomNonce || 0)
+      ) {
+        map.fitBounds(cached.bounds, {
+          padding: [24, 24],
+          maxZoom: 13
+        });
+
+        layerCacheRef.current.set(cacheKey, {
+          ...cached,
+          zoomNonce: state.zoomNonce
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [layers, layerStates, map, onLayerStateChange]);
+
+  return null;
+}
+
 function MapTools({ markers, onQueryRecords, onClearQuery, onShapesChange, registerClearShapes, enableQueries, onSaveGeoJson }) {
   const map = useMap();
   const markersRef = useRef(markers);
@@ -1237,6 +1452,7 @@ function App() {
     filename: "shape.geojson",
     text: ""
   });
+  const [layerStates, setLayerStates] = useState([]);
   const markerRefs = useRef(new Map());
   const shouldPanToSelectionRef = useRef(false);
   const clearShapesRef = useRef(null);
@@ -1264,6 +1480,56 @@ function App() {
 
   const clearDrawnShapes = useCallback(() => {
     clearShapesRef.current?.();
+  }, []);
+
+  const patchLayerState = useCallback((layerIndex, patch) => {
+    setLayerStates((current) => current.map((state, index) => (index === layerIndex ? { ...state, ...patch } : state)));
+  }, []);
+
+  const setLayerVisibility = useCallback((layerIndex, visible) => {
+    setLayerStates((current) =>
+      current.map((state, index) => (
+        index === layerIndex
+          ? {
+              ...state,
+              visible,
+              error: visible ? "" : state.error,
+              loadNonce: visible ? state.loadNonce + 1 : state.loadNonce
+            }
+          : state
+      ))
+    );
+  }, []);
+
+  const retryLayerLoad = useCallback((layerIndex) => {
+    setLayerStates((current) =>
+      current.map((state, index) => (
+        index === layerIndex
+          ? {
+              ...state,
+              visible: true,
+              error: "",
+              loadNonce: state.loadNonce + 1
+            }
+          : state
+      ))
+    );
+  }, []);
+
+  const zoomToLayer = useCallback((layerIndex) => {
+    setLayerStates((current) =>
+      current.map((state, index) => (
+        index === layerIndex
+          ? {
+              ...state,
+              visible: true,
+              error: "",
+              loadNonce: state.loaded ? state.loadNonce : state.loadNonce + 1,
+              zoomNonce: state.zoomNonce + 1
+            }
+          : state
+      ))
+    );
   }, []);
 
   const handleZoomIn = useCallback(() => {
@@ -1341,6 +1607,7 @@ function App() {
 
   const applyLoadedDataset = useCallback((nextDataset) => {
     setDataset(nextDataset);
+    setLayerStates(buildInitialLayerStates(nextDataset.layers || []));
     setSelectedRecordId(nextDataset.records[0]?.id || "");
     shouldPanToSelectionRef.current = false;
     setActiveQuery(null);
@@ -1363,6 +1630,7 @@ function App() {
 
   const resetLoadedDataset = useCallback(() => {
     setDataset(null);
+    setLayerStates([]);
     setSelectedRecordId("");
     shouldPanToSelectionRef.current = false;
     setActiveQuery(null);
@@ -1898,6 +2166,13 @@ function App() {
           </LayersControl>
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
+          {dataset?.layers?.length ? (
+            <MapDatasetLayers
+              layers={dataset.layers}
+              layerStates={layerStates}
+              onLayerStateChange={patchLayerState}
+            />
+          ) : null}
           <MapGeocodeLayer
             results={geocodeResults}
             fitNonce={geocodeFitNonce}
@@ -2159,11 +2434,43 @@ function App() {
                   <section className="panel-section">
                     <h2>Layers</h2>
                     <div className="layer-list">
-                      {dataset.layers.map((layer) => (
-                        <a key={`${layer.title}-${layer.location}`} href={layer.location || layer.url} target="_blank" rel="noreferrer">
-                          {layer.title || layer.location}
-                        </a>
-                      ))}
+                      {dataset.layers.map((layer, index) => {
+                        const layerState = layerStates[index] || buildInitialLayerStates([layer])[0];
+                        const layerSourceUrl = getLayerSourceUrl(layer);
+
+                        return (
+                          <div className="layer-card" key={`${index}-${layer.title}-${layerSourceUrl}`}>
+                            <label className="layer-toggle">
+                              <input
+                                type="checkbox"
+                                checked={layerState.visible}
+                                onChange={(event) => setLayerVisibility(index, event.target.checked)}
+                              />
+                              <span>{layer.title || layerSourceUrl}</span>
+                            </label>
+                            <div className="layer-actions-row">
+                              <button type="button" className="config-link-button" onClick={() => zoomToLayer(index)}>
+                                zoom
+                              </button>
+                              {layer.url ? (
+                                <a className="layer-detail-link" href={layer.url} target="_blank" rel="noreferrer">
+                                  details
+                                </a>
+                              ) : null}
+                              {layerState.error ? (
+                                <button type="button" className="config-link-button" onClick={() => retryLayerLoad(index)}>
+                                  retry
+                                </button>
+                              ) : null}
+                            </div>
+                            <div className={`layer-status ${layerState.error ? "error" : ""}`}>
+                              {layerState.loading
+                                ? "Loading layer..."
+                                : layerState.error || (layerState.loaded ? "Loaded on map." : layerSourceUrl)}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </section>
                 ) : null}
@@ -2455,8 +2762,9 @@ function App() {
                     <h4>1. Start With A Dataset</h4>
                     <p>
                       Use a <strong>tabfile</strong> and <strong>configfile</strong> in the URL, or use{" "}
-                      <a href={arctosDemoHref}>Load Arctos Demo</a>. The browser parses field order, aliases, logos, marker
-                      colors, layers, and visibility rules directly from the XML configuration.
+                      <a href={arctosDemoHref}>Load Arctos Demo</a> or <a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a>.
+                      The browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly
+                      from the XML configuration.
                     </p>
                   </article>
 

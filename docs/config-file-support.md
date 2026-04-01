@@ -72,5 +72,6 @@ Implementation:
 - dedicated download workflow and download confirmation UI are not yet ported
 
 ### Legacy KML layer overlay behavior
-- KML layer metadata is parsed and listed
-- interactive background-layer loading/toggling is not yet ported to the current Leaflet map
+- KML, KMZ, and GeoJSON layer metadata is parsed
+- remote layers are fetched through the same-origin `/api/layer` proxy
+- sidebar controls can toggle visibility and zoom to loaded overlays
