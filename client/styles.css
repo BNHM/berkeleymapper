@@ -390,17 +390,17 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 62px;
-  padding: 8px;
-  border: 1px solid #ececec;
-  background: #fff;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .logo-stack img {
   display: block;
   width: 100%;
-  max-width: 170px;
-  max-height: 52px;
+  max-width: 240px;
+  max-height: 78px;
   object-fit: contain;
   object-position: center;
 }
@@ -444,38 +444,92 @@ a:hover {
   gap: 6px;
 }
 
-.layer-card {
-  display: grid;
-  gap: 5px;
-  padding: 8px;
-  border: 1px solid #d6dee6;
-  background: #f8fbfd;
+.layer-list {
+  gap: 10px;
 }
 
-.layer-toggle {
+.layer-list-item {
+  display: grid;
+  gap: 1px;
+}
+
+.layer-heading {
+  display: grid;
+  grid-template-columns: 10px 14px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 4px;
+  width: 100%;
+}
+
+.layer-swatch {
+  width: 10px;
+  height: 10px;
+  margin-top: 2px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  box-sizing: border-box;
+}
+
+.layer-heading input {
+  margin: 0;
+  margin-top: 1px;
+}
+
+.layer-inline {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: 8px;
+  column-gap: 4px;
+  row-gap: 0;
+  min-width: 0;
+}
+
+.layer-title {
+  display: inline;
   margin: 0;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
-.layer-toggle input {
-  margin: 1px 0 0;
-}
-
-.layer-actions-row {
+.layer-inline-actions {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  line-height: 1;
+  margin-top: -1px;
 }
 
-.layer-detail-link {
+.layer-icon-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
   color: #174e96;
-  font-size: 12px;
-  text-decoration: underline;
+  background: transparent;
+  border: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  text-decoration: none;
+  vertical-align: text-bottom;
+}
+
+.layer-icon-action svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+}
+
+.layer-zoom-action {
+  transform: translateY(-7px);
 }
 
 .layer-status {
@@ -483,6 +537,7 @@ a:hover {
   line-height: 1.4;
   color: #4f6274;
   word-break: break-word;
+  padding-left: 18px;
 }
 
 .layer-status.error {

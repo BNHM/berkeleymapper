@@ -52,7 +52,9 @@ function buildInitialLayerStates(layers = []) {
     loading: false,
     loaded: false,
     error: "",
-    zoomNonce: 0,
+    boundsValid: false,
+    zoomNonce: layer?.active ? 1 : 0,
+    featureCount: 0,
     loadNonce: 0
   }));
 }
@@ -111,8 +113,50 @@ function buildLayerFeaturePopupHtml(title, properties = {}) {
   ].join("");
 }
 
+function ZoomIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="8" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8 5.5v5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+      <path d="M5.5 8h5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function DetailsIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M4 12 12 4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+      <path d="M7.5 4H12v4.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function RetryIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <path d="M12.5 6A4.8 4.8 0 1 0 13 9" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+      <path d="M10.5 3.5h3v3" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function truncateLayerTitle(value, maxLength = 20) {
+  const text = String(value || "");
+
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  return `${text.slice(0, maxLength).trimEnd()}...`;
+}
+
+function getLayerAccentColor(index) {
+  return markerPalette[index % markerPalette.length];
+}
+
 function createLeafletDataLayer(geoJson, layer, index) {
-  const color = markerPalette[index % markerPalette.length];
+  const color = getLayerAccentColor(index);
 
   return L.geoJSON(geoJson, {
     style(feature) {
@@ -794,13 +838,16 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
   const map = useMap();
   const layerGroupRef = useRef(null);
   const layerCacheRef = useRef(new Map());
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     const layerGroup = L.featureGroup();
     layerGroupRef.current = layerGroup;
     map.addLayer(layerGroup);
 
     return () => {
+      isMountedRef.current = false;
       map.removeLayer(layerGroup);
       layerGroupRef.current = null;
       layerCacheRef.current.clear();
@@ -814,11 +861,10 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
       return;
     }
 
-    let cancelled = false;
-
     async function ensureLayerLoaded(layer, index, state) {
       const cacheKey = `${index}:${getLayerSourceUrl(layer)}`;
       const cached = layerCacheRef.current.get(cacheKey);
+      const sourceUrl = getLayerSourceUrl(layer);
 
       if (cached?.status === "loading") {
         return;
@@ -841,32 +887,65 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
       try {
         const geoJson = await loadLayerGeoJson(layer);
 
-        if (cancelled) {
+        if (!isMountedRef.current) {
           return;
         }
 
         const leafletLayer = createLeafletDataLayer(geoJson, layer, index);
         const bounds = leafletLayer.getBounds?.() || L.latLngBounds([]);
+        const featureCount = leafletLayer.getLayers?.().length || 0;
+        const boundsValid = bounds.isValid?.() || false;
+        const geoJsonFeatureCount = Array.isArray(geoJson?.features) ? geoJson.features.length : 0;
+        const geometryTypes = Array.isArray(geoJson?.features)
+          ? [...new Set(geoJson.features.map((feature) => feature?.geometry?.type || "unknown"))]
+          : [];
+        const emptyLayerMessage = featureCount
+          ? ""
+          : "Layer loaded but produced no displayable geometries.";
+        let appliedZoomNonce = 0;
 
         layerCacheRef.current.set(cacheKey, {
           status: "loaded",
           leafletLayer,
           bounds,
+          boundsValid,
+          featureCount,
           loadNonce: state.loadNonce,
           zoomNonce: 0
         });
 
         if (state.visible) {
           layerGroup.addLayer(leafletLayer);
+          leafletLayer.bringToFront?.();
+
+          if (boundsValid && state.zoomNonce > 0) {
+            map.fitBounds(bounds, {
+              padding: [24, 24],
+              maxZoom: 13
+            });
+            appliedZoomNonce = state.zoomNonce;
+          }
         }
+
+        layerCacheRef.current.set(cacheKey, {
+          status: "loaded",
+          leafletLayer,
+          bounds,
+          boundsValid,
+          featureCount,
+          loadNonce: state.loadNonce,
+          zoomNonce: appliedZoomNonce
+        });
 
         onLayerStateChange(index, {
           loading: false,
-          loaded: true,
-          error: ""
+          loaded: featureCount > 0,
+          boundsValid,
+          featureCount,
+          error: emptyLayerMessage
         });
       } catch (error) {
-        if (cancelled) {
+        if (!isMountedRef.current) {
           return;
         }
 
@@ -880,6 +959,8 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
         onLayerStateChange(index, {
           loading: false,
           loaded: false,
+          boundsValid: false,
+          featureCount: 0,
           error: message
         });
       }
@@ -893,6 +974,7 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
       if (state.visible) {
         if (cached?.status === "loaded" && cached.leafletLayer && !layerGroup.hasLayer(cached.leafletLayer)) {
           layerGroup.addLayer(cached.leafletLayer);
+          cached.leafletLayer.bringToFront?.();
         }
 
         if (!cached || cached.status === "loading") {
@@ -908,7 +990,7 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
 
       if (
         cached?.status === "loaded" &&
-        cached.bounds?.isValid?.() &&
+        cached.boundsValid &&
         state.zoomNonce > (cached.zoomNonce || 0)
       ) {
         map.fitBounds(cached.bounds, {
@@ -922,10 +1004,6 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
         });
       }
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, [layers, layerStates, map, onLayerStateChange]);
 
   return null;
@@ -1622,7 +1700,7 @@ function App() {
     setShouldFitLoadedDataset(true);
     setWindowViews((current) => ({
       ...current,
-      results: "open",
+      results: "minimized",
       statistics: "hidden"
     }));
     setActiveWindow("results");
@@ -2396,6 +2474,86 @@ function App() {
                   </section>
                 ) : null}
 
+                {dataset?.layers?.length ? (
+                  <section className="panel-section">
+                    <h2>Layers</h2>
+                    <div className="layer-list">
+                      {dataset.layers.map((layer, index) => {
+                        const layerState = layerStates[index] || buildInitialLayerStates([layer])[0];
+                        const layerSourceUrl = getLayerSourceUrl(layer);
+                        const layerTitle = layer.title || layerSourceUrl;
+                        const shortLayerTitle = truncateLayerTitle(layerTitle, 20);
+                        const layerToggleId = `layer-toggle-${index}`;
+                        const statusMessage = layerState.loading
+                          ? "Loading layer..."
+                          : layerState.error || "";
+
+                        return (
+                          <div className="layer-list-item" key={`${index}-${layer.title}-${layerSourceUrl}`}>
+                            <div className="layer-heading">
+                              <span
+                                className="layer-swatch"
+                                style={{ backgroundColor: getLayerAccentColor(index) }}
+                                aria-hidden="true"
+                              />
+                              <input
+                                id={layerToggleId}
+                                type="checkbox"
+                                checked={layerState.visible}
+                                onChange={(event) => setLayerVisibility(index, event.target.checked)}
+                              />
+                              <div className="layer-inline">
+                                <label htmlFor={layerToggleId} className="layer-title" title={layerTitle}>
+                                  {shortLayerTitle}
+                                </label>
+                                <div className="layer-inline-actions">
+                                  <button
+                                    type="button"
+                                    className="layer-icon-action layer-zoom-action"
+                                    onClick={() => zoomToLayer(index)}
+                                    aria-label={`Zoom to ${layerTitle}`}
+                                    title="Zoom to layer"
+                                  >
+                                    <ZoomIcon />
+                                  </button>
+                                  {layer.url ? (
+                                    <a
+                                      className="layer-icon-action layer-details-action"
+                                      href={layer.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      aria-label={`Open details for ${layerTitle}`}
+                                      title="Layer details"
+                                    >
+                                      <DetailsIcon />
+                                    </a>
+                                  ) : null}
+                                  {layerState.error ? (
+                                    <button
+                                      type="button"
+                                      className="layer-icon-action"
+                                      onClick={() => retryLayerLoad(index)}
+                                      aria-label={`Retry ${layerTitle}`}
+                                      title="Retry layer"
+                                    >
+                                      <RetryIcon />
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                            {statusMessage ? (
+                              <div className={`layer-status ${layerState.error ? "error" : ""}`}>
+                                {statusMessage}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ) : null}
+
                 <section className="panel-section">
                   <h2>Actions</h2>
                   <div className="panel-actions">
@@ -2412,10 +2570,6 @@ function App() {
                       Export KML
                     </button>
                   </div>
-                  <p className="legend-copy tool-note">
-                    Statistics use the current result set. Downloads export the visible field order, and KML export follows the
-                    current subset.
-                  </p>
                 </section>
 
                 {dataset?.metadata?.disclaimer ? (
@@ -2427,51 +2581,6 @@ function App() {
                         __html: dataset.metadata.disclaimer
                       }}
                     />
-                  </section>
-                ) : null}
-
-                {dataset?.layers?.length ? (
-                  <section className="panel-section">
-                    <h2>Layers</h2>
-                    <div className="layer-list">
-                      {dataset.layers.map((layer, index) => {
-                        const layerState = layerStates[index] || buildInitialLayerStates([layer])[0];
-                        const layerSourceUrl = getLayerSourceUrl(layer);
-
-                        return (
-                          <div className="layer-card" key={`${index}-${layer.title}-${layerSourceUrl}`}>
-                            <label className="layer-toggle">
-                              <input
-                                type="checkbox"
-                                checked={layerState.visible}
-                                onChange={(event) => setLayerVisibility(index, event.target.checked)}
-                              />
-                              <span>{layer.title || layerSourceUrl}</span>
-                            </label>
-                            <div className="layer-actions-row">
-                              <button type="button" className="config-link-button" onClick={() => zoomToLayer(index)}>
-                                zoom
-                              </button>
-                              {layer.url ? (
-                                <a className="layer-detail-link" href={layer.url} target="_blank" rel="noreferrer">
-                                  details
-                                </a>
-                              ) : null}
-                              {layerState.error ? (
-                                <button type="button" className="config-link-button" onClick={() => retryLayerLoad(index)}>
-                                  retry
-                                </button>
-                              ) : null}
-                            </div>
-                            <div className={`layer-status ${layerState.error ? "error" : ""}`}>
-                              {layerState.loading
-                                ? "Loading layer..."
-                                : layerState.error || (layerState.loaded ? "Loaded on map." : layerSourceUrl)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
                   </section>
                 ) : null}
 
