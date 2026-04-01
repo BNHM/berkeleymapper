@@ -1,40 +1,62 @@
 <img src='https://raw.githubusercontent.com/BNHM/berkeleymapper/master/src/main/webapp/img/logo_medium.png' width='150' align="left">
 
 ## Introduction
-BerkeleyMapper 2.0 is a mapping interface for Collections (or other) Databases built on top of Google Maps.  Users can configure their mapping interface through a simple XML configuration script while mapping data from tab-delimited text files.
+BerkeleyMapper 2.0 is a mapping interface for collections and other tabular geographic datasets. Users configure the map through a legacy BerkeleyMapper XML config file and map records from tab-delimited text files.
 
-This codebase is in active development, with many new features and interface changes from the prior version.  The BerkeleyMapper instance running at http://berkeleymapper.berkeley.edu is open to anyone mapping natural history collections data.  The code is open source, so you may wish to setup your own instance running on another server. If you have any questions or feature requests please email the developer at "jdeck -at- berkeley -dot- edu"
+The current codebase is a React + Leaflet refactor of the older Java/Google Maps application. It keeps compatibility with the BerkeleyMapper config format while moving loading, rendering, and UI behavior into JavaScript.
 
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
 ## Try it out!
-Following shows a sample berkeleymapper call from Arctos
+Sample Arctos call:
 
 http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
 
+Sample AmphibiaWeb call:
+
+http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/public/sampledata/amphibiaweb.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/public/sampledata/amphibiaweb.xml
+
 ## JavaScript Refactor
-The current refactor branch now includes a JavaScript runtime that replaces the WAR-based startup path with:
+The current app runs as a JavaScript frontend with a small Node server for same-origin proxy endpoints.
+
+Local development:
 
 ```bash
 nvm use
 npm install
-npm start
+npm run dev
 ```
 
-Local development runs through Vite only, and production output is a static site build.
+Production build:
 
-This React slice currently ports the first part of BerkeleyMapper away from Java:
+```bash
+npm run build
+```
+
+Preview the built app locally:
+
+```bash
+npm run preview
+```
+
+The current React app supports:
 
 - load a tab-delimited dataset directly in the browser from a URL
 - optionally load a legacy BerkeleyMapper XML config directly in the browser
 - parse records and coordinates in JavaScript
 - render the dataset in a React UI with a Leaflet map and records table
+- render collection logos and metadata from config
+- support config-driven field ordering, aliases, and visible-field filtering
+- support config-driven marker coloring
+- load KML, KMZ, and GeoJSON overlay layers from `gisdata.layer`
+- toggle and zoom to overlay layers from the legend
+- proxy remote dataset/config/layer requests through same-origin API endpoints
 
 ## Static Deployment
 The app now builds to a static site and can be hosted anywhere that can serve the `dist/` directory.
 
 - client routes are static assets built by Vite
-- the production Node server exposes `/api/dataset` and loads remote `tabfile` / `configfile` URLs server-side
+- the production Node server exposes `/api/dataset` and `/api/layer`
 - remote dataset hosts no longer need browser CORS headers when accessed through that server endpoint
 
 Build settings:
@@ -44,15 +66,66 @@ Build command: npm run build
 Publish directory: dist
 ```
 
-The remaining Java-only REST features are still legacy code for now and need to be ported separately:
+## API Endpoints
+The JavaScript app currently uses two same-origin endpoints.
+
+### `GET /api/dataset`
+Loads a remote tabfile and optional config file server-side, then returns the parsed BerkeleyMapper dataset payload as JSON.
+
+Query parameters:
+- `tabfile` required, absolute or same-origin URL to a tab-delimited text file
+- `configfile` optional, absolute or same-origin URL to a BerkeleyMapper XML config file
+
+Example:
+
+```text
+/api/dataset?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
+```
+
+Behavior:
+- supports `GET` and `HEAD`
+- rejects non-HTTP(S) URLs
+- returns `400` for missing required parameters
+- returns `502` when upstream data cannot be loaded
+
+### `GET /api/layer`
+Fetches a remote overlay source server-side and returns it to the browser with the appropriate content type.
+
+Query parameters:
+- `url` required, absolute or same-origin URL to a `.kml`, `.kmz`, `.geojson`, or `.json` layer source
+
+Example:
+
+```text
+/api/layer?url=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/Anaxyrus_canorus.kmz
+```
+
+Behavior:
+- supports `GET` and `HEAD`
+- infers content type for KML, KMZ, GeoJSON, JSON, and XML sources
+- rejects non-HTTP(S) URLs
+- returns `400` for missing required parameters
+- returns `502` when upstream layer content cannot be loaded
+- detects common human-verification HTML pages and treats them as errors instead of valid layer data
+
+## Config Support
+Current config support is tracked in [docs/config-file-support.md](/Users/jdeck/IdeaProjects/berkeleymapper/berkeleymapper/docs/config-file-support.md).
+
+Supported areas currently include:
+- metadata and logos
+- concepts, field aliases, ordering, and visible columns
+- record linkback generation
+- GIS layer metadata and overlay loading
+
+## Remaining Legacy Work
+Some features are still legacy Java behavior and need to be ported separately:
 
 - polygon and spatial intersection processing
-- downloads and KML export
 - shapefile-backed spatial lookups
-- the rest of the config-driven feature surface
+- the remaining config-driven feature surface and older workflow variants
 
 ## Developers
-All external libraries are controlled by gradle, so to get started, you need to just:
+The legacy Java/WAR deployment files are still present for older deployment paths. If you need the older Gradle/WAR flow:
 
 ```
 # java libraries built around java 8, to use java 8, use the following:
