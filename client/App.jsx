@@ -469,6 +469,22 @@ function buildGroupedPopupHtml(group, columns) {
   `;
 }
 
+function bindPopupForProgrammaticOpen(layer, popupHtml) {
+  layer.bindPopup(popupHtml);
+  layer.off("click", layer._openPopup, layer);
+  layer.off("keypress", layer._onKeyPress, layer);
+}
+
+function openProgrammaticPopup(layer, popupHtml) {
+  if (!layer.getPopup()) {
+    bindPopupForProgrammaticOpen(layer, popupHtml);
+  } else if (layer.getPopup().getContent() !== popupHtml) {
+    layer.setPopupContent(popupHtml);
+  }
+
+  layer.openPopup();
+}
+
 function formatCount(value) {
   return numberFormatter.format(value);
 }
@@ -1273,18 +1289,12 @@ function MapMarkerLayer({
         const marker = markers[index];
         const leafletMarker = L.marker([marker.latitude, marker.longitude], {
           icon: createMarkerIcon(marker.color),
-          recordId: marker.id
+          recordId: marker.id,
+          popupHtml: buildPopupHtml(marker.record, displayedColumns)
         });
 
-        leafletMarker.bindPopup("");
-        leafletMarker.on("popupopen", () => {
-          const popup = leafletMarker.getPopup();
-          if (popup && !popup.getContent()) {
-            popup.setContent(buildPopupHtml(marker.record, displayedColumns));
-          }
-        });
         leafletMarker.on("click", () => {
-          onMarkerClick(marker.id);
+          onMarkerClick([marker.id]);
         });
 
         markerRefs.current.set(marker.id, leafletMarker);
@@ -1316,7 +1326,7 @@ function MapMarkerLayer({
     }
 
     clusterGroup.zoomToShowLayer(marker, () => {
-      marker.openPopup();
+      openProgrammaticPopup(marker, marker.options.popupHtml);
     });
   }, [selectedRecordId, markerRefs, shouldFocusSelection]);
 
@@ -1393,15 +1403,9 @@ function MapPointLayer({
           createPointStyle(group.color, canvasRenderer, isSelected)
         );
 
-        leafletMarker.bindPopup("");
-        leafletMarker.on("popupopen", () => {
-          const popup = leafletMarker.getPopup();
-          if (popup && !popup.getContent()) {
-            popup.setContent(buildGroupedPopupHtml(group, displayedColumns));
-          }
-        });
+        leafletMarker.options.popupHtml = buildGroupedPopupHtml(group, displayedColumns);
         leafletMarker.on("click", () => {
-          onMarkerClick(group.recordIds[0]);
+          onMarkerClick(group.recordIds);
         });
 
         group.recordIds.forEach((recordId) => {
@@ -1447,7 +1451,7 @@ function MapPointLayer({
     marker.bringToFront();
     const target = marker.getLatLng();
     const openSelectedPopup = () => {
-      marker.openPopup();
+      openProgrammaticPopup(marker, marker.options.popupHtml);
     };
 
     map.once("moveend", openSelectedPopup);
@@ -1675,13 +1679,6 @@ function App() {
     setWindowView("results", "open");
     setSelectedRecordId((current) => (nextQuery.recordIds.includes(current) ? current : nextQuery.recordIds[0] || ""));
   }, [setWindowView]);
-
-  const handleClusterSelection = useCallback((recordIds) => {
-    applyQuerySelection({
-      label: "Cluster Query",
-      recordIds
-    });
-  }, [applyQuerySelection]);
 
   const applyLoadedDataset = useCallback((nextDataset) => {
     setDataset(nextDataset);
@@ -1998,6 +1995,7 @@ function App() {
 
   const records = dataset?.records || [];
   const columns = dataset?.columns || [];
+  const recordLookup = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
   const colorConfig = dataset?.colorConfig || null;
   const colorFields = dataset?.colorFields || [];
@@ -2057,6 +2055,29 @@ function App() {
   }, [mapInstance, markers]);
 
   const selectedMarker = markers.find((marker) => marker.id === selectedRecordId) || null;
+  const startRecordQuery = useCallback((recordIds, fallbackLabel) => {
+    const normalizedRecordIds = Array.isArray(recordIds) ? recordIds.filter(Boolean) : [recordIds].filter(Boolean);
+    if (!normalizedRecordIds.length) {
+      return;
+    }
+
+    const firstRecord = normalizedRecordIds.length === 1 ? recordLookup.get(normalizedRecordIds[0]) : null;
+    const queryLabel =
+      firstRecord
+        ? getRecordLabel(firstRecord, columns) || fallbackLabel
+        : fallbackLabel;
+
+    applyQuerySelection({
+      label: queryLabel,
+      recordIds: normalizedRecordIds
+    });
+  }, [applyQuerySelection, columns, recordLookup]);
+  const handleMapRecordSelection = useCallback((recordIds) => {
+    startRecordQuery(recordIds, "Point Query");
+  }, [startRecordQuery]);
+  const handleClusterSelection = useCallback((recordIds) => {
+    startRecordQuery(recordIds, "Cluster Query");
+  }, [startRecordQuery]);
   const queryRecordIds = activeQuery?.recordIds || null;
   const recordsForResults = useMemo(() => {
     if (!queryRecordIds) {
@@ -2281,7 +2302,7 @@ function App() {
               displayedColumns={displayedColumns}
               selectedRecordId={selectedRecordId}
               markerRefs={markerRefs}
-              onMarkerClick={handleRecordSelection}
+              onMarkerClick={handleMapRecordSelection}
               onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
@@ -2291,7 +2312,7 @@ function App() {
               displayedColumns={displayedColumns}
               selectedRecordId={selectedRecordId}
               markerRefs={markerRefs}
-              onMarkerClick={handleRecordSelection}
+              onMarkerClick={handleMapRecordSelection}
               onClusterSelect={handleClusterSelection}
               onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
