@@ -254,6 +254,22 @@ function buildLayerFeaturePopupHtml(title, properties = {}) {
   ].join("");
 }
 
+function buildLayerFeatureDetails(title, properties = {}) {
+  const featureName = properties.name ? String(properties.name).trim() : "";
+  const description = properties.description ? String(properties.description).trim() : "";
+  const descriptionIsHtml = looksLikeHtml(description);
+
+  return {
+    title: String(title || "").trim(),
+    featureName,
+    descriptionHtml: descriptionIsHtml ? sanitizeLayerPopupHtml(description) : "",
+    descriptionText: description && !descriptionIsHtml ? description : "",
+    rows: Object.entries(properties)
+      .filter(([, value]) => value !== null && value !== undefined && value !== "")
+      .filter(([key]) => key !== "name" && key !== "description")
+  };
+}
+
 function ZoomIcon() {
   return (
     <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -296,7 +312,7 @@ function getLayerAccentColor(index) {
   return markerPalette[index % markerPalette.length];
 }
 
-function createLeafletDataLayer(geoJson, layer, index) {
+function createLeafletDataLayer(geoJson, layer, index, onFeatureSelect) {
   const color = getLayerAccentColor(index);
 
   return L.geoJSON(geoJson, {
@@ -329,11 +345,9 @@ function createLeafletDataLayer(geoJson, layer, index) {
       });
     },
     onEachFeature(feature, leafletLayer) {
-      const popupHtml = buildLayerFeaturePopupHtml(layer?.title, feature?.properties || {});
-
-      if (popupHtml) {
-        leafletLayer.bindPopup(popupHtml);
-      }
+      leafletLayer.on("click", () => {
+        onFeatureSelect?.(layer?.title || "Layer Details", feature?.properties || {});
+      });
     }
   });
 }
@@ -991,7 +1005,7 @@ function MapGeocodeLayer({ results, fitNonce, onDeleteResult, onKeepOnlyResult }
   return null;
 }
 
-function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
+function MapDatasetLayers({ layers, layerStates, onLayerStateChange, onFeatureSelect }) {
   const map = useMap();
   const layerGroupRef = useRef(null);
   const layerCacheRef = useRef(new Map());
@@ -1048,7 +1062,7 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
           return;
         }
 
-        const leafletLayer = createLeafletDataLayer(geoJson, layer, index);
+        const leafletLayer = createLeafletDataLayer(geoJson, layer, index, onFeatureSelect);
         const bounds = leafletLayer.getBounds?.() || L.latLngBounds([]);
         const featureCount = leafletLayer.getLayers?.().length || 0;
         const boundsValid = bounds.isValid?.() || false;
@@ -1161,7 +1175,7 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange }) {
         });
       }
     });
-  }, [layers, layerStates, map, onLayerStateChange]);
+  }, [layers, layerStates, map, onFeatureSelect, onLayerStateChange]);
 
   return null;
 }
@@ -1646,6 +1660,7 @@ function App() {
   });
   const [activeWindow, setActiveWindow] = useState("help");
   const [selectedRecordId, setSelectedRecordId] = useState("");
+  const [selectedLayerFeature, setSelectedLayerFeature] = useState(null);
   const [colorBy, setColorBy] = useState("");
   const [pointDisplay, setPointDisplay] = useState("clustered");
   const [activeQuery, setActiveQuery] = useState(null);
@@ -1737,6 +1752,7 @@ function App() {
 
   const handleRecordSelection = useCallback((recordId) => {
     shouldPanToSelectionRef.current = true;
+    setSelectedLayerFeature(null);
     setSelectedRecordId(recordId);
   }, []);
 
@@ -1811,15 +1827,31 @@ function App() {
       ...current,
       [windowName]: nextView
     }));
+    if (windowName === "results" && nextView !== "hidden") {
+      setMobileView("results");
+    }
+
     if (nextView !== "hidden") {
       setActiveWindow(windowName);
-      if (isPhoneViewport && windowName === "results") {
-        setMobileView("results");
-      }
-    } else if (isPhoneViewport && windowName === "results") {
+    } else if (windowName === "results") {
       setMobileView((current) => (current === "results" ? "map" : current));
     }
-  }, [isPhoneViewport]);
+  }, []);
+
+  const openRecordResultsPanel = useCallback(() => {
+    setSelectedLayerFeature(null);
+    setMobileView("results");
+    setWindowView("results", "open");
+  }, [setWindowView]);
+
+  const handleLayerFeatureSelect = useCallback((layerTitle, properties = {}) => {
+    setSelectedLayerFeature({
+      title: layerTitle,
+      properties
+    });
+    setMobileView("results");
+    setWindowView("results", "open");
+  }, [setWindowView]);
 
   const toggleWindowFullscreen = useCallback((windowName) => {
     setWindowViews((current) => ({
@@ -1864,6 +1896,7 @@ function App() {
 
   const applyQuerySelection = useCallback((nextQuery) => {
     shouldPanToSelectionRef.current = false;
+    setSelectedLayerFeature(null);
     setActiveQuery(nextQuery);
     setWindowView("results", "open");
     setSelectedRecordId((current) => (nextQuery.recordIds.includes(current) ? current : nextQuery.recordIds[0] || ""));
@@ -1873,6 +1906,7 @@ function App() {
     setDataset(nextDataset);
     setLayerStates(buildInitialLayerStates(nextDataset.layers || []));
     setSelectedRecordId(nextDataset.records[0]?.id || "");
+    setSelectedLayerFeature(null);
     shouldPanToSelectionRef.current = false;
     setActiveQuery(null);
     setHasDrawnShapes(false);
@@ -1899,6 +1933,7 @@ function App() {
     setDataset(null);
     setLayerStates([]);
     setSelectedRecordId("");
+    setSelectedLayerFeature(null);
     shouldPanToSelectionRef.current = false;
     setActiveQuery(null);
     setHasDrawnShapes(false);
@@ -2289,6 +2324,12 @@ function App() {
       : activeQuery
         ? "No records matched the current query"
         : "No records loaded";
+  const layerFeatureDetails = selectedLayerFeature
+    ? buildLayerFeatureDetails(selectedLayerFeature.title, selectedLayerFeature.properties)
+    : null;
+  const layerFeatureSummary = layerFeatureDetails
+    ? layerFeatureDetails.featureName || `${formatCount(layerFeatureDetails.rows.length)} field${layerFeatureDetails.rows.length === 1 ? "" : "s"}`
+    : "";
   const statisticsSummary = `${formatCount(recordsForResults.length)} records in scope`;
   const resultsView = windowViews.results;
   const statisticsView = windowViews.statistics;
@@ -2479,6 +2520,7 @@ function App() {
               layers={dataset.layers}
               layerStates={layerStates}
               onLayerStateChange={patchLayerState}
+              onFeatureSelect={handleLayerFeatureSelect}
             />
           ) : null}
           <MapGeocodeLayer
@@ -2546,7 +2588,7 @@ function App() {
               </button>
             ) : null}
             {dataset && !isPhoneViewport ? (
-              <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
+              <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={openRecordResultsPanel}>
                 Results
               </button>
             ) : null}
@@ -2574,7 +2616,7 @@ function App() {
               <button
                 type="button"
                 className="window-reopen"
-                onClick={() => setWindowView("results", "open")}
+                onClick={openRecordResultsPanel}
                 aria-label="Show results"
               >
                 Results
@@ -2598,7 +2640,7 @@ function App() {
                     Map
                   </button>
                   {dataset ? (
-                    <button type="button" className="secondary" onClick={() => setWindowView("results", "open")}>
+                    <button type="button" className="secondary" onClick={openRecordResultsPanel}>
                       Results
                     </button>
                   ) : null}
@@ -2892,8 +2934,8 @@ function App() {
           >
             <div className="window-titlebar">
               <div className="window-titletext">
-                <strong>Results</strong>
-                <span>{resultsSummary}</span>
+                <strong>{selectedLayerFeature ? "Layer Details" : "Results"}</strong>
+                <span>{selectedLayerFeature ? layerFeatureSummary : resultsSummary}</span>
               </div>
               {isPhoneViewport ? (
                 <div className="mobile-window-nav">
@@ -2933,34 +2975,76 @@ function App() {
             </div>
 
             <div className="window-content">
-              <div className="results-table">
-                <table>
-                  <thead>
-                    <tr>
-                      {displayedColumns.map((column) => (
-                        <th key={column.name}>{column.alias}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recordsForResults.slice(0, 100).map((record) => (
-                      <tr
-                        key={record.id}
-                        className={record.id === selectedRecordId ? "is-selected" : ""}
-                        onClick={() => {
-                          handleRecordSelection(record.id);
-                        }}
-                      >
+              {layerFeatureDetails ? (
+                <div className="layer-feature-panel">
+                  <div className="layer-feature-header">
+                    <div>
+                      <h2>{layerFeatureDetails.featureName || layerFeatureDetails.title || "Layer Feature"}</h2>
+                      {layerFeatureDetails.featureName && layerFeatureDetails.title ? (
+                        <p>{layerFeatureDetails.title}</p>
+                      ) : null}
+                    </div>
+                    <button type="button" className="secondary" onClick={openRecordResultsPanel}>
+                      Record Results
+                    </button>
+                  </div>
+                  {layerFeatureDetails.descriptionHtml ? (
+                    <div
+                      className="layer-feature-html"
+                      dangerouslySetInnerHTML={{
+                        __html: layerFeatureDetails.descriptionHtml
+                      }}
+                    />
+                  ) : layerFeatureDetails.descriptionText ? (
+                    <div className="layer-feature-html">
+                      <p>{layerFeatureDetails.descriptionText}</p>
+                    </div>
+                  ) : null}
+                  {layerFeatureDetails.rows.length ? (
+                    <div className="layer-feature-meta">
+                      <table>
+                        <tbody>
+                          {layerFeatureDetails.rows.map(([key, value]) => (
+                            <tr key={key}>
+                              <th>{key}</th>
+                              <td>{renderRecordValue(String(value), `layer-${key}`)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="results-table">
+                  <table>
+                    <thead>
+                      <tr>
                         {displayedColumns.map((column) => (
-                          <td key={`${record.id}-${column.name}`}>
-                            {renderRecordValue(record.values[column.name] || "", `${record.id}-${column.name}`)}
-                          </td>
+                          <th key={column.name}>{column.alias}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {recordsForResults.slice(0, 100).map((record) => (
+                        <tr
+                          key={record.id}
+                          className={record.id === selectedRecordId ? "is-selected" : ""}
+                          onClick={() => {
+                            handleRecordSelection(record.id);
+                          }}
+                        >
+                          {displayedColumns.map((column) => (
+                            <td key={`${record.id}-${column.name}`}>
+                              {renderRecordValue(record.values[column.name] || "", `${record.id}-${column.name}`)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </section>
         ) : null}
@@ -3325,7 +3409,14 @@ function App() {
               key={windowItem.key}
               type="button"
               className="window-reopen"
-              onClick={() => setWindowView(windowItem.key, "open")}
+              onClick={() => {
+                if (windowItem.key === "results") {
+                  openRecordResultsPanel();
+                  return;
+                }
+
+                setWindowView(windowItem.key, "open");
+              }}
               aria-label={`Show ${windowItem.label} panel`}
             >
               {windowItem.label}

@@ -927,6 +927,67 @@ a:hover {
   background: #ffffff;
 }
 
+.layer-feature-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  padding: 12px;
+  overflow: auto;
+  background: #ffffff;
+}
+
+.layer-feature-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.layer-feature-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.layer-feature-header p {
+  margin: 4px 0 0;
+  color: #5b6470;
+  font-size: 12px;
+}
+
+.layer-feature-html,
+.layer-feature-meta {
+  min-width: 0;
+}
+
+.layer-feature-html {
+  overflow: auto;
+}
+
+.layer-feature-html table,
+.layer-feature-meta table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.layer-feature-html td,
+.layer-feature-html th,
+.layer-feature-meta td,
+.layer-feature-meta th {
+  padding: 6px 8px;
+  border: 1px solid #d9e0e6;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.layer-feature-meta th {
+  width: 180px;
+  background: #f4f7fa;
+  font-weight: 700;
+}
+
 .statistics-content {
   gap: 10px;
   padding: 10px 12px 12px;
