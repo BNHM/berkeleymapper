@@ -29,6 +29,7 @@ const amphibiawebDemo = {
   configfile: "/sampledata/amphibiaweb.xml"
 };
 const amphibiawebDemoHref = `?${new URLSearchParams(amphibiawebDemo).toString()}`;
+const phoneViewportMediaQuery = "(max-width: 720px)";
 const anchorTagPattern = /^<a\s+[^>]*href=(["'])(.*?)\1[^>]*>(.*?)<\/a>$/i;
 const urlPattern = /^https?:\/\/\S+$/i;
 const markerPalette = [
@@ -83,6 +84,10 @@ function buildInitialForm() {
     tabfile: params.get("tabfile") || "",
     configfile: params.get("configfile") || ""
   };
+}
+
+function detectPhoneViewport() {
+  return typeof window !== "undefined" && window.matchMedia(phoneViewportMediaQuery).matches;
 }
 
 function stripHtml(value) {
@@ -1630,6 +1635,8 @@ function App() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isPhoneViewport, setIsPhoneViewport] = useState(detectPhoneViewport);
+  const [mobileView, setMobileView] = useState("map");
   const [windowViews, setWindowViews] = useState({
     results: "hidden",
     statistics: "hidden",
@@ -1677,6 +1684,47 @@ function App() {
   const renderProgressFlushTimeoutRef = useRef(null);
   const renderProgressLastCommitRef = useRef(0);
   const pendingRenderProgressRef = useRef({ active: false, loaded: 0, total: 0 });
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(phoneViewportMediaQuery);
+    const handleChange = (event) => {
+      setIsPhoneViewport(event.matches);
+    };
+
+    setIsPhoneViewport(mediaQuery.matches);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isPhoneViewport) {
+      setMobileView((current) => {
+        if (current === "results") {
+          return windowViews.results === "hidden" ? "map" : "results";
+        }
+
+        return "map";
+      });
+      return;
+    }
+
+    setMobileView("map");
+  }, [isPhoneViewport, windowViews.results]);
 
   const getInitialColorField = useCallback((nextDataset) => {
     const configuredField = nextDataset?.colorConfig?.fieldname;
@@ -1765,8 +1813,13 @@ function App() {
     }));
     if (nextView !== "hidden") {
       setActiveWindow(windowName);
+      if (isPhoneViewport && windowName === "results") {
+        setMobileView("results");
+      }
+    } else if (isPhoneViewport && windowName === "results") {
+      setMobileView((current) => (current === "results" ? "map" : current));
     }
-  }, []);
+  }, [isPhoneViewport]);
 
   const toggleWindowFullscreen = useCallback((windowName) => {
     setWindowViews((current) => ({
@@ -1833,11 +1886,14 @@ function App() {
     setShouldFitLoadedDataset(true);
     setWindowViews((current) => ({
       ...current,
-      results: "minimized",
+      results: isPhoneViewport ? "hidden" : "minimized",
       statistics: "hidden"
     }));
     setActiveWindow("results");
-  }, [getInitialColorField]);
+    if (isPhoneViewport) {
+      setMobileView("map");
+    }
+  }, [getInitialColorField, isPhoneViewport]);
 
   const resetLoadedDataset = useCallback(() => {
     setDataset(null);
@@ -1858,7 +1914,10 @@ function App() {
       results: "hidden",
       statistics: "hidden"
     }));
-  }, []);
+    if (isPhoneViewport) {
+      setMobileView("map");
+    }
+  }, [isPhoneViewport]);
 
   const loadDatasetFromClientFiles = useCallback(async (payload) => {
     const [tabdata, configdata] = await Promise.all([
@@ -2236,27 +2295,34 @@ function App() {
   const geoJsonView = windowViews.geojson;
   const configView = windowViews.config;
   const helpView = windowViews.help;
+  const desktopSidebarOpen = !isPhoneViewport && sidebarOpen;
+  const legendPanelOpen = isPhoneViewport ? mobileView === "legend" : sidebarOpen;
+  const displayResultsView = isPhoneViewport
+    ? mobileView === "results" && resultsView !== "hidden"
+      ? "open"
+      : "hidden"
+    : resultsView;
   const getDockedHeight = (view, openHeight) => (view === "open" ? openHeight : view === "minimized" ? "34px" : "0px");
-  const resultsDockedHeight = getDockedHeight(resultsView, "min(34vh, 320px)");
+  const resultsDockedHeight = getDockedHeight(displayResultsView, "min(34vh, 320px)");
   const statisticsDockedHeight = getDockedHeight(statisticsView, "min(30vh, 280px)");
   const geoJsonDockedHeight = getDockedHeight(geoJsonView, "min(30vh, 280px)");
   const configDockedHeight = getDockedHeight(configView, "min(36vh, 360px)");
   const resultsDockedBottom = "0px";
-  const statisticsDockedBottom = resultsView === "fullscreen" ? "0px" : resultsDockedHeight;
+  const statisticsDockedBottom = displayResultsView === "fullscreen" ? "0px" : resultsDockedHeight;
   const geoJsonDockedBottom =
-    resultsView === "fullscreen" || statisticsView === "fullscreen"
+    displayResultsView === "fullscreen" || statisticsView === "fullscreen"
       ? "0px"
       : `calc(${resultsDockedHeight} + ${statisticsDockedHeight})`;
   const configDockedBottom =
-    resultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen"
+    displayResultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen"
       ? "0px"
       : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${geoJsonDockedHeight})`;
   const helpDockedBottom =
-    resultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen" || configView === "fullscreen"
+    displayResultsView === "fullscreen" || statisticsView === "fullscreen" || geoJsonView === "fullscreen" || configView === "fullscreen"
       ? "0px"
       : `calc(${resultsDockedHeight} + ${statisticsDockedHeight} + ${geoJsonDockedHeight} + ${configDockedHeight})`;
   const hiddenWindows = [
-    resultsView === "hidden" ? { key: "results", label: "Results" } : null,
+    !isPhoneViewport && resultsView === "hidden" ? { key: "results", label: "Results" } : null,
     geoJsonView === "hidden" && geoJsonExport.text ? { key: "geojson", label: "GeoJSON" } : null
   ].filter(Boolean);
   const statisticsColumns = useMemo(
@@ -2364,7 +2430,14 @@ function App() {
 
   return (
     <main className="mapper-shell">
-      <div className={`map-stage ${sidebarOpen ? "is-sidebar-open" : ""}`}>
+      <div
+        className={[
+          "map-stage",
+          desktopSidebarOpen ? "is-sidebar-open" : "",
+          isPhoneViewport ? "is-phone-layout" : "",
+          isPhoneViewport ? `is-mobile-${mobileView}` : ""
+        ].filter(Boolean).join(" ")}
+      >
         {loadWarning ? (
           <div className="top-warning-banner" role="alert">
             <span>{loadWarning}</span>
@@ -2472,7 +2545,7 @@ function App() {
                 All
               </button>
             ) : null}
-            {dataset ? (
+            {dataset && !isPhoneViewport ? (
               <button type="button" className="bm-map-toolbar-button" title="Show results panel" onClick={() => setWindowView("results", "open")}>
                 Results
               </button>
@@ -2490,14 +2563,48 @@ function App() {
           </div>
         ) : null}
 
-        <div className={`sidebar-toggle ${sidebarOpen ? "is-open" : ""}`}>
-          <button type="button" onClick={() => setSidebarOpen((current) => !current)} aria-label="Toggle legend panel">
-            {sidebarOpen ? "‹" : "›"}
-          </button>
-        </div>
+        {isPhoneViewport ? (
+          <div className="mobile-view-launchers">
+            {mobileView !== "legend" ? (
+              <button type="button" className="window-reopen" onClick={() => setMobileView("legend")} aria-label="Show legend">
+                Legend
+              </button>
+            ) : null}
+            {dataset && mobileView !== "results" ? (
+              <button
+                type="button"
+                className="window-reopen"
+                onClick={() => setWindowView("results", "open")}
+                aria-label="Show results"
+              >
+                Results
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <div className={`sidebar-toggle ${sidebarOpen ? "is-open" : ""}`}>
+            <button type="button" onClick={() => setSidebarOpen((current) => !current)} aria-label="Toggle legend panel">
+              {sidebarOpen ? "‹" : "›"}
+            </button>
+          </div>
+        )}
 
-        <aside className={`legend-panel ${sidebarOpen ? "is-open" : ""}`}>
+        <aside className={`legend-panel ${legendPanelOpen ? "is-open" : ""}`}>
           <div className="legend-scroll">
+            {isPhoneViewport ? (
+              <section className="panel-section mobile-panel-switcher">
+                <div className="panel-actions">
+                  <button type="button" onClick={() => setMobileView("map")}>
+                    Map
+                  </button>
+                  {dataset ? (
+                    <button type="button" className="secondary" onClick={() => setWindowView("results", "open")}>
+                      Results
+                    </button>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
             <section className="panel-section">
               <h2>
                 <button type="button" className="section-title-link" onClick={() => setWindowView("config", "fullscreen")}>
@@ -2778,9 +2885,9 @@ function App() {
           </div>
         </aside>
 
-        {resultsView !== "hidden" ? (
+        {displayResultsView !== "hidden" ? (
           <section
-            className={`bottom-drawer results-drawer is-${resultsView} ${activeWindow === "results" ? "is-active" : ""}`}
+            className={`bottom-drawer results-drawer is-${displayResultsView} ${activeWindow === "results" ? "is-active" : ""}`}
             onMouseDown={() => setActiveWindow("results")}
           >
             <div className="window-titlebar">
@@ -2788,23 +2895,37 @@ function App() {
                 <strong>Results</strong>
                 <span>{resultsSummary}</span>
               </div>
-              <div className="window-controls">
-                <button type="button" className="results-control-button" onClick={() => setWindowView("results", "minimized")} aria-label="Minimize results panel">
-                  <span className="results-control-icon results-control-minimize" aria-hidden="true" />
-                </button>
-                {resultsView !== "open" ? (
-                  <button type="button" className="results-control-button" onClick={() => setWindowView("results", "open")} aria-label="Restore results panel">
-                    <span className="results-control-icon results-control-restore" aria-hidden="true" />
+              {isPhoneViewport ? (
+                <div className="mobile-window-nav">
+                  <button type="button" className="window-reopen" onClick={() => setMobileView("map")} aria-label="Show map">
+                    Map
                   </button>
+                  <button type="button" className="window-reopen" onClick={() => setMobileView("legend")} aria-label="Show legend">
+                    Legend
+                  </button>
+                </div>
+              ) : null}
+              <div className="window-controls">
+                {!isPhoneViewport ? (
+                  <>
+                    <button type="button" className="results-control-button" onClick={() => setWindowView("results", "minimized")} aria-label="Minimize results panel">
+                      <span className="results-control-icon results-control-minimize" aria-hidden="true" />
+                    </button>
+                    {displayResultsView !== "open" ? (
+                      <button type="button" className="results-control-button" onClick={() => setWindowView("results", "open")} aria-label="Restore results panel">
+                        <span className="results-control-icon results-control-restore" aria-hidden="true" />
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="results-control-button"
+                      onClick={() => toggleWindowFullscreen("results")}
+                      aria-label={displayResultsView === "fullscreen" ? "Exit fullscreen results" : "Fullscreen results"}
+                    >
+                      <span className="results-control-icon results-control-maximize" aria-hidden="true" />
+                    </button>
+                  </>
                 ) : null}
-                <button
-                  type="button"
-                  className="results-control-button"
-                  onClick={() => toggleWindowFullscreen("results")}
-                  aria-label={resultsView === "fullscreen" ? "Exit fullscreen results" : "Fullscreen results"}
-                >
-                  <span className="results-control-icon results-control-maximize" aria-hidden="true" />
-                </button>
                 <button type="button" className="results-control-button" onClick={() => setWindowView("results", "hidden")} aria-label="Close results panel">
                   <span className="results-control-icon results-control-close" aria-hidden="true" />
                 </button>
