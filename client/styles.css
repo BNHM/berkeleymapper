@@ -1204,6 +1204,26 @@ tbody tr.is-selected {
   color: #555;
 }
 
+.popup-kml-description {
+  margin-top: 8px;
+}
+
+.popup-kml-description table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.popup-kml-description td,
+.popup-kml-description th {
+  padding: 4px 6px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  vertical-align: top;
+}
+
+.popup-kml-description a {
+  color: #165c46;
+}
+
 .popup-geocode-actions {
   display: flex;
   flex-wrap: wrap;

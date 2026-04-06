@@ -98,18 +98,154 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function looksLikeHtml(value) {
+  return typeof value === "string" && /<[^>]+>/.test(value);
+}
+
+function sanitizeLayerPopupHtml(value) {
+  if (!looksLikeHtml(value)) {
+    return escapeHtml(String(value || ""));
+  }
+
+  const parser = new DOMParser();
+  const document = parser.parseFromString(value, "text/html");
+  const allowedTags = new Set([
+    "a",
+    "b",
+    "blockquote",
+    "br",
+    "caption",
+    "code",
+    "div",
+    "em",
+    "i",
+    "li",
+    "ol",
+    "p",
+    "pre",
+    "span",
+    "strong",
+    "table",
+    "tbody",
+    "td",
+    "th",
+    "thead",
+    "tr",
+    "u",
+    "ul"
+  ]);
+  const removableTags = new Set(["head", "html", "body"]);
+  const dropTags = new Set(["script", "style", "iframe", "object", "embed", "link", "meta"]);
+  const allowedAttrs = {
+    a: new Set(["href", "target", "title"]),
+    table: new Set(["border", "cellpadding", "cellspacing"]),
+    td: new Set(["align", "bgcolor", "colspan", "rowspan", "valign"]),
+    th: new Set(["align", "bgcolor", "colspan", "rowspan", "valign"]),
+    tr: new Set(["align", "bgcolor", "valign"]),
+    div: new Set(["align"]),
+    p: new Set(["align"]),
+    span: new Set(["align"])
+  };
+
+  const sanitizeUrl = (url) => {
+    const trimmed = String(url || "").trim();
+
+    if (!trimmed) {
+      return "";
+    }
+
+    if (/^(https?:|mailto:|tel:)/i.test(trimmed)) {
+      return trimmed;
+    }
+
+    return "";
+  };
+
+  const walk = (node) => {
+    if (node.nodeType !== Node.ELEMENT_NODE) {
+      return;
+    }
+
+    const tagName = node.tagName.toLowerCase();
+
+    if (dropTags.has(tagName)) {
+      node.remove();
+      return;
+    }
+
+    if (removableTags.has(tagName) || !allowedTags.has(tagName)) {
+      const parent = node.parentNode;
+
+      if (!parent) {
+        return;
+      }
+
+      while (node.firstChild) {
+        parent.insertBefore(node.firstChild, node);
+      }
+
+      node.remove();
+      return;
+    }
+
+    [...node.attributes].forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const allowed = allowedAttrs[tagName];
+
+      if (!allowed || !allowed.has(name)) {
+        node.removeAttribute(attribute.name);
+        return;
+      }
+
+      if (tagName === "a" && name === "href") {
+        const sanitizedHref = sanitizeUrl(attribute.value);
+
+        if (!sanitizedHref) {
+          node.removeAttribute(attribute.name);
+          return;
+        }
+
+        node.setAttribute("href", sanitizedHref);
+      }
+
+      if (tagName === "a" && name === "target" && attribute.value === "_blank") {
+        node.setAttribute("rel", "noreferrer noopener");
+      }
+    });
+
+    [...node.childNodes].forEach(walk);
+  };
+
+  [...document.body.childNodes].forEach(walk);
+
+  return document.body.innerHTML;
+}
+
 function buildLayerFeaturePopupHtml(title, properties = {}) {
+  const featureName = properties.name ? String(properties.name).trim() : "";
+  const description = properties.description ? String(properties.description).trim() : "";
+  const renderedDescription = description && looksLikeHtml(description)
+    ? sanitizeLayerPopupHtml(description)
+    : "";
   const rows = Object.entries(properties)
     .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .filter(([key]) => !(renderedDescription && (key === "description" || key === "name")))
     .slice(0, 6);
 
-  if (!rows.length) {
-    return title ? `<div><strong>${escapeHtml(title)}</strong></div>` : "";
+  if (!rows.length && !renderedDescription && !featureName) {
+    return title ? `<div class="popup-body"><strong>${escapeHtml(title)}</strong></div>` : "";
   }
 
   return [
+    `<div class="popup-body">`,
     title ? `<div><strong>${escapeHtml(title)}</strong></div>` : "",
-    ...rows.map(([key, value]) => `<div><strong>${escapeHtml(key)}</strong>: ${escapeHtml(String(value))}</div>`)
+    renderedDescription && featureName && featureName.toLowerCase() !== title?.toLowerCase()
+      ? `<div><strong>Name</strong>: ${escapeHtml(featureName)}</div>`
+      : "",
+    renderedDescription
+      ? `<div class="popup-kml-description">${renderedDescription}</div>`
+      : rows.map(([key, value]) => `<div><strong>${escapeHtml(key)}</strong>: ${escapeHtml(String(value))}</div>`).join(""),
+    `</div>`
   ].join("");
 }
 
