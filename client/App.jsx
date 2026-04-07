@@ -46,6 +46,8 @@ const markerPalette = [
 ];
 const numberFormatter = new Intl.NumberFormat();
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
+const datasetLayerPaneName = "bm-dataset-layers";
+const recordPointPaneName = "bm-record-points";
 
 function buildInitialLayerStates(layers = []) {
   return layers.map((layer) => ({
@@ -312,6 +314,17 @@ function getLayerAccentColor(index) {
   return markerPalette[index % markerPalette.length];
 }
 
+function ensureMapPane(map, paneName, zIndex) {
+  let pane = map.getPane(paneName);
+
+  if (!pane) {
+    pane = map.createPane(paneName);
+  }
+
+  pane.style.zIndex = String(zIndex);
+  return pane;
+}
+
 function clampPositiveNumber(value, fallback) {
   return Number.isFinite(value) && value > 0 ? value : fallback;
 }
@@ -395,6 +408,7 @@ function createLeafletDataLayer(geoJson, layer, index, onFeatureSelect) {
   const createPointIcon = createKmlPointIconFactory();
 
   return L.geoJSON(geoJson, {
+    pane: datasetLayerPaneName,
     style(feature) {
       return getLeafletKmlPathStyle(feature, color);
     },
@@ -403,11 +417,15 @@ function createLeafletDataLayer(geoJson, layer, index, onFeatureSelect) {
 
       if (pointIcon) {
         return L.marker(latlng, {
-          icon: pointIcon
+          icon: pointIcon,
+          pane: datasetLayerPaneName
         });
       }
 
-      return L.circleMarker(latlng, getLeafletKmlPointOptions(feature, color));
+      return L.circleMarker(latlng, {
+        ...getLeafletKmlPointOptions(feature, color),
+        pane: datasetLayerPaneName
+      });
     },
     onEachFeature(feature, leafletLayer) {
       leafletLayer.on("click", () => {
@@ -1149,6 +1167,7 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange, onFeatureSe
 
   useEffect(() => {
     isMountedRef.current = true;
+    ensureMapPane(map, datasetLayerPaneName, 450);
     const layerGroup = L.featureGroup();
     layerGroupRef.current = layerGroup;
     map.addLayer(layerGroup);
@@ -1640,8 +1659,12 @@ function MapPointLayer({
   const groupedMarkers = useMemo(() => groupMarkersByCoordinate(markers), [markers]);
 
   useEffect(() => {
+    ensureMapPane(map, recordPointPaneName, 650);
     const layerGroup = L.layerGroup();
-    const canvasRenderer = L.canvas({ padding: 0.5 });
+    const canvasRenderer = L.canvas({
+      padding: 0.5,
+      pane: recordPointPaneName
+    });
 
     layerGroupRef.current = layerGroup;
     canvasRendererRef.current = canvasRenderer;
@@ -1691,7 +1714,10 @@ function MapPointLayer({
         const isSelected = group.recordIds.includes(selectedRecordId);
         const leafletMarker = L.circleMarker(
           [group.latitude, group.longitude],
-          createPointStyle(group.color, canvasRenderer, isSelected)
+          {
+            ...createPointStyle(group.color, canvasRenderer, isSelected),
+            pane: recordPointPaneName
+          }
         );
 
         leafletMarker.options.popupHtml = buildGroupedPopupHtml(group, displayedColumns);
