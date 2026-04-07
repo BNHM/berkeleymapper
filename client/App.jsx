@@ -2363,7 +2363,17 @@ function App() {
   const columns = dataset?.columns || [];
   const recordLookup = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
-  const colorConfigs = dataset?.colorConfigs?.length ? dataset.colorConfigs : (dataset?.colorConfig ? [dataset.colorConfig] : []);
+  const colorConfigs = useMemo(() => {
+    if (dataset?.colorConfigs?.length) {
+      return dataset.colorConfigs;
+    }
+
+    if (dataset?.colorConfig) {
+      return [dataset.colorConfig];
+    }
+
+    return [];
+  }, [dataset?.colorConfigs, dataset?.colorConfig]);
   const colorFields = dataset?.colorFields || [];
   const availableColorFields = useMemo(() => {
     const merged = new Map();
