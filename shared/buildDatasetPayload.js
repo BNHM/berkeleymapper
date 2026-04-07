@@ -25,6 +25,7 @@ export function buildDatasetPayload({ requestId, tabfile, configfile, tabdata, c
     metadata: config.metadata,
     colors: config.colors,
     colorConfig: config.colorConfig,
+    colorConfigs: config.colorConfigs || [],
     logos: config.logos,
     layers: config.layers,
     ...parsed
