@@ -1661,13 +1661,13 @@ function MapPointLayer({
   useEffect(() => {
     ensureMapPane(map, recordPointPaneName, 650);
     const layerGroup = L.layerGroup();
-    const canvasRenderer = L.canvas({
+    const pointRenderer = L.svg({
       padding: 0.5,
       pane: recordPointPaneName
     });
 
     layerGroupRef.current = layerGroup;
-    canvasRendererRef.current = canvasRenderer;
+    canvasRendererRef.current = pointRenderer;
     map.addLayer(layerGroup);
 
     return () => {
@@ -1681,7 +1681,7 @@ function MapPointLayer({
 
   useEffect(() => {
     const layerGroup = layerGroupRef.current;
-    const canvasRenderer = canvasRendererRef.current;
+    const pointRenderer = canvasRendererRef.current;
     if (!layerGroup) {
       return;
     }
@@ -1715,7 +1715,7 @@ function MapPointLayer({
         const leafletMarker = L.circleMarker(
           [group.latitude, group.longitude],
           {
-            ...createPointStyle(group.color, canvasRenderer, isSelected),
+            ...createPointStyle(group.color, pointRenderer, isSelected),
             pane: recordPointPaneName
           }
         );
