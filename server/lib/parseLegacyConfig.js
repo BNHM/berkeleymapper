@@ -55,6 +55,16 @@ function toHex(red, green, blue) {
   return `#${clamp(red)}${clamp(green)}${clamp(blue)}`;
 }
 
+function normalizeWebColor(value) {
+  const normalized = String(value || "").trim().replace(/^#/, "");
+
+  if (/^[0-9a-f]{6}$/i.test(normalized)) {
+    return `#${normalized.toLowerCase()}`;
+  }
+
+  return "";
+}
+
 function decodeXmlEntities(value) {
   return String(value || "")
     .replaceAll("&amp;", "&")
@@ -89,7 +99,19 @@ function parseRecordLinkBack(recordLinkBackNode) {
   };
 }
 
-function parseColorConfig(colorsNode) {
+function parseDominantPalette(colorsNode, paletteFallback = {}) {
+  const dominantColor = normalizeWebColor(colorsNode?.dominantcolor?.webcolor || paletteFallback.dominantColor);
+  const subdominantColor = normalizeWebColor(colorsNode?.subdominantcolor?.webcolor || paletteFallback.subdominantColor);
+  const textDominantColor = normalizeWebColor(colorsNode?.textdominantcolor?.webcolor || paletteFallback.textDominantColor);
+
+  return {
+    dominantColor,
+    subdominantColor,
+    textDominantColor
+  };
+}
+
+function parseColorConfig(colorsNode, paletteFallback = {}) {
   if (!colorsNode || typeof colorsNode !== "object") {
     return null;
   }
@@ -101,10 +123,15 @@ function parseColorConfig(colorsNode) {
     return null;
   }
 
+  const palette = parseDominantPalette(colorsNode, paletteFallback);
+
   return {
     method,
     fieldname,
     label: toText(colorsNode.label) || fieldname,
+    dominantColor: palette.dominantColor,
+    subdominantColor: palette.subdominantColor,
+    textDominantColor: palette.textDominantColor,
     colors: toArray(colorsNode.color).map((color) => ({
       key: color.key || "default",
       label: color.label || color.key || "Default",
@@ -139,7 +166,11 @@ export function parseLegacyConfig(xmlText) {
     parsed[Object.keys(parsed)[0]] ||
     {};
   const metadata = root.metadata || {};
-  const colors = root.colors || {};
+  const paletteFallback = parseDominantPalette(root);
+  const colorConfigs = toArray(root.colors)
+    .map((colorsNode) => parseColorConfig(colorsNode, paletteFallback))
+    .filter(Boolean);
+  const colors = colorConfigs[0] || {};
 
   return {
     metadata: {
@@ -166,7 +197,8 @@ export function parseLegacyConfig(xmlText) {
       blue: Number(color.blue || 0),
       hex: toHex(color.red, color.green, color.blue)
     })),
-    colorConfig: parseColorConfig(colors),
+    colorConfig: colorConfigs[0] || null,
+    colorConfigs,
     logos: toArray(metadata.logo).concat(toArray(root.logos?.logo || root.logo)).map((logo) => ({
       img: logo.img || "",
       url: logo.url || ""

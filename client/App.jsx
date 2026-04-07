@@ -602,7 +602,65 @@ function createPointStyle(color, renderer, selected = false) {
   };
 }
 
-function buildColorAssignments(records, colorBy, colorConfig) {
+function clampRgbChannel(value) {
+  return Math.max(0, Math.min(255, Math.round(value)));
+}
+
+function parseHexColor(value) {
+  const normalized = String(value || "").trim().replace(/^#/, "");
+
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) {
+    return null;
+  }
+
+  return {
+    red: Number.parseInt(normalized.slice(0, 2), 16),
+    green: Number.parseInt(normalized.slice(2, 4), 16),
+    blue: Number.parseInt(normalized.slice(4, 6), 16)
+  };
+}
+
+function toHexColor({ red, green, blue }) {
+  return `#${clampRgbChannel(red).toString(16).padStart(2, "0")}${clampRgbChannel(green).toString(16).padStart(2, "0")}${clampRgbChannel(blue).toString(16).padStart(2, "0")}`;
+}
+
+function interpolateHexColor(startColor, endColor, ratio) {
+  const start = parseHexColor(startColor);
+  const end = parseHexColor(endColor);
+
+  if (!start || !end) {
+    return "";
+  }
+
+  return toHexColor({
+    red: start.red + ((end.red - start.red) * ratio),
+    green: start.green + ((end.green - start.green) * ratio),
+    blue: start.blue + ((end.blue - start.blue) * ratio)
+  });
+}
+
+function buildGeneratedLegend(uniqueValues, dominantColor, subdominantColor) {
+  const firstColor = dominantColor || subdominantColor;
+  const secondColor = subdominantColor || dominantColor;
+
+  if (!firstColor || !secondColor) {
+    return [];
+  }
+
+  if (uniqueValues.length <= 1) {
+    return uniqueValues.map((value) => ({
+      value,
+      color: firstColor
+    }));
+  }
+
+  return uniqueValues.map((value, index) => ({
+    value,
+    color: interpolateHexColor(firstColor, secondColor, index / (uniqueValues.length - 1)) || firstColor
+  }));
+}
+
+function buildColorAssignments(records, colorBy, colorConfigs = []) {
   if (!colorBy) {
     return {
       colorMap: new Map(),
@@ -611,11 +669,13 @@ function buildColorAssignments(records, colorBy, colorConfig) {
     };
   }
 
-  if (colorConfig?.method === "field" && colorConfig.fieldname === colorBy && colorConfig.colors?.length) {
-    const colorMap = new Map();
-    let defaultColor = "#cc3333";
+  const activeColorConfig = colorConfigs.find((config) => config?.fieldname === colorBy) || null;
 
-    colorConfig.colors.forEach((entry) => {
+  if ((activeColorConfig?.method === "field" || activeColorConfig?.method === "dynamicfield") && activeColorConfig.colors?.length) {
+    const colorMap = new Map();
+    let defaultColor = activeColorConfig.dominantColor || "#cc3333";
+
+    activeColorConfig.colors.forEach((entry) => {
       if ((entry.key || "").toLowerCase() === "default") {
         defaultColor = entry.hex || defaultColor;
         return;
@@ -627,7 +687,7 @@ function buildColorAssignments(records, colorBy, colorConfig) {
     return {
       colorMap,
       defaultColor,
-      legend: colorConfig.colors
+      legend: activeColorConfig.colors
         .filter((entry) => (entry.key || "").toLowerCase() !== "default")
         .map((entry) => ({
           value: entry.label || entry.key,
@@ -637,14 +697,25 @@ function buildColorAssignments(records, colorBy, colorConfig) {
   }
 
   const uniqueValues = [...new Set(records.map((record) => stripHtml(record.values[colorBy] || "").trim()).filter(Boolean))].slice(0, 50);
+  const generatedLegend = activeColorConfig
+    ? buildGeneratedLegend(uniqueValues, activeColorConfig.dominantColor, activeColorConfig.subdominantColor)
+    : [];
+  const fallbackLegend = generatedLegend.length
+    ? generatedLegend
+    : uniqueValues.map((value, index) => ({
+      value,
+      color: markerPalette[index % markerPalette.length]
+    }));
   const colorMap = new Map();
-  const legend = uniqueValues.map((value, index) => {
-    const color = markerPalette[index % markerPalette.length];
-    colorMap.set(value, color);
-    return { value, color };
+  fallbackLegend.forEach((entry) => {
+    colorMap.set(entry.value, entry.color);
   });
 
-  return { colorMap, legend };
+  return {
+    colorMap,
+    defaultColor: activeColorConfig?.dominantColor || "#cc3333",
+    legend: fallbackLegend
+  };
 }
 
 function buildPopupRowsHtml(record, columns) {
@@ -1807,7 +1878,7 @@ function App() {
   }, [isPhoneViewport, windowViews.results]);
 
   const getInitialColorField = useCallback((nextDataset) => {
-    const configuredField = nextDataset?.colorConfig?.fieldname;
+    const configuredField = nextDataset?.colorConfigs?.[0]?.fieldname || nextDataset?.colorConfig?.fieldname;
     if (!configuredField) {
       return "";
     }
@@ -2292,7 +2363,7 @@ function App() {
   const columns = dataset?.columns || [];
   const recordLookup = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
-  const colorConfig = dataset?.colorConfig || null;
+  const colorConfigs = dataset?.colorConfigs?.length ? dataset.colorConfigs : (dataset?.colorConfig ? [dataset.colorConfig] : []);
   const colorFields = dataset?.colorFields || [];
   const availableColorFields = useMemo(() => {
     const merged = new Map();
@@ -2301,19 +2372,24 @@ function App() {
       merged.set(field.name, field);
     });
 
-    if (colorConfig?.fieldname && !merged.has(colorConfig.fieldname)) {
+    colorConfigs.forEach((colorConfig) => {
+      if (!colorConfig?.fieldname || merged.has(colorConfig.fieldname)) {
+        return;
+      }
+
       const matchingColumn = columns.find((column) => column.name === colorConfig.fieldname);
       merged.set(colorConfig.fieldname, {
         name: colorConfig.fieldname,
         alias: colorConfig.label || matchingColumn?.alias || colorConfig.fieldname
       });
-    }
+    });
 
     return [...merged.values()];
-  }, [colorFields, colorConfig, columns]);
+  }, [colorFields, colorConfigs, columns]);
+  const activeColorConfig = colorConfigs.find((config) => config?.fieldname === colorBy) || null;
   const { colorMap, defaultColor, legend: dynamicColorLegend } = useMemo(
-    () => buildColorAssignments(records, colorBy, colorConfig),
-    [records, colorBy, colorConfig]
+    () => buildColorAssignments(records, colorBy, colorConfigs),
+    [records, colorBy, colorConfigs]
   );
   const markers = useMemo(
     () =>
@@ -2834,7 +2910,7 @@ function App() {
 
                 {dynamicColorLegend.length ? (
                   <section className="panel-section">
-                    <h2>{colorBy && colorConfig?.fieldname === colorBy ? colorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
+                    <h2>{colorBy && activeColorConfig?.fieldname === colorBy ? activeColorConfig.label || "Marker Colors" : "Marker Colors"}</h2>
                     <div className="color-list">
                       {dynamicColorLegend.map((entry) => (
                         <div className="color-row" key={entry.value}>
