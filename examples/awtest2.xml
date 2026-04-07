@@ -14,7 +14,7 @@
 <colors method="field" fieldname="darwin:scientificname" label="scientificName">
 <dominantcolor webcolor="629ad3"/>
 <subdominantcolor webcolor="ddddff"/>
-</colors>
+<colors>
 <colors method="field" fieldname="darwin:basisofrecord" label="Basis of Record">
 <color key="PRESERVED_SPECIMEN" red="0" green="0" blue="255" symbol="7" label="Preserved Specimen" />
 <color key="HUMAN_OBSERVATION" red="255" green="0" blue="0" symbol="7" label="Human Observation" />
