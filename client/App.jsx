@@ -312,37 +312,102 @@ function getLayerAccentColor(index) {
   return markerPalette[index % markerPalette.length];
 }
 
+function clampPositiveNumber(value, fallback) {
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function clampUnitInterval(value, fallback) {
+  return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : fallback;
+}
+
+function createKmlPointIconFactory() {
+  const iconCache = new Map();
+
+  return (featureStyle) => {
+    const iconHref = String(featureStyle?.iconHref || "").trim();
+    if (!iconHref) {
+      return null;
+    }
+
+    const iconScale = clampPositiveNumber(featureStyle?.iconScale, 1);
+    const iconSize = Math.max(16, Math.round(32 * iconScale));
+    const cacheKey = `${iconHref}|${iconSize}`;
+
+    if (!iconCache.has(cacheKey)) {
+      iconCache.set(cacheKey, L.icon({
+        iconUrl: iconHref,
+        iconRetinaUrl: iconHref,
+        iconSize: [iconSize, iconSize],
+        iconAnchor: [Math.round(iconSize / 2), iconSize],
+        popupAnchor: [0, -iconSize + 6]
+      }));
+    }
+
+    return iconCache.get(cacheKey) || null;
+  };
+}
+
+function getLeafletKmlPathStyle(feature, fallbackColor) {
+  const featureStyle = feature?.kmlStyle || {};
+  const geometryType = feature?.geometry?.type || "";
+
+  if (geometryType.includes("Polygon")) {
+    const hasOutline = featureStyle.outline !== false;
+    const hasFill = featureStyle.fill !== false;
+
+    return {
+      color: featureStyle.lineColor || fallbackColor,
+      weight: clampPositiveNumber(featureStyle.lineWidth, 2),
+      opacity: clampUnitInterval(featureStyle.lineOpacity, 0.9),
+      fillColor: featureStyle.fillColor || fallbackColor,
+      fillOpacity: clampUnitInterval(featureStyle.fillOpacity, 0.12),
+      stroke: hasOutline,
+      fill: hasFill
+    };
+  }
+
+  return {
+    color: featureStyle.lineColor || fallbackColor,
+    weight: clampPositiveNumber(featureStyle.lineWidth, 2),
+    opacity: clampUnitInterval(featureStyle.lineOpacity, 0.95)
+  };
+}
+
+function getLeafletKmlPointOptions(feature, fallbackColor) {
+  const featureStyle = feature?.kmlStyle || {};
+  const pointColor = featureStyle.iconColor || fallbackColor;
+  const iconScale = clampPositiveNumber(featureStyle.iconScale, 1);
+  const strokeOpacity = clampUnitInterval(featureStyle.iconOpacity, 0.95);
+  const fillOpacity = clampUnitInterval(featureStyle.iconOpacity, 0.3);
+
+  return {
+    radius: Math.max(4, Math.min(18, Math.round(5 * iconScale))),
+    color: pointColor,
+    weight: 1.5,
+    opacity: strokeOpacity,
+    fillColor: pointColor,
+    fillOpacity
+  };
+}
+
 function createLeafletDataLayer(geoJson, layer, index, onFeatureSelect) {
   const color = getLayerAccentColor(index);
+  const createPointIcon = createKmlPointIconFactory();
 
   return L.geoJSON(geoJson, {
     style(feature) {
-      const geometryType = feature?.geometry?.type || "";
-
-      if (geometryType.includes("Polygon")) {
-        return {
-          color,
-          weight: 2,
-          opacity: 0.9,
-          fillColor: color,
-          fillOpacity: 0.12
-        };
-      }
-
-      return {
-        color,
-        weight: 2,
-        opacity: 0.95
-      };
+      return getLeafletKmlPathStyle(feature, color);
     },
     pointToLayer(feature, latlng) {
-      return L.circleMarker(latlng, {
-        radius: 5,
-        color,
-        weight: 1.5,
-        fillColor: color,
-        fillOpacity: 0.3
-      });
+      const pointIcon = createPointIcon(feature?.kmlStyle);
+
+      if (pointIcon) {
+        return L.marker(latlng, {
+          icon: pointIcon
+        });
+      }
+
+      return L.circleMarker(latlng, getLeafletKmlPointOptions(feature, color));
     },
     onEachFeature(feature, leafletLayer) {
       leafletLayer.on("click", () => {
@@ -2557,7 +2622,7 @@ function App() {
               onRenderProgress={handleRenderProgress}
               shouldFocusSelection={shouldPanToSelectionRef.current}
             />
-          ) : dataset ? (
+          ) : dataset && pointDisplay === "clustered" ? (
             <MapMarkerLayer
               markers={markers}
               displayedColumns={displayedColumns}
@@ -2742,6 +2807,7 @@ function App() {
                         setPointDisplay(event.target.value);
                       }}
                     >
+                      <option value="none">No markers</option>
                       <option value="clustered">Marker Clusterer</option>
                       <option value="markers">Placemarks</option>
                     </select>

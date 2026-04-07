@@ -75,8 +75,307 @@ function findFirstDescendantByLocalName(node, name) {
   return findDescendantsByLocalName(node, name)[0] || null;
 }
 
+function findFirstChildByLocalName(node, name) {
+  const target = String(name || "").toLowerCase();
+  return getChildElements(node).find((child) => getElementLocalName(child) === target) || null;
+}
+
 function getElementText(node) {
   return String(node?.textContent || "").trim();
+}
+
+function getStyleIdentifier(node) {
+  return String(node?.getAttribute?.("id") || node?.getAttribute?.("xml:id") || "").trim();
+}
+
+function normalizeKmlStyleReference(styleUrl) {
+  const value = String(styleUrl || "").trim();
+
+  if (!value) {
+    return "";
+  }
+
+  if (value.startsWith("#")) {
+    return value;
+  }
+
+  const hashIndex = value.indexOf("#");
+  if (hashIndex >= 0) {
+    const fragment = value.slice(hashIndex);
+    return fragment.startsWith("#") ? fragment : `#${fragment}`;
+  }
+
+  return value;
+}
+
+function parseKmlBoolean(text) {
+  const value = String(text || "").trim().toLowerCase();
+
+  if (!value) {
+    return undefined;
+  }
+
+  if (value === "1" || value === "true") {
+    return true;
+  }
+
+  if (value === "0" || value === "false") {
+    return false;
+  }
+
+  return undefined;
+}
+
+function parseKmlNumber(text) {
+  const value = Number.parseFloat(String(text || "").trim());
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function parseKmlColor(text) {
+  const value = String(text || "").trim().replace(/^#/, "");
+
+  if (!/^[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value)) {
+    return null;
+  }
+
+  const normalized = value.length === 6 ? `ff${value}` : value;
+  const alpha = normalized.slice(0, 2);
+  const blue = normalized.slice(2, 4);
+  const green = normalized.slice(4, 6);
+  const red = normalized.slice(6, 8);
+
+  return {
+    color: `#${red}${green}${blue}`.toLowerCase(),
+    opacity: Number.parseInt(alpha, 16) / 255
+  };
+}
+
+function resolveKmlIconHref(href, sourceUrl, options = {}) {
+  const value = String(href || "").trim();
+
+  if (!value) {
+    return "";
+  }
+
+  if (/^(https?:|data:|blob:)/i.test(value)) {
+    return value;
+  }
+
+  if (value.startsWith("//")) {
+    return `https:${value}`;
+  }
+
+  if (!options.allowRelativeIcons) {
+    return "";
+  }
+
+  try {
+    return new URL(value, sourceUrl).toString();
+  } catch {
+    return "";
+  }
+}
+
+function mergeKmlStyles(baseStyle, nextStyle) {
+  return {
+    ...(baseStyle || {}),
+    ...(nextStyle || {})
+  };
+}
+
+function parseKmlLineStyle(styleElement) {
+  const lineStyleElement = findFirstChildByLocalName(styleElement, "linestyle");
+
+  if (!lineStyleElement) {
+    return null;
+  }
+
+  const color = parseKmlColor(getElementText(findFirstChildByLocalName(lineStyleElement, "color")));
+  const width = parseKmlNumber(getElementText(findFirstChildByLocalName(lineStyleElement, "width")));
+  const style = {};
+
+  if (color?.color) {
+    style.lineColor = color.color;
+    style.lineOpacity = color.opacity;
+  }
+
+  if (width !== undefined) {
+    style.lineWidth = width;
+  }
+
+  return Object.keys(style).length ? style : null;
+}
+
+function parseKmlPolyStyle(styleElement) {
+  const polyStyleElement = findFirstChildByLocalName(styleElement, "polystyle");
+
+  if (!polyStyleElement) {
+    return null;
+  }
+
+  const color = parseKmlColor(getElementText(findFirstChildByLocalName(polyStyleElement, "color")));
+  const fill = parseKmlBoolean(getElementText(findFirstChildByLocalName(polyStyleElement, "fill")));
+  const outline = parseKmlBoolean(getElementText(findFirstChildByLocalName(polyStyleElement, "outline")));
+  const style = {};
+
+  if (color?.color) {
+    style.fillColor = color.color;
+    style.fillOpacity = color.opacity;
+  }
+
+  if (fill !== undefined) {
+    style.fill = fill;
+  }
+
+  if (outline !== undefined) {
+    style.outline = outline;
+  }
+
+  return Object.keys(style).length ? style : null;
+}
+
+function parseKmlIconStyle(styleElement, sourceUrl, options = {}) {
+  const iconStyleElement = findFirstChildByLocalName(styleElement, "iconstyle");
+
+  if (!iconStyleElement) {
+    return null;
+  }
+
+  const color = parseKmlColor(getElementText(findFirstChildByLocalName(iconStyleElement, "color")));
+  const scale = parseKmlNumber(getElementText(findFirstChildByLocalName(iconStyleElement, "scale")));
+  const iconElement = findFirstChildByLocalName(iconStyleElement, "icon");
+  const href = resolveKmlIconHref(
+    getElementText(findFirstChildByLocalName(iconElement, "href")),
+    sourceUrl,
+    options
+  );
+  const style = {};
+
+  if (color?.color) {
+    style.iconColor = color.color;
+    style.iconOpacity = color.opacity;
+  }
+
+  if (scale !== undefined) {
+    style.iconScale = scale;
+  }
+
+  if (href) {
+    style.iconHref = href;
+  }
+
+  return Object.keys(style).length ? style : null;
+}
+
+function parseKmlStyleElement(styleElement, sourceUrl, options = {}) {
+  const style = mergeKmlStyles(
+    mergeKmlStyles(
+      parseKmlLineStyle(styleElement),
+      parseKmlPolyStyle(styleElement)
+    ),
+    parseKmlIconStyle(styleElement, sourceUrl, options)
+  );
+
+  return Object.keys(style).length ? style : null;
+}
+
+function parseKmlStyleMapElement(styleMapElement, sourceUrl, options = {}) {
+  const entries = {};
+
+  getChildElements(styleMapElement)
+    .filter((child) => getElementLocalName(child) === "pair")
+    .forEach((pairElement) => {
+      const key = getElementText(findFirstChildByLocalName(pairElement, "key")).toLowerCase() || "normal";
+      const styleUrl = getElementText(findFirstChildByLocalName(pairElement, "styleurl"));
+      const inlineStyleElement = findFirstChildByLocalName(pairElement, "style");
+
+      entries[key] = {
+        styleUrl,
+        style: inlineStyleElement ? parseKmlStyleElement(inlineStyleElement, sourceUrl, options) : null
+      };
+    });
+
+  return Object.keys(entries).length ? entries : null;
+}
+
+function resolveKmlStyleReference(styleUrl, styleContext, trail = new Set()) {
+  const reference = normalizeKmlStyleReference(styleUrl);
+
+  if (!reference || trail.has(reference)) {
+    return null;
+  }
+
+  trail.add(reference);
+
+  if (styleContext.styles.has(reference)) {
+    return styleContext.styles.get(reference);
+  }
+
+  const styleMap = styleContext.styleMaps.get(reference);
+  if (!styleMap) {
+    return null;
+  }
+
+  const preferredEntries = [
+    styleMap.normal,
+    styleMap.highlight,
+    ...Object.values(styleMap)
+  ].filter(Boolean);
+
+  let resolvedStyle = null;
+  preferredEntries.forEach((entry) => {
+    resolvedStyle = mergeKmlStyles(
+      resolvedStyle,
+      mergeKmlStyles(
+        resolveKmlStyleReference(entry.styleUrl, styleContext, trail),
+        entry.style
+      )
+    );
+  });
+
+  return resolvedStyle;
+}
+
+function buildKmlStyleContext(xml, sourceUrl, options = {}) {
+  const styles = new Map();
+  const styleMaps = new Map();
+
+  findDescendantsByLocalName(xml?.documentElement, "style").forEach((styleElement) => {
+    const identifier = getStyleIdentifier(styleElement);
+
+    if (!identifier) {
+      return;
+    }
+
+    const style = parseKmlStyleElement(styleElement, sourceUrl, options);
+    if (!style) {
+      return;
+    }
+
+    styles.set(`#${identifier}`, style);
+    styles.set(identifier, style);
+  });
+
+  findDescendantsByLocalName(xml?.documentElement, "stylemap").forEach((styleMapElement) => {
+    const identifier = getStyleIdentifier(styleMapElement);
+
+    if (!identifier) {
+      return;
+    }
+
+    const styleMap = parseKmlStyleMapElement(styleMapElement, sourceUrl, options);
+    if (!styleMap) {
+      return;
+    }
+
+    styleMaps.set(`#${identifier}`, styleMap);
+    styleMaps.set(identifier, styleMap);
+  });
+
+  return {
+    styles,
+    styleMaps
+  };
 }
 
 function parseKmlCoordinates(text) {
@@ -239,7 +538,37 @@ function parseKmlProperties(placemarkElement) {
   return properties;
 }
 
-function parseKmlPlacemark(placemarkElement) {
+function parseKmlPlacemarkStyle(placemarkElement, styleContext, sourceUrl, options = {}) {
+  const directStyleUrl = getElementText(findFirstChildByLocalName(placemarkElement, "styleurl"));
+  const directStyleElement = findFirstChildByLocalName(placemarkElement, "style");
+  const directStyleMapElement = findFirstChildByLocalName(placemarkElement, "stylemap");
+  let style = resolveKmlStyleReference(directStyleUrl, styleContext);
+
+  if (directStyleMapElement) {
+    const inlineStyleMap = parseKmlStyleMapElement(directStyleMapElement, sourceUrl, options);
+    const preferredEntries = inlineStyleMap
+      ? [inlineStyleMap.normal, inlineStyleMap.highlight, ...Object.values(inlineStyleMap)].filter(Boolean)
+      : [];
+
+    preferredEntries.forEach((entry) => {
+      style = mergeKmlStyles(
+        style,
+        mergeKmlStyles(
+          resolveKmlStyleReference(entry.styleUrl, styleContext),
+          entry.style
+        )
+      );
+    });
+  }
+
+  if (directStyleElement) {
+    style = mergeKmlStyles(style, parseKmlStyleElement(directStyleElement, sourceUrl, options));
+  }
+
+  return style && Object.keys(style).length ? style : null;
+}
+
+function parseKmlPlacemark(placemarkElement, styleContext, sourceUrl, options = {}) {
   const geometryElement = getChildElements(placemarkElement).find((child) => {
     const localName = getElementLocalName(child);
     return localName === "point" || localName === "linestring" || localName === "polygon" || localName === "multigeometry";
@@ -257,13 +586,17 @@ function parseKmlPlacemark(placemarkElement) {
   return {
     type: "Feature",
     properties: parseKmlProperties(placemarkElement),
-    geometry
+    geometry,
+    kmlStyle: parseKmlPlacemarkStyle(placemarkElement, styleContext, sourceUrl, options)
   };
 }
 
-function parseKmlDocument(xml) {
+function parseKmlDocument(xml, sourceUrl, options = {}) {
   const placemarks = findDescendantsByLocalName(xml?.documentElement, "placemark");
-  const features = placemarks.map(parseKmlPlacemark).filter(Boolean);
+  const styleContext = buildKmlStyleContext(xml, sourceUrl, options);
+  const features = placemarks
+    .map((placemarkElement) => parseKmlPlacemark(placemarkElement, styleContext, sourceUrl, options))
+    .filter(Boolean);
 
   return {
     type: "FeatureCollection",
@@ -271,7 +604,7 @@ function parseKmlDocument(xml) {
   };
 }
 
-function parseKmlText(kmlText, sourceUrl) {
+function parseKmlText(kmlText, sourceUrl, options = {}) {
   const parser = new DOMParser();
   const xml = parser.parseFromString(kmlText, "application/xml");
   const parserError = xml.querySelector("parsererror");
@@ -281,7 +614,7 @@ function parseKmlText(kmlText, sourceUrl) {
   }
 
   const parsed = toGeoJSON.kml(xml);
-  const fallback = parseKmlDocument(xml);
+  const fallback = parseKmlDocument(xml, sourceUrl, options);
 
   if (Array.isArray(fallback?.features) && fallback.features.length) {
     return fallback;
@@ -337,12 +670,12 @@ export async function loadLayerGeoJson(layer) {
   if (format === "kmz") {
     const buffer = await response.arrayBuffer();
     const kmlText = await extractKmlFromKmz(buffer, sourceUrl);
-    return parseKmlText(kmlText, sourceUrl);
+    return parseKmlText(kmlText, sourceUrl, { allowRelativeIcons: false });
   }
 
   if (format === "kml") {
     const kmlText = await response.text();
-    return parseKmlText(kmlText, sourceUrl);
+    return parseKmlText(kmlText, sourceUrl, { allowRelativeIcons: true });
   }
 
   throw new Error(`Unsupported layer format for ${sourceUrl}.`);
