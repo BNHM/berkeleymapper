@@ -1,0 +1,19 @@
+<berkeleymapper>
+  <metadata>
+    <name>Config-Only GIS Layer Demo</name>
+    <abstract>Local BerkeleyMapper sample for config-only loads with no tabfile.</abstract>
+    <legendText><![CDATA[
+      This local sample recreates BerkeleyMapper's no-tabfile code path. The config defines a GIS layer, but no tab-delimited records.
+    ]]></legendText>
+  </metadata>
+  <gisdata>
+    <layer title="Local Config-Only Layer" legend="1" active="1" url="https://example.org/local-config-only-demo">
+      <![CDATA[/sampledata/no-tabfile-layer.kml]]>
+    </layer>
+  </gisdata>
+  <concepts xmlns:darwin="http://digir.net/schema/conceptual/darwin/2003/1.0">
+    <concept order="1" viewlist="1" datatype="darwin:scientificname" alias="Scientific Name"/>
+    <concept order="2" viewlist="1" datatype="darwin:decimallatitude" alias="Decimal Latitude"/>
+    <concept order="3" viewlist="1" datatype="darwin:decimallongitude" alias="Decimal Longitude"/>
+  </concepts>
+</berkeleymapper>

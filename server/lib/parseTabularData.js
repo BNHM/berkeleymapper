@@ -23,6 +23,15 @@ function buildColumnsFromConfig(concepts) {
   }));
 }
 
+function buildSummary(columns, records, markers) {
+  return {
+    columnCount: columns.length,
+    visibleColumnCount: columns.filter((column) => column.visible).length,
+    recordCount: records.length,
+    pointCount: markers.length
+  };
+}
+
 function columnMatchKey(value) {
   if (!value) {
     return "";
@@ -299,11 +308,29 @@ export function parseTabularData(tabText, config) {
         name: column.name,
         alias: column.alias
       })),
-    summary: {
-      columnCount: orderedColumns.length,
-      visibleColumnCount: orderedColumns.filter((column) => column.visible).length,
-      recordCount: records.length,
-      pointCount: markers.length
-    }
+    summary: buildSummary(orderedColumns, records, markers)
+  };
+}
+
+export function buildEmptyTabularData(config) {
+  const configuredColumns = buildColumnsFromConfig(config?.concepts || []).map((column, index) => ({
+    ...column,
+    originalIndex: index
+  }));
+  const orderedColumns = sortColumns(configuredColumns);
+  const records = [];
+  const markers = [];
+
+  return {
+    columns: orderedColumns,
+    records,
+    markers,
+    colorFields: orderedColumns
+      .filter((column) => column.colorable)
+      .map((column) => ({
+        name: column.name,
+        alias: column.alias
+      })),
+    summary: buildSummary(orderedColumns, records, markers)
   };
 }

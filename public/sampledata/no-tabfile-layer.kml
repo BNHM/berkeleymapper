@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>BerkeleyMapper Config-Only Layer Demo</name>
+    <Style id="demo-poly">
+      <LineStyle>
+        <color>ff2d6cdf</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>552d6cdf</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+    <Placemark>
+      <name>Config-Only Demo Polygon</name>
+      <description><![CDATA[
+        <p>This local layer exists to reproduce BerkeleyMapper loads where no tabfile is provided and the config only defines GIS layers.</p>
+      ]]></description>
+      <styleUrl>#demo-poly</styleUrl>
+      <Polygon>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>
+              -122.55,37.70,0
+              -121.95,37.70,0
+              -121.95,38.15,0
+              -122.55,38.15,0
+              -122.55,37.70,0
+            </coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  </Document>
+</kml>

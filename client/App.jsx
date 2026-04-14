@@ -29,6 +29,10 @@ const amphibiawebDemo = {
   configfile: "/sampledata/amphibiaweb.xml"
 };
 const amphibiawebDemoHref = `?${new URLSearchParams(amphibiawebDemo).toString()}`;
+const configOnlyDemo = {
+  configfile: "/sampledata/no-tabfile-config.xml"
+};
+const configOnlyDemoHref = `?${new URLSearchParams(configOnlyDemo).toString()}`;
 const phoneViewportMediaQuery = "(max-width: 720px)";
 const anchorTagPattern = /^<a\s+[^>]*href=(["'])(.*?)\1[^>]*>(.*?)<\/a>$/i;
 const urlPattern = /^https?:\/\/\S+$/i;
@@ -63,7 +67,7 @@ function buildInitialLayerStates(layers = []) {
 }
 
 function shouldAttemptServerLoad(payload) {
-  return Boolean(payload?.tabfile) && !payload?.tabdata;
+  return Boolean(payload?.tabfile || payload?.configfile) && !payload?.tabdata && !payload?.configdata;
 }
 
 async function fetchRequiredText(url, label) {
@@ -2132,7 +2136,9 @@ function App() {
 
   const loadDatasetFromServerFiles = useCallback(async (payload) => {
     const params = new URLSearchParams();
-    params.set("tabfile", payload.tabfile);
+    if (payload.tabfile) {
+      params.set("tabfile", payload.tabfile);
+    }
 
     if (payload.configfile) {
       params.set("configfile", payload.configfile);
@@ -2180,10 +2186,10 @@ function App() {
             throw serverError;
           }
         }
-      } else if (payload?.tabdata) {
+      } else if (payload?.tabdata || payload?.configdata) {
         data = buildDatasetPayload(payload);
       } else {
-        throw new Error("Provide a tabfile URL and, optionally, a configfile URL.");
+        throw new Error("Provide a tabfile URL, a configfile URL, or both.");
       }
 
       applyLoadedDataset(data);
@@ -3399,8 +3405,8 @@ function App() {
                   <img src={brandLogo} alt="BerkeleyMapper" className="about-hero-logo" />
                   <div className="about-hero-copy">
                     <p>
-                      BerkeleyMapper reads a BerkeleyMapper XML configuration file together with a tab-delimited data file,
-                      then renders the records on the map, in the results window, and in the statistics tools.
+                      BerkeleyMapper reads a BerkeleyMapper XML configuration file and, when present, a tab-delimited data
+                      file. Config-only datasets can still load GIS layers even when no tabfile is available.
                     </p>
                     <p>{aboutPermissionCopy}</p>
                   </div>
@@ -3410,8 +3416,10 @@ function App() {
                   <article className="about-card">
                     <h4>1. Start With A Dataset</h4>
                     <p>
-                      Use a <strong>tabfile</strong> and <strong>configfile</strong> in the URL, or use{" "}
-                      <a href={arctosDemoHref}>Load Arctos Demo</a> or <a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a>.
+                      Use a <strong>configfile</strong> URL by itself, or pair it with a <strong>tabfile</strong>. You can
+                      also use{" "}
+                      <a href={configOnlyDemoHref}>Load Config-Only Demo</a>, <a href={arctosDemoHref}>Load Arctos Demo</a>,
+                      or <a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a>.
                       The browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly
                       from the XML configuration.
                     </p>
@@ -3489,6 +3497,19 @@ function App() {
                 </section>
 
                 <section className="about-note">
+                  <h4>Sample Calls</h4>
+                  <p>
+                    Local no-tabfile recreation:
+                    <br />
+                    <a href={configOnlyDemoHref}><code>?configfile=/sampledata/no-tabfile-config.xml</code></a>
+                  </p>
+                  <p>
+                    This sample keeps everything local and exercises the config-only load path with a GIS overlay layer and
+                    zero tabular records.
+                  </p>
+                </section>
+
+                <section className="about-note">
                   <h4>Current Sources</h4>
                   <p>
                     <code>tabfile</code>: {dataset?.source?.tabfile || "Not loaded"}
@@ -3545,7 +3566,7 @@ function App() {
             <div className="window-content help-content">
               <p>
                 BerkeleyMapper now fetches remote <code>tabfile</code> and <code>configfile</code> URLs on the server and
-                returns the parsed dataset to the browser.
+                returns the parsed dataset to the browser. A config-only load is valid when the XML only defines GIS layers.
               </p>
               {loadWarningDetails.tabfile || loadWarningDetails.configfile ? (
                 <>

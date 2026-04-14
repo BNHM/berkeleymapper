@@ -98,13 +98,13 @@ export async function handleDatasetRequest(request, response, url, options = {})
     const tabfile = resolveSourceUrl(url.searchParams.get("tabfile"), request, fallbackHost);
     const configfile = resolveSourceUrl(url.searchParams.get("configfile"), request, fallbackHost);
 
-    if (!tabfile) {
-      sendJson(response, 400, { error: "Missing required query parameter: tabfile" });
+    if (!tabfile && !configfile) {
+      sendJson(response, 400, { error: "Missing required query parameter: tabfile or configfile" });
       return;
     }
 
     const [tabdata, configdata] = await Promise.all([
-      fetchRequiredText(tabfile, "tab file"),
+      tabfile ? fetchRequiredText(tabfile, "tab file") : Promise.resolve(""),
       configfile ? fetchRequiredText(configfile, "config file") : Promise.resolve("")
     ]);
 
