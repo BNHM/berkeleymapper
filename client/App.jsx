@@ -100,6 +100,15 @@ function stripHtml(value) {
   return value.replace(/<[^>]+>/g, "").trim();
 }
 
+function decodeHtmlEntities(value) {
+  return String(value || "")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", "\"")
+    .replaceAll("&#39;", "'");
+}
+
 function escapeHtml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -446,16 +455,21 @@ function parseLinkValue(value) {
 
   const anchorMatch = value.trim().match(anchorTagPattern);
   if (anchorMatch) {
+    const href = decodeHtmlEntities(anchorMatch[2]);
+    const label = decodeHtmlEntities(stripHtml(anchorMatch[3]) || href);
+
     return {
-      href: anchorMatch[2],
-      label: stripHtml(anchorMatch[3]) || anchorMatch[2]
+      href,
+      label
     };
   }
 
   if (urlPattern.test(value.trim())) {
+    const decodedValue = decodeHtmlEntities(value.trim());
+
     return {
-      href: value.trim(),
-      label: value.trim()
+      href: decodedValue,
+      label: decodedValue
     };
   }
 
