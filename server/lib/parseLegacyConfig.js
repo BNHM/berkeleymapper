@@ -143,6 +143,28 @@ function parseColorConfig(colorsNode, paletteFallback = {}) {
   };
 }
 
+function parseJoinConfig(joinNode) {
+  if (!joinNode || typeof joinNode !== "object") {
+    return null;
+  }
+
+  const method = toText(joinNode.method).toLowerCase();
+  const fieldname1 = normalizeColumnName(toText(joinNode.fieldname1));
+  const fieldname2 = normalizeColumnName(toText(joinNode.fieldname2));
+
+  if (!method || !fieldname1 || !fieldname2) {
+    return null;
+  }
+
+  return {
+    method,
+    fieldname1,
+    fieldname2,
+    label: toText(joinNode.label) || "",
+    title: toText(joinNode.title) || ""
+  };
+}
+
 export function normalizeColumnName(datatype = "") {
   return datatypeMap[datatype.toLowerCase()] || datatype;
 }
@@ -210,6 +232,7 @@ export function parseLegacyConfig(xmlText) {
       legend: `${layer.legend || ""}` === "1",
       location: layer.cdata || layer["#text"] || ""
     })),
+    join: parseJoinConfig(root.join),
     recordLinkBack: parseRecordLinkBack(root.recordlinkback || root.linkback || metadata.linkback)
   };
 }

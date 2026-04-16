@@ -1,1 +1,16 @@
 filesLocation = path/to/where/webserver/writes/temporary/files/
+
+# Root directory for local/server-hosted spatial data.
+# Recommended local value:
+# spatialDataDir = /Users/jdeck/code/data
+spatialDataDir = path/to/spatial/data/root/
+
+# Root directory containing the downloaded GADM 4.1 dataset.
+# Recommended local value:
+# gadm41Dir = /Users/jdeck/code/data/GADM41
+gadm41Dir = path/to/GADM41/
+
+# Legacy Java spatial intersections still expect one or more shapefiles on disk.
+# Point shapeFiles.N at derived shapefiles exported from the GADM41 source data.
+# Example:
+# shapeFiles.1 = "/Users/jdeck/code/data/GADM41/derived/admin_join_grid.shp", "Administrative Boundaries"

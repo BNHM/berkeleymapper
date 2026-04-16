@@ -20,8 +20,8 @@ L.Icon.Default.mergeOptions({
 const defaultCenter = [37.85, -122.27];
 const defaultZoom = 4;
 const arctosDemo = {
-  tabfile: "https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt",
-  configfile: "https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml"
+  tabfile: "/sampledata/arctostest.txt",
+  configfile: "/sampledata/arctostest.xml"
 };
 const arctosDemoHref = `?${new URLSearchParams(arctosDemo).toString()}`;
 const amphibiawebDemo = {
@@ -33,6 +33,12 @@ const configOnlyDemo = {
   configfile: "/sampledata/no-tabfile-config.xml"
 };
 const configOnlyDemoHref = `?${new URLSearchParams(configOnlyDemo).toString()}`;
+const ucmpJoinDemo = {
+  configfile: "/sampledata/ucmp2.xml",
+  sourcename: "UCMP specimen search",
+  tabfile: "/sampledata/ucmp2.txt"
+};
+const ucmpJoinDemoHref = `?ViewResults=join&${new URLSearchParams(ucmpJoinDemo).toString()}`;
 const phoneViewportMediaQuery = "(max-width: 720px)";
 const anchorTagPattern = /^<a\s+[^>]*href=(["'])(.*?)\1[^>]*>(.*?)<\/a>$/i;
 const urlPattern = /^https?:\/\/\S+$/i;
@@ -52,6 +58,72 @@ const numberFormatter = new Intl.NumberFormat();
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 const datasetLayerPaneName = "bm-dataset-layers";
 const recordPointPaneName = "bm-record-points";
+const emptyRecordIdsByCountyKey = new Map();
+const spatialStatisticsModes = Object.freeze([
+  { value: "none", label: "Column Values" },
+  { value: "country", label: "Intersect Countries" },
+  { value: "state", label: "Intersect States" },
+  { value: "county", label: "Intersect Counties" }
+]);
+const emptySpatialStatisticsResult = Object.freeze({
+  country: [],
+  state: [],
+  county: []
+});
+const usStateAliasMap = Object.freeze({
+  AL: "ALABAMA",
+  AK: "ALASKA",
+  AZ: "ARIZONA",
+  AR: "ARKANSAS",
+  CA: "CALIFORNIA",
+  CO: "COLORADO",
+  CT: "CONNECTICUT",
+  DE: "DELAWARE",
+  FL: "FLORIDA",
+  GA: "GEORGIA",
+  HI: "HAWAII",
+  ID: "IDAHO",
+  IL: "ILLINOIS",
+  IN: "INDIANA",
+  IA: "IOWA",
+  KS: "KANSAS",
+  KY: "KENTUCKY",
+  LA: "LOUISIANA",
+  ME: "MAINE",
+  MD: "MARYLAND",
+  MA: "MASSACHUSETTS",
+  MI: "MICHIGAN",
+  MN: "MINNESOTA",
+  MS: "MISSISSIPPI",
+  MO: "MISSOURI",
+  MT: "MONTANA",
+  NE: "NEBRASKA",
+  NV: "NEVADA",
+  NH: "NEW HAMPSHIRE",
+  NJ: "NEW JERSEY",
+  NM: "NEW MEXICO",
+  NY: "NEW YORK",
+  NC: "NORTH CAROLINA",
+  ND: "NORTH DAKOTA",
+  OH: "OHIO",
+  OK: "OKLAHOMA",
+  OR: "OREGON",
+  PA: "PENNSYLVANIA",
+  RI: "RHODE ISLAND",
+  SC: "SOUTH CAROLINA",
+  SD: "SOUTH DAKOTA",
+  TN: "TENNESSEE",
+  TX: "TEXAS",
+  UT: "UTAH",
+  VT: "VERMONT",
+  VA: "VIRGINIA",
+  WA: "WASHINGTON",
+  WV: "WEST VIRGINIA",
+  WI: "WISCONSIN",
+  WY: "WYOMING",
+  DC: "DISTRICT OF COLUMBIA"
+});
+const removableCountySuffixPattern = /\b(COUNTY|PARISH|BOROUGH|CENSUS AREA|CITY AND BOROUGH|MUNICIPALITY|DISTRICT|REGION|PREFECTURE|PROVINCE|DEPARTMENT|COMMUNE|METROPOLITAN MUNICIPALITY)\b$/;
 
 function buildInitialLayerStates(layers = []) {
   return layers.map((layer) => ({
@@ -83,6 +155,10 @@ async function fetchRequiredText(url, label) {
   return response.text();
 }
 
+function isRecoverableDevDatasetLoadError(error) {
+  return Boolean(error?.recoverableDevFallback);
+}
+
 function buildInitialForm() {
   const params = new URLSearchParams(window.location.search);
 
@@ -107,6 +183,114 @@ function decodeHtmlEntities(value) {
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", "\"")
     .replaceAll("&#39;", "'");
+}
+
+function normalizeJoinText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("&", " and ")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function canonicalizeUsStateName(value) {
+  const normalized = normalizeJoinText(value);
+  return usStateAliasMap[normalized] || normalized;
+}
+
+function stripCountySuffix(value) {
+  return normalizeJoinText(value).replace(removableCountySuffixPattern, "").trim();
+}
+
+function buildCountyJoinKey(stateValue, countyValue) {
+  const stateName = canonicalizeUsStateName(stateValue);
+  const countyName = stripCountySuffix(countyValue) || normalizeJoinText(countyValue);
+
+  if (!stateName || !countyName) {
+    return "";
+  }
+
+  return `${stateName}::${countyName}`;
+}
+
+function buildCountyFeatureJoinKeys(properties = {}) {
+  const stateName = canonicalizeUsStateName(properties.NAME_1 || properties.state || "");
+  const countyName = normalizeJoinText(properties.NAME_2 || properties.county || "");
+  const countyType = normalizeJoinText(properties.ENGTYPE_2 || properties.TYPE_2 || "");
+
+  if (!stateName || !countyName) {
+    return [];
+  }
+
+  const baseCountyName = stripCountySuffix(countyName) || countyName;
+  const variants = new Set([countyName, baseCountyName]);
+
+  if (countyType) {
+    variants.add(`${baseCountyName} ${countyType}`.trim());
+    variants.add(`${countyName} ${countyType}`.trim());
+  }
+
+  return [...variants]
+    .filter(Boolean)
+    .map((countyVariant) => `${stateName}::${countyVariant}`);
+}
+
+function getCountyFeatureRecordIds(properties, recordIdsByCountyKey) {
+  const recordIds = new Set();
+
+  buildCountyFeatureJoinKeys(properties).forEach((key) => {
+    const matchingRecordIds = recordIdsByCountyKey.get(key) || [];
+    matchingRecordIds.forEach((recordId) => {
+      recordIds.add(recordId);
+    });
+  });
+
+  return [...recordIds];
+}
+
+function buildCountymatchLookup(records, joinConfig) {
+  const recordIdsByCountyKey = new Map();
+  const stateNames = new Set();
+  let maxCount = 0;
+
+  if (!joinConfig?.fieldname1 || !joinConfig?.fieldname2) {
+    return {
+      recordIdsByCountyKey,
+      stateNames: [],
+      maxCount
+    };
+  }
+
+  records.forEach((record) => {
+    const stateValue = record.values?.[joinConfig.fieldname1] || "";
+    const canonicalStateName = canonicalizeUsStateName(stateValue);
+    if (canonicalStateName) {
+      stateNames.add(canonicalStateName);
+    }
+
+    const key = buildCountyJoinKey(
+      stateValue,
+      record.values?.[joinConfig.fieldname2] || ""
+    );
+
+    if (!key) {
+      return;
+    }
+
+    const nextRecordIds = recordIdsByCountyKey.get(key) || [];
+    nextRecordIds.push(record.id);
+    recordIdsByCountyKey.set(key, nextRecordIds);
+    maxCount = Math.max(maxCount, nextRecordIds.length);
+  });
+
+  return {
+    recordIdsByCountyKey,
+    stateNames: [...stateNames].sort(),
+    maxCount
+  };
 }
 
 function escapeHtml(value) {
@@ -911,12 +1095,400 @@ function buildFrequencyRows(records, column) {
   records.forEach((record) => {
     const rawValue = record.values[column.name] || "";
     const normalizedValue = stripHtml(rawValue).trim() || "(blank)";
-    counts.set(normalizedValue, (counts.get(normalizedValue) || 0) + 1);
+    const existing = counts.get(normalizedValue);
+
+    if (existing) {
+      existing.count += 1;
+      existing.recordIds.push(record.id);
+      return;
+    }
+
+    counts.set(normalizedValue, {
+      value: normalizedValue,
+      count: 1,
+      recordIds: [record.id]
+    });
   });
 
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, count }))
+  return [...counts.values()]
     .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
+}
+
+function hasUsablePolygonGeometry(feature) {
+  const geometryType = feature?.geometry?.type || "";
+  const coordinates = feature?.geometry?.coordinates;
+
+  return (
+    (geometryType === "Polygon" || geometryType === "MultiPolygon") &&
+    Array.isArray(coordinates) &&
+    coordinates.length > 0
+  );
+}
+
+function appendCoordinatesToBbox(coordinates, bbox) {
+  if (!Array.isArray(coordinates)) {
+    return;
+  }
+
+  if (typeof coordinates[0] === "number" && typeof coordinates[1] === "number") {
+    const longitude = coordinates[0];
+    const latitude = coordinates[1];
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return;
+    }
+
+    bbox.minLongitude = Math.min(bbox.minLongitude, longitude);
+    bbox.minLatitude = Math.min(bbox.minLatitude, latitude);
+    bbox.maxLongitude = Math.max(bbox.maxLongitude, longitude);
+    bbox.maxLatitude = Math.max(bbox.maxLatitude, latitude);
+    return;
+  }
+
+  coordinates.forEach((entry) => {
+    appendCoordinatesToBbox(entry, bbox);
+  });
+}
+
+function computeFeatureBbox(feature) {
+  if (!hasUsablePolygonGeometry(feature)) {
+    return null;
+  }
+
+  const bbox = {
+    minLatitude: Number.POSITIVE_INFINITY,
+    minLongitude: Number.POSITIVE_INFINITY,
+    maxLatitude: Number.NEGATIVE_INFINITY,
+    maxLongitude: Number.NEGATIVE_INFINITY
+  };
+
+  appendCoordinatesToBbox(feature.geometry.coordinates, bbox);
+
+  if (
+    !Number.isFinite(bbox.minLatitude) ||
+    !Number.isFinite(bbox.minLongitude) ||
+    !Number.isFinite(bbox.maxLatitude) ||
+    !Number.isFinite(bbox.maxLongitude)
+  ) {
+    return null;
+  }
+
+  return bbox;
+}
+
+function pointWithinBbox(latitude, longitude, bbox) {
+  if (!bbox) {
+    return false;
+  }
+
+  return (
+    longitude >= bbox.minLongitude &&
+    longitude <= bbox.maxLongitude &&
+    latitude >= bbox.minLatitude &&
+    latitude <= bbox.maxLatitude
+  );
+}
+
+function normalizeIntersectionFeatures(features) {
+  return (Array.isArray(features) ? features : [])
+    .map((feature) => {
+      if (!hasUsablePolygonGeometry(feature)) {
+        return null;
+      }
+
+      const bbox = computeFeatureBbox(feature);
+      if (!bbox) {
+        return null;
+      }
+
+      return {
+        feature,
+        bbox,
+        properties: feature.properties || {}
+      };
+    })
+    .filter(Boolean);
+}
+
+function buildIntersectionMarkerGroups(markers) {
+  const grouped = new Map();
+
+  markers.forEach((marker) => {
+    if (!Number.isFinite(marker?.latitude) || !Number.isFinite(marker?.longitude)) {
+      return;
+    }
+
+    const key = `${marker.latitude},${marker.longitude}`;
+    const existing = grouped.get(key);
+
+    if (existing) {
+      existing.count += 1;
+      existing.recordIds.push(marker.id);
+      return;
+    }
+
+    grouped.set(key, {
+      key,
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+      count: 1,
+      recordIds: [marker.id],
+      pointFeature: buildPointFeature(marker)
+    });
+  });
+
+  return [...grouped.values()];
+}
+
+async function fetchGadmBoundaryGeoJson({ level, countryName = "", countryNames = [], stateNames = [] }) {
+  const normalizedCountryNames = Array.isArray(countryNames) ? countryNames.filter(Boolean) : [];
+  const normalizedStateNames = Array.isArray(stateNames) ? stateNames.filter(Boolean) : [];
+  const params = new URLSearchParams();
+  params.set("level", String(level));
+
+  if (countryName) {
+    params.set("country", countryName);
+  }
+
+  if (normalizedCountryNames.length) {
+    params.set("countries", normalizedCountryNames.join(","));
+  }
+
+  if (normalizedStateNames.length) {
+    params.set("states", normalizedStateNames.join(","));
+  }
+
+  const cacheKey = params.toString();
+  if (gadmGeoJsonCache.has(cacheKey)) {
+    return gadmGeoJsonCache.get(cacheKey);
+  }
+
+  const response = await fetch(`/api/gadm41?${cacheKey}`, {
+    headers: {
+      Accept: "application/geo+json, application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to load admin boundaries: ${response.status} ${response.statusText}`);
+  }
+
+  const geoJson = await response.json();
+  gadmGeoJsonCache.set(cacheKey, geoJson);
+  return geoJson;
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+async function fetchSpatialStatistics(pointGroups, onProgress) {
+  const response = await fetch("/api/spatial-statistics", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      points: pointGroups
+    })
+  });
+
+  const responseBody = await response.json();
+
+  if (!response.ok) {
+    throw new Error(responseBody?.error || `Unable to compute spatial intersections: ${response.status} ${response.statusText}`);
+  }
+
+  const requestId = String(responseBody?.requestId || "").trim();
+  if (!requestId) {
+    throw new Error("Spatial intersection service did not return a request id.");
+  }
+
+  if (typeof onProgress === "function") {
+    onProgress({
+      requestId,
+      status: responseBody?.status || "pending",
+      lines: Array.isArray(responseBody?.lines) ? responseBody.lines : []
+    });
+  }
+
+  for (;;) {
+    await delay(350);
+
+    const statusResponse = await fetch(`/api/spatial-statistics?id=${encodeURIComponent(requestId)}`, {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+    const statusBody = await statusResponse.json();
+
+    if (!statusResponse.ok) {
+      throw new Error(statusBody?.error || `Unable to read spatial intersection status: ${statusResponse.status} ${statusResponse.statusText}`);
+    }
+
+    if (typeof onProgress === "function") {
+      onProgress({
+        requestId,
+        status: statusBody?.status || "pending",
+        lines: Array.isArray(statusBody?.lines) ? statusBody.lines : []
+      });
+    }
+
+    if (statusBody?.status === "error") {
+      throw new Error(statusBody?.error || "Unable to compute spatial intersections.");
+    }
+
+    if (statusBody?.status === "complete") {
+      return {
+        country: Array.isArray(statusBody?.result?.country) ? statusBody.result.country : [],
+        state: Array.isArray(statusBody?.result?.state) ? statusBody.result.state : [],
+        county: Array.isArray(statusBody?.result?.county) ? statusBody.result.county : []
+      };
+    }
+  }
+}
+
+function buildSpatialIntersectionRows(markers, features, buildLabel) {
+  const markerGroups = buildIntersectionMarkerGroups(markers);
+  const normalizedFeatures = normalizeIntersectionFeatures(features);
+  const rowsByLabel = new Map();
+
+  markerGroups.forEach((markerGroup) => {
+    for (const featureEntry of normalizedFeatures) {
+      if (!pointWithinBbox(markerGroup.latitude, markerGroup.longitude, featureEntry.bbox)) {
+        continue;
+      }
+
+      let isMatch = false;
+
+      try {
+        isMatch = booleanPointInPolygon(markerGroup.pointFeature, featureEntry.feature);
+      } catch {
+        continue;
+      }
+
+      if (!isMatch) {
+        continue;
+      }
+
+      const label = buildLabel(featureEntry.properties);
+      if (!label) {
+        break;
+      }
+
+      const existing = rowsByLabel.get(label);
+      if (existing) {
+        existing.count += markerGroup.count;
+        existing.recordIds.push(...markerGroup.recordIds);
+      } else {
+        rowsByLabel.set(label, {
+          value: label,
+          count: markerGroup.count,
+          recordIds: [...markerGroup.recordIds]
+        });
+      }
+
+      break;
+    }
+  });
+
+  return [...rowsByLabel.values()]
+    .sort((left, right) => right.count - left.count || left.value.localeCompare(right.value));
+}
+
+async function buildCountryIntersectionRows(markers) {
+  const cacheKey = `country:${markers.map((marker) => marker.id).join("|")}`;
+  if (spatialIntersectionCache.has(cacheKey)) {
+    return spatialIntersectionCache.get(cacheKey);
+  }
+
+  const geoJson = await fetchGadmBoundaryGeoJson({ level: 0 });
+  const features = Array.isArray(geoJson?.features) ? geoJson.features : [];
+  const rows = buildSpatialIntersectionRows(markers, features, (properties) => properties.NAME_0 || "");
+
+  const result = {
+    rows,
+    countries: Array.isArray(rows) ? rows.map((row) => row.value).filter(Boolean) : []
+  };
+
+  spatialIntersectionCache.set(cacheKey, result);
+  return result;
+}
+
+async function buildStateIntersectionRows(markers) {
+  const cacheKey = `state:${markers.map((marker) => marker.id).join("|")}`;
+  if (spatialIntersectionCache.has(cacheKey)) {
+    return spatialIntersectionCache.get(cacheKey);
+  }
+
+  const countryResults = await buildCountryIntersectionRows(markers);
+  const countries = Array.isArray(countryResults?.countries) ? countryResults.countries : [];
+
+  if (!countries.length) {
+    const emptyResult = {
+      rows: [],
+      countries: [],
+      states: []
+    };
+    spatialIntersectionCache.set(cacheKey, emptyResult);
+    return emptyResult;
+  }
+
+  const geoJson = await fetchGadmBoundaryGeoJson({
+    level: 1,
+    countryNames: countries
+  });
+  const features = Array.isArray(geoJson?.features) ? geoJson.features : [];
+  const rows = buildSpatialIntersectionRows(markers, features, (properties) => {
+    const stateName = properties.NAME_1 || "";
+    const countryName = properties.COUNTRY || "";
+    return [stateName, countryName].filter(Boolean).join(", ");
+  });
+
+  const result = {
+    rows,
+    countries,
+    states: Array.isArray(rows) ? rows.map((row) => row.value.split(",")[0]?.trim()).filter(Boolean) : []
+  };
+
+  spatialIntersectionCache.set(cacheKey, result);
+  return result;
+}
+
+async function buildCountyIntersectionRows(markers) {
+  const cacheKey = `county:${markers.map((marker) => marker.id).join("|")}`;
+  if (spatialIntersectionCache.has(cacheKey)) {
+    return spatialIntersectionCache.get(cacheKey);
+  }
+
+  const stateResults = await buildStateIntersectionRows(markers);
+  const countries = Array.isArray(stateResults?.countries) ? stateResults.countries : [];
+  const states = Array.isArray(stateResults?.states) ? stateResults.states : [];
+
+  if (!countries.length || !states.length) {
+    spatialIntersectionCache.set(cacheKey, []);
+    return [];
+  }
+
+  const geoJson = await fetchGadmBoundaryGeoJson({
+    level: 2,
+    countryNames: countries,
+    stateNames: states
+  });
+  const features = Array.isArray(geoJson?.features) ? geoJson.features : [];
+
+  const result = buildSpatialIntersectionRows(markers, features, (properties) => {
+    const countyName = properties.NAME_2 || "";
+    const stateName = properties.NAME_1 || "";
+    const countryName = properties.COUNTRY || "";
+    return [countyName, stateName, countryName].filter(Boolean).join(", ");
+  });
+
+  spatialIntersectionCache.set(cacheKey, result);
+  return result;
 }
 
 function serializeDelimited(records, columns) {
@@ -1349,6 +1921,155 @@ function MapDatasetLayers({ layers, layerStates, onLayerStateChange, onFeatureSe
       }
     });
   }, [layers, layerStates, map, onFeatureSelect, onLayerStateChange]);
+
+  return null;
+}
+
+function MapCountymatchLayer({ joinConfig, recordIdsByCountyKey, stateNames, maxCount, onQueryRecords, shouldFitBounds, onBoundsFit }) {
+  const map = useMap();
+  const layerRef = useRef(null);
+  const geoJsonCacheRef = useRef(new Map());
+  const fitTimeoutRef = useRef(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    async function renderJoinLayer() {
+      if (layerRef.current) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+
+      if (joinConfig?.method !== "countymatch") {
+        return;
+      }
+
+      ensureMapPane(map, datasetLayerPaneName, 450);
+
+      try {
+        const stateQuery = stateNames?.length ? `&states=${encodeURIComponent(stateNames.join(","))}` : "";
+        const cacheKey = stateNames?.length ? stateNames.join("|") : "all";
+        let geoJson = geoJsonCacheRef.current.get(cacheKey) || null;
+
+        if (!geoJson) {
+          const response = await fetch(`/api/gadm41?level=2&country=United%20States${stateQuery}`, {
+            signal: controller.signal,
+            headers: {
+              Accept: "application/geo+json, application/json"
+            }
+          });
+
+          if (!response.ok) {
+            throw new Error(`Unable to load county boundaries: ${response.status} ${response.statusText}`);
+          }
+
+          geoJson = await response.json();
+          geoJsonCacheRef.current.set(cacheKey, geoJson);
+        }
+
+        if (isCancelled) {
+          return;
+        }
+
+        const matchedFeatures = Array.isArray(geoJson?.features)
+          ? geoJson.features.filter((feature) => getCountyFeatureRecordIds(feature?.properties || {}, recordIdsByCountyKey).length > 0)
+          : [];
+
+        if (!matchedFeatures.length) {
+          onBoundsFit?.();
+          return;
+        }
+
+        const colorForCount = (count) => {
+          const ratio = maxCount > 1 ? Math.min(1, count / maxCount) : 1;
+          const lightness = Math.round(92 - (ratio * 42));
+          return `hsl(206 58% ${lightness}%)`;
+        };
+
+        const leafletLayer = L.geoJSON({
+          ...geoJson,
+          features: matchedFeatures
+        }, {
+          pane: datasetLayerPaneName,
+          style: (feature) => {
+            const recordCount = getCountyFeatureRecordIds(feature?.properties || {}, recordIdsByCountyKey).length;
+
+            return {
+              color: "#35597c",
+              weight: 1.1,
+              opacity: 0.9,
+              fillColor: colorForCount(recordCount),
+              fillOpacity: 0.72
+            };
+          },
+          onEachFeature: (feature, layer) => {
+            const recordIds = getCountyFeatureRecordIds(feature?.properties || {}, recordIdsByCountyKey);
+            const countyName = feature?.properties?.NAME_2 || "County";
+            const stateName = feature?.properties?.NAME_1 || "";
+            const label = [countyName, stateName].filter(Boolean).join(", ");
+            const recordCount = recordIds.length;
+
+            layer.bindTooltip(`${label}${label ? " " : ""}(${formatCount(recordCount)} record${recordCount === 1 ? "" : "s"})`, {
+              sticky: true
+            });
+
+            layer.on("click", () => {
+              if (!recordIds.length) {
+                return;
+              }
+
+              onQueryRecords(recordIds, label || joinConfig?.label || "County Query");
+            });
+          }
+        });
+
+        layerRef.current = leafletLayer;
+        leafletLayer.addTo(map);
+
+        if (shouldFitBounds) {
+          const bounds = leafletLayer.getBounds?.();
+
+          if (bounds?.isValid?.()) {
+            fitTimeoutRef.current = window.setTimeout(() => {
+              if (isCancelled) {
+                return;
+              }
+
+              map.fitBounds(bounds, {
+                padding: [24, 24],
+                maxZoom: 8
+              });
+              onBoundsFit?.();
+              fitTimeoutRef.current = null;
+            }, 140);
+          } else {
+            onBoundsFit?.();
+          }
+        }
+      } catch (error) {
+        if (!isCancelled && error?.name !== "AbortError") {
+          console.error("Unable to render countymatch join layer:", error);
+        }
+      }
+    }
+
+    renderJoinLayer();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+      if (fitTimeoutRef.current) {
+        window.clearTimeout(fitTimeoutRef.current);
+        fitTimeoutRef.current = null;
+      }
+
+      if (layerRef.current) {
+        map.removeLayer(layerRef.current);
+        layerRef.current = null;
+      }
+    };
+  }, [joinConfig, map, maxCount, onBoundsFit, onQueryRecords, recordIdsByCountyKey, shouldFitBounds, stateNames]);
 
   return null;
 }
@@ -1846,6 +2567,12 @@ function App() {
   const [activeQuery, setActiveQuery] = useState(null);
   const [hasDrawnShapes, setHasDrawnShapes] = useState(false);
   const [statisticsColumnName, setStatisticsColumnName] = useState("");
+  const [statisticsSpatialMode, setStatisticsSpatialMode] = useState("none");
+  const [statisticsSpatialResults, setStatisticsSpatialResults] = useState(emptySpatialStatisticsResult);
+  const [statisticsSpatialResultKey, setStatisticsSpatialResultKey] = useState("");
+  const [statisticsSpatialBusy, setStatisticsSpatialBusy] = useState(false);
+  const [statisticsSpatialError, setStatisticsSpatialError] = useState("");
+  const [statisticsSpatialStatusLines, setStatisticsSpatialStatusLines] = useState([]);
   const [mapInstance, setMapInstance] = useState(null);
   const [renderProgress, setRenderProgress] = useState({ active: false, loaded: 0, total: 0 });
   const [loadWarning, setLoadWarning] = useState("");
@@ -1879,6 +2606,7 @@ function App() {
   const renderProgressFlushTimeoutRef = useRef(null);
   const renderProgressLastCommitRef = useRef(0);
   const pendingRenderProgressRef = useRef({ active: false, loaded: 0, total: 0 });
+  const statisticsSpatialRequestKeyRef = useRef("");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -2092,6 +2820,12 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
+    setStatisticsSpatialMode("none");
+    setStatisticsSpatialResults(emptySpatialStatisticsResult);
+    setStatisticsSpatialResultKey("");
+    setStatisticsSpatialBusy(false);
+    setStatisticsSpatialError("");
+    setStatisticsSpatialStatusLines([]);
     setLoadWarning("");
     setLoadWarningDetails({
       tabfile: "",
@@ -2119,6 +2853,12 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
+    setStatisticsSpatialMode("none");
+    setStatisticsSpatialResults(emptySpatialStatisticsResult);
+    setStatisticsSpatialResultKey("");
+    setStatisticsSpatialBusy(false);
+    setStatisticsSpatialError("");
+    setStatisticsSpatialStatusLines([]);
     setLoadWarning("");
     setLoadWarningDetails({
       tabfile: "",
@@ -2158,7 +2898,17 @@ function App() {
       params.set("configfile", payload.configfile);
     }
 
-    const response = await fetch(`/api/dataset?${params.toString()}`);
+    let response;
+
+    try {
+      response = await fetch(`/api/dataset?${params.toString()}`);
+    } catch (error) {
+      const nextError = new Error("Unable to reach the local dataset API.");
+      nextError.recoverableDevFallback = true;
+      nextError.cause = error;
+      throw nextError;
+    }
+
     const contentType = response.headers.get("content-type") || "";
 
     if (contentType.includes("application/json")) {
@@ -2176,7 +2926,9 @@ function App() {
       throw new Error(responseText || `Unable to load dataset: ${response.status} ${response.statusText}`);
     }
 
-    throw new Error("Dataset service returned an unexpected response.");
+    const nextError = new Error("Dataset service returned an unexpected response.");
+    nextError.recoverableDevFallback = true;
+    throw nextError;
   }, []);
 
   async function loadDataset(payload, options = {}) {
@@ -2194,7 +2946,7 @@ function App() {
         try {
           data = await loadDatasetFromServerFiles(payload);
         } catch (serverError) {
-          if (import.meta.env.DEV) {
+          if (import.meta.env.DEV && isRecoverableDevDatasetLoadError(serverError)) {
             data = await loadDatasetFromClientFiles(payload);
           } else {
             throw serverError;
@@ -2407,6 +3159,7 @@ function App() {
 
   const records = dataset?.records || [];
   const columns = dataset?.columns || [];
+  const joinConfig = dataset?.join || null;
   const recordLookup = useMemo(() => new Map(records.map((record) => [record.id, record])), [records]);
   const displayedColumns = useMemo(() => getDisplayedColumns(columns), [columns]);
   const colorConfigs = useMemo(() => {
@@ -2472,14 +3225,26 @@ function App() {
         .filter(Boolean),
     [records, columns, colorBy, colorMap, defaultColor]
   );
+  const countymatchLookup = useMemo(
+    () => (joinConfig?.method === "countymatch" ? buildCountymatchLookup(records, joinConfig) : null),
+    [joinConfig, records]
+  );
+  const shouldShowCountymatchLayer = Boolean(joinConfig?.method === "countymatch");
 
   const handleZoomAll = useCallback(() => {
     if (!mapInstance) {
       return;
     }
 
-    fitMapToMarkers(mapInstance, markers);
-  }, [mapInstance, markers]);
+    if (markers.length) {
+      fitMapToMarkers(mapInstance, markers);
+      return;
+    }
+
+    if (shouldShowCountymatchLayer) {
+      setShouldFitLoadedDataset(true);
+    }
+  }, [mapInstance, markers, shouldShowCountymatchLayer]);
 
   const selectedMarker = markers.find((marker) => marker.id === selectedRecordId) || null;
   const startRecordQuery = useCallback((recordIds, fallbackLabel) => {
@@ -2514,6 +3279,27 @@ function App() {
     const recordIdSet = new Set(queryRecordIds);
     return records.filter((record) => recordIdSet.has(record.id));
   }, [records, queryRecordIds]);
+  const markersForResults = useMemo(() => {
+    if (!queryRecordIds) {
+      return markers;
+    }
+
+    const recordIdSet = new Set(queryRecordIds);
+    return markers.filter((marker) => recordIdSet.has(marker.id));
+  }, [markers, queryRecordIds]);
+  const markerResultKey = useMemo(
+    () => markersForResults.map((marker) => marker.id).join("|"),
+    [markersForResults]
+  );
+  const statisticsSpatialPointGroups = useMemo(
+    () =>
+      groupMarkersByCoordinate(markersForResults).map((group) => ({
+        latitude: group.latitude,
+        longitude: group.longitude,
+        recordIds: group.recordIds
+      })),
+    [markersForResults]
+  );
   const resultsSummary = renderProgress.active
     ? `Loading ${formatCount(renderProgress.loaded)} of ${formatCount(renderProgress.total)} records`
     : recordsForResults.length
@@ -2527,7 +3313,6 @@ function App() {
   const layerFeatureSummary = layerFeatureDetails
     ? layerFeatureDetails.featureName || `${formatCount(layerFeatureDetails.rows.length)} field${layerFeatureDetails.rows.length === 1 ? "" : "s"}`
     : "";
-  const statisticsSummary = `${formatCount(recordsForResults.length)} records in scope`;
   const resultsView = windowViews.results;
   const statisticsView = windowViews.statistics;
   const geoJsonView = windowViews.geojson;
@@ -2567,12 +3352,36 @@ function App() {
     () => displayedColumns.filter((column) => !["Latitude", "Longitude"].includes(column.name)),
     [displayedColumns]
   );
+  const statisticsColumnCount = Array.isArray(statisticsColumns) ? statisticsColumns.length : 0;
+  const markerResultCount = Array.isArray(markersForResults) ? markersForResults.length : 0;
   const statisticsColumn =
     statisticsColumns.find((column) => column.name === statisticsColumnName) || statisticsColumns[0] || null;
   const frequencyRows = useMemo(
     () => (statisticsColumn ? buildFrequencyRows(recordsForResults, statisticsColumn) : []),
     [recordsForResults, statisticsColumn]
   );
+  const displayedStatisticsRows = statisticsSpatialMode === "none"
+    ? (Array.isArray(frequencyRows) ? frequencyRows : [])
+    : (Array.isArray(statisticsSpatialResults?.[statisticsSpatialMode]) ? statisticsSpatialResults[statisticsSpatialMode] : []);
+  const displayedStatisticsRowCount = displayedStatisticsRows.length;
+  const hasStatisticsOptions = Boolean(statisticsColumnCount || markers.length);
+  const isSpatialStatisticsReady = !markerResultCount || statisticsSpatialResultKey === markerResultKey;
+  const shouldShowSpatialLoading =
+    statisticsSpatialMode !== "none" &&
+    markerResultCount > 0 &&
+    !statisticsSpatialError &&
+    (statisticsSpatialBusy || !isSpatialStatisticsReady);
+  const shouldShowSpatialError = statisticsSpatialMode !== "none" && Boolean(statisticsSpatialError);
+  const statisticsLabel = statisticsSpatialMode === "country"
+    ? "Country"
+    : statisticsSpatialMode === "state"
+      ? "State / Province"
+      : statisticsSpatialMode === "county"
+        ? "County / District"
+        : statisticsColumn?.alias || "Value";
+  const statisticsSummary = statisticsSpatialMode === "none"
+    ? `${formatCount(recordsForResults.length)} records in scope`
+    : `${formatCount(markerResultCount)} mapped records in scope`;
   const datasetName =
     dataset?.metadata?.name && dataset.metadata.name !== "Untitled BerkeleyMapper dataset"
       ? dataset.metadata.name
@@ -2589,8 +3398,84 @@ function App() {
     ? "This dataset was requested by passing tabfile/configfile URLs into BerkeleyMapper. The application assumes those URLs were supplied with permission to retrieve and display the data."
     : "When a tabfile and configfile are supplied to BerkeleyMapper, the application assumes it has permission to retrieve and display that material directly in the browser.";
 
+  const ensureSpatialStatisticsLoaded = useCallback(async () => {
+    if (!markerResultCount) {
+      setStatisticsSpatialResults(emptySpatialStatisticsResult);
+      setStatisticsSpatialResultKey("");
+      setStatisticsSpatialBusy(false);
+      setStatisticsSpatialError("");
+      setStatisticsSpatialStatusLines([]);
+      statisticsSpatialRequestKeyRef.current = "";
+      return;
+    }
+
+    if (statisticsSpatialResultKey === markerResultKey || statisticsSpatialRequestKeyRef.current === markerResultKey) {
+      return;
+    }
+
+    statisticsSpatialRequestKeyRef.current = markerResultKey;
+    setStatisticsSpatialBusy(true);
+    setStatisticsSpatialError("");
+    setStatisticsSpatialStatusLines([]);
+
+    try {
+      const nextResults = await fetchSpatialStatistics(statisticsSpatialPointGroups, ({ lines }) => {
+        if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+          return;
+        }
+
+        setStatisticsSpatialStatusLines(Array.isArray(lines) ? lines : []);
+      });
+
+      if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+        return;
+      }
+
+      setStatisticsSpatialResults(nextResults);
+      setStatisticsSpatialResultKey(markerResultKey);
+    } catch (error) {
+      if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+        return;
+      }
+
+      setStatisticsSpatialResults(emptySpatialStatisticsResult);
+      setStatisticsSpatialResultKey("");
+      setStatisticsSpatialError(error instanceof Error ? error.message : "Unable to compute spatial intersections.");
+    } finally {
+      if (statisticsSpatialRequestKeyRef.current === markerResultKey) {
+        statisticsSpatialRequestKeyRef.current = "";
+        setStatisticsSpatialBusy(false);
+      }
+    }
+  }, [markerResultCount, markerResultKey, statisticsSpatialPointGroups, statisticsSpatialResultKey]);
+
+  const openStatisticsPanel = useCallback(() => {
+    setWindowView("statistics", "open");
+    setActiveWindow("statistics");
+    ensureSpatialStatisticsLoaded();
+  }, [ensureSpatialStatisticsLoaded, setWindowView]);
+
+  const handleStatisticsColumnChange = useCallback((event) => {
+    setStatisticsColumnName(event.target.value);
+    setStatisticsSpatialMode("none");
+  }, []);
+
+  const handleStatisticsSpatialModeChange = useCallback((event) => {
+    const nextMode = event.target.value;
+    setStatisticsSpatialMode(nextMode);
+
+    if (nextMode !== "none") {
+      ensureSpatialStatisticsLoaded();
+    }
+  }, [ensureSpatialStatisticsLoaded]);
+
+  const resetStatisticsSelection = useCallback(() => {
+    clearActiveQuery();
+    setStatisticsSpatialMode("none");
+  }, [clearActiveQuery]);
+
   useEffect(() => {
-    if (!statisticsColumns.length) {
+    if (!statisticsColumnCount) {
       setStatisticsColumnName("");
       return;
     }
@@ -2598,7 +3483,15 @@ function App() {
     setStatisticsColumnName((current) =>
       statisticsColumns.some((column) => column.name === current) ? current : statisticsColumns[0].name
     );
-  }, [statisticsColumns]);
+  }, [statisticsColumnCount, statisticsColumns]);
+
+  useEffect(() => {
+    if (statisticsView === "hidden") {
+      return;
+    }
+
+    ensureSpatialStatisticsLoaded();
+  }, [ensureSpatialStatisticsLoaded, statisticsView]);
 
   useEffect(() => {
     if (windowViews[activeWindow] !== "hidden") {
@@ -2718,6 +3611,17 @@ function App() {
               layerStates={layerStates}
               onLayerStateChange={patchLayerState}
               onFeatureSelect={handleLayerFeatureSelect}
+            />
+          ) : null}
+          {shouldShowCountymatchLayer ? (
+            <MapCountymatchLayer
+              joinConfig={joinConfig}
+              recordIdsByCountyKey={countymatchLookup?.recordIdsByCountyKey || emptyRecordIdsByCountyKey}
+              stateNames={countymatchLookup?.stateNames || []}
+              maxCount={countymatchLookup?.maxCount || 0}
+              onQueryRecords={startRecordQuery}
+              shouldFitBounds={shouldFitLoadedDataset && !markers.length}
+              onBoundsFit={() => setShouldFitLoadedDataset(false)}
             />
           ) : null}
           <MapGeocodeLayer
@@ -3061,7 +3965,11 @@ function App() {
                 <section className="panel-section">
                   <h2>Actions</h2>
                   <div className="panel-actions">
-                    <button type="button" onClick={() => setWindowView("statistics", "open")} disabled={!statisticsColumns.length}>
+                    <button
+                      type="button"
+                      onClick={openStatisticsPanel}
+                      disabled={!hasStatisticsOptions}
+                    >
                       Statistics
                     </button>
                     <button type="button" className="secondary" onClick={exportAllViewable} disabled={!records.length}>
@@ -3251,7 +4159,10 @@ function App() {
           <section
             className={`bottom-drawer statistics-drawer is-${statisticsView} ${activeWindow === "statistics" ? "is-active" : ""}`}
             style={statisticsView === "fullscreen" ? undefined : { bottom: statisticsDockedBottom }}
-            onMouseDown={() => setActiveWindow("statistics")}
+            onMouseDown={() => {
+              setActiveWindow("statistics");
+              ensureSpatialStatisticsLoaded();
+            }}
           >
             <div className="window-titlebar">
               <div className="window-titletext">
@@ -3263,7 +4174,12 @@ function App() {
                   <span className="results-control-icon results-control-minimize" aria-hidden="true" />
                 </button>
                 {statisticsView !== "open" ? (
-                  <button type="button" className="results-control-button" onClick={() => setWindowView("statistics", "open")} aria-label="Restore statistics panel">
+                  <button
+                    type="button"
+                    className="results-control-button"
+                    onClick={openStatisticsPanel}
+                    aria-label="Restore statistics panel"
+                  >
                     <span className="results-control-icon results-control-restore" aria-hidden="true" />
                   </button>
                 ) : null}
@@ -3285,10 +4201,28 @@ function App() {
               <div className="statistics-toolbar">
                 <label>
                   Column
-                  <select value={statisticsColumn?.name || ""} onChange={(event) => setStatisticsColumnName(event.target.value)}>
+                  <select
+                    value={statisticsColumn?.name || ""}
+                    onChange={handleStatisticsColumnChange}
+                    disabled={!statisticsColumnCount}
+                  >
                     {statisticsColumns.map((column) => (
                       <option key={column.name} value={column.name}>
                         {column.alias}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Spatial Intersection
+                  <select value={statisticsSpatialMode} onChange={handleStatisticsSpatialModeChange}>
+                    {spatialStatisticsModes.map((mode) => (
+                      <option
+                        key={mode.value}
+                        value={mode.value}
+                        disabled={mode.value !== "none" && !markerResultCount}
+                      >
+                        {mode.label}
                       </option>
                     ))}
                   </select>
@@ -3297,20 +4231,49 @@ function App() {
                   <strong>{activeQuery ? activeQuery.label : "Entire Dataset"}</strong>
                   <span>{statisticsSummary}</span>
                 </div>
+                {activeQuery || statisticsSpatialMode !== "none" ? (
+                  <button type="button" className="secondary" onClick={resetStatisticsSelection}>
+                    Reset
+                  </button>
+                ) : null}
               </div>
 
-              {statisticsColumn ? (
+              {shouldShowSpatialError ? (
+                <p className="statistics-empty">{statisticsSpatialError}</p>
+              ) : shouldShowSpatialLoading ? (
+                <div className="statistics-loading-block">
+                  <p className="statistics-empty">Computing spatial intersections...</p>
+                  {statisticsSpatialStatusLines.length ? (
+                    <ul className="statistics-status-list">
+                      {statisticsSpatialStatusLines.map((line, index) => (
+                        <li key={`${index}-${line}`}>{line}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : statisticsSpatialMode !== "none" && !markerResultCount ? (
+                <p className="statistics-empty">No mapped point records are available for spatial intersections.</p>
+              ) : statisticsSpatialMode === "none" && !statisticsColumn ? (
+                <p className="statistics-empty">No visible columns are available for statistics.</p>
+              ) : displayedStatisticsRowCount ? (
                 <div className="stats-table-wrap">
                   <table className="stats-table">
                     <thead>
                       <tr>
-                        <th>{statisticsColumn.alias}</th>
+                        <th>{statisticsLabel}</th>
                         <th>Count</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {frequencyRows.map((row) => (
-                        <tr key={`${statisticsColumn.name}-${row.value}`}>
+                      {displayedStatisticsRows.map((row) => (
+                        <tr
+                          key={`${statisticsSpatialMode}-${row.value}`}
+                          onClick={() => {
+                            if (Array.isArray(row.recordIds) && row.recordIds.length) {
+                              startRecordQuery(row.recordIds, row.value);
+                            }
+                          }}
+                        >
                           <td>{row.value}</td>
                           <td>{formatCount(row.count)}</td>
                         </tr>
@@ -3319,7 +4282,11 @@ function App() {
                   </table>
                 </div>
               ) : (
-                <p className="statistics-empty">No visible columns are available for statistics.</p>
+                <p className="statistics-empty">
+                  {statisticsSpatialMode === "none"
+                    ? "No visible columns are available for statistics."
+                    : "No spatial intersections were found for the mapped records in scope."}
+                </p>
               )}
             </div>
           </section>
@@ -3430,13 +4397,16 @@ function App() {
                   <article className="about-card">
                     <h4>1. Start With A Dataset</h4>
                     <p>
-                      Use a <strong>configfile</strong> URL by itself, or pair it with a <strong>tabfile</strong>. You can
-                      also use{" "}
-                      <a href={configOnlyDemoHref}>Load Config-Only Demo</a>, <a href={arctosDemoHref}>Load Arctos Demo</a>,
-                      or <a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a>.
-                      The browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly
-                      from the XML configuration.
+                      Use a <strong>configfile</strong> URL by itself, or pair it with a <strong>tabfile</strong>. The
+                      browser parses field order, aliases, logos, marker colors, layers, and visibility rules directly from
+                      the XML configuration.
                     </p>
+                    <ul className="about-sample-list">
+                      <li><a href={configOnlyDemoHref}>Load Config-Only Demo</a></li>
+                      <li><a href={arctosDemoHref}>Load Arctos Demo</a></li>
+                      <li><a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a></li>
+                      <li><a href={ucmpJoinDemoHref}>Load UCMP County Join Demo</a></li>
+                    </ul>
                   </article>
 
                   <article className="about-card">
@@ -3512,15 +4482,23 @@ function App() {
 
                 <section className="about-note">
                   <h4>Sample Calls</h4>
-                  <p>
-                    Local no-tabfile recreation:
-                    <br />
-                    <a href={configOnlyDemoHref}><code>?configfile=/sampledata/no-tabfile-config.xml</code></a>
-                  </p>
-                  <p>
-                    This sample keeps everything local and exercises the config-only load path with a GIS overlay layer and
-                    zero tabular records.
-                  </p>
+                  <ul className="about-sample-list">
+                    <li>
+                      <a href={configOnlyDemoHref}><code>?configfile=/sampledata/no-tabfile-config.xml</code></a>
+                      <p>
+                        Config-only local recreation. This keeps everything local and exercises the config-only load path
+                        with a GIS overlay layer and zero tabular records.
+                      </p>
+                    </li>
+                    <li>
+                      <a href={ucmpJoinDemoHref}><code>{ucmpJoinDemoHref}</code></a>
+                      <p>
+                        UCMP county join example. This uses the legacy <code>countymatch</code> XML join logic and shades
+                        county polygons from local <code>GADM41/admn_2.shp</code> data so clicking a county filters the
+                        records to that county.
+                      </p>
+                    </li>
+                  </ul>
                 </section>
 
                 <section className="about-note">

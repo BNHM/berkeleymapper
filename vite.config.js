@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { handleDatasetRequest, handleLayerRequest } from "./server/lib/apiHandlers.js";
+import { handleDatasetRequest, handleGadmBoundaryRequest, handleLayerRequest, handleSpatialStatisticsRequest } from "./server/lib/apiHandlers.js";
 
 export default defineConfig({
   plugins: [
@@ -27,6 +27,16 @@ export default defineConfig({
             await handleLayerRequest(request, response, url, {
               fallbackHost: "localhost:5173"
             });
+            return;
+          }
+
+          if (url.pathname === "/api/gadm41") {
+            await handleGadmBoundaryRequest(request, response, url);
+            return;
+          }
+
+          if (url.pathname === "/api/spatial-statistics") {
+            await handleSpatialStatisticsRequest(request, response);
             return;
           }
 

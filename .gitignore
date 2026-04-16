@@ -5,6 +5,7 @@
 # Frontend / local runtime
 node_modules/
 .vite/
+.cache/
 dist/
 coverage/
 tmp/node-sessions/

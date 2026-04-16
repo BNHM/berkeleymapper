@@ -1047,6 +1047,19 @@ a:hover {
   margin: 0 0 10px;
 }
 
+.about-sample-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.about-sample-list li + li {
+  margin-top: 0;
+}
+
+.about-sample-list p {
+  margin: 6px 0 0;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1194,6 +1207,31 @@ a:hover {
 .statistics-empty {
   margin: 0;
   font-size: 12px;
+}
+
+.statistics-loading-block {
+  display: grid;
+  gap: 10px;
+}
+
+.statistics-status-list {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #d8e1e9;
+  border-radius: 10px;
+  background: #f7fafc;
+  color: #29415c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  list-style: none;
+  text-align: left;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.statistics-status-list li + li {
+  margin-top: 4px;
 }
 
 table {

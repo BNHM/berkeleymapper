@@ -3,13 +3,13 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { dirname, extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { handleDatasetRequest, handleLayerRequest } from "./lib/apiHandlers.js";
+import { handleDatasetRequest, handleGadmBoundaryRequest, handleLayerRequest, handleSpatialStatisticsRequest } from "./lib/apiHandlers.js";
+import { runtimeConfig } from "./lib/runtimeConfig.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const distDir = resolve(__dirname, "..", "dist");
-const host = process.env.HOST || "127.0.0.1";
-const port = Number.parseInt(process.env.PORT || "4173", 10);
+const { host, port } = runtimeConfig;
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -93,6 +93,16 @@ const server = createServer(async (request, response) => {
       return;
     }
 
+    if (url.pathname === "/api/gadm41") {
+      await handleGadmBoundaryRequest(request, response, url);
+      return;
+    }
+
+    if (url.pathname === "/api/spatial-statistics") {
+      await handleSpatialStatisticsRequest(request, response);
+      return;
+    }
+
     if (request.method !== "GET" && request.method !== "HEAD") {
       sendError(response, 405, "Method not allowed");
       return;
@@ -124,4 +134,8 @@ const server = createServer(async (request, response) => {
 
 server.listen(port, host, () => {
   console.log(`Serving BerkeleyMapper dist from ${distDir} at http://${host}:${port}`);
+  if (runtimeConfig.spatialDataDir || runtimeConfig.gadm41Dir) {
+    console.log(`Spatial data root: ${runtimeConfig.spatialDataDir || "(unset)"}`);
+    console.log(`GADM41 root: ${runtimeConfig.gadm41Dir || "(unset)"}`);
+  }
 });

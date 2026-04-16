@@ -4,12 +4,12 @@
 
 - Local development authoritative boundary store: `./var/boundaries/`
 - Production authoritative boundary store: `/srv/berkeleymapper-data/boundaries/`
-- Configuration knob for both: `BOUNDARY_DATA_DIR`
+- Configuration knob for both: `SPATIAL_DATA_DIR`
 
 Use the same internal layout under both roots so scripts and config stay portable:
 
 ```text
-${BOUNDARY_DATA_DIR}/
+${SPATIAL_DATA_DIR}/
   source/
     gadm/
       usa/
@@ -54,7 +54,7 @@ Why:
   - manifests
   - small fixtures
   - tiny test datasets
-- Keep real downloaded boundary files under `BOUNDARY_DATA_DIR`, outside normal source control.
+- Keep real downloaded boundary files under `SPATIAL_DATA_DIR`, outside normal source control.
 
 ### Recommended Data Sources
 
@@ -74,7 +74,7 @@ Why:
 
 ### Implementation Tasks
 
-1. Add `BOUNDARY_DATA_DIR` support for local and server deployments.
+1. Add `SPATIAL_DATA_DIR` support for local and server deployments.
 2. Add a download/build script:
    - `scripts/fetch-boundaries.sh`
 3. Add a derivation script:
@@ -95,7 +95,7 @@ Why:
 
 If only one authoritative dataset is chosen:
 
-- Use `GeoPackage` under `${BOUNDARY_DATA_DIR}/source/...`
+- Use `GeoPackage` under `${SPATIAL_DATA_DIR}/source/...`
 - Derive:
   - `GeoJSON` for map display
   - `Shapefile` only where the legacy intersection code still requires it
