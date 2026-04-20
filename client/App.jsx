@@ -19,6 +19,38 @@ L.Icon.Default.mergeOptions({
 
 const defaultCenter = [37.85, -122.27];
 const defaultZoom = 4;
+const baseMapDefinitions = Object.freeze([
+  {
+    name: "Street Map",
+    checked: true,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+  },
+  {
+    name: "Topographic",
+    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+  },
+  {
+    name: "USGS Topo",
+    attribution: 'Tiles courtesy <a href="https://www.usgs.gov/programs/national-geospatial-program/national-map">USGS The National Map</a>',
+    maxNativeZoom: 16,
+    maxZoom: 19,
+    url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"
+  },
+  {
+    name: "USGS Topo (Legacy)",
+    attribution: 'Tiles &copy; Esri; Copyright &copy; 2011 National Geographic Society, i-cubed',
+    maxNativeZoom: 15,
+    maxZoom: 19,
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/USA_Topo_Maps/MapServer/tile/{z}/{y}/{x}"
+  },
+  {
+    name: "Imagery",
+    attribution: "Tiles &copy; Esri",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+  }
+]);
 const arctosDemo = {
   tabfile: "/sampledata/arctostest.txt",
   configfile: "/sampledata/arctostest.xml"
@@ -3584,24 +3616,11 @@ function App() {
         ) : null}
         <MapContainer center={defaultCenter} zoom={defaultZoom} scrollWheelZoom zoomControl={false} className="map-canvas">
           <LayersControl position="topright">
-            <LayersControl.BaseLayer checked name="Street Map">
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="Topographic">
-              <TileLayer
-                attribution='Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="https://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
-                url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
-              />
-            </LayersControl.BaseLayer>
-            <LayersControl.BaseLayer name="Imagery">
-              <TileLayer
-                attribution='Tiles &copy; Esri'
-                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-              />
-            </LayersControl.BaseLayer>
+            {baseMapDefinitions.map(({ name, checked, ...tileLayerProps }) => (
+              <LayersControl.BaseLayer key={name} checked={checked} name={name}>
+                <TileLayer {...tileLayerProps} />
+              </LayersControl.BaseLayer>
+            ))}
           </LayersControl>
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
