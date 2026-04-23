@@ -17,7 +17,7 @@
     "@tmcw/togeojson": "^7.1.2",
     "@turf/area": "^7.3.4",
     "@turf/boolean-point-in-polygon": "^7.3.4",
-    "fast-xml-parser": "^5.2.5",
+    "fast-xml-parser": "^5.7.0",
     "jszip": "^3.10.1",
     "leaflet": "^1.9.4",
     "leaflet-draw": "^1.0.4",
