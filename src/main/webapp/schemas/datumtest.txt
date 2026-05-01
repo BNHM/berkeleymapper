@@ -1,2 +1,0 @@
-Foot of Golden Gate Bridge	United States	California	San Francisco Co.	37.810972	-122.476417	100.0	NAD27	South end of the Golden Gate Bridge in NAD27 datum coordinates
-Foot of Golden Gate Bridge	United States	California	San Francisco Co.	37.8109	-122.4775	100.0	WGS84	South end of the Golden Gate Bridge

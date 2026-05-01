@@ -1,6 +1,0 @@
-// TODO: throw Exception on FileReaders if there is no points to map, in fact-- all exceptions should be caught
-// TODO: in marker view, need method for telling if there are overlapping markers
-// TODO: except JSON output -- i think it is clogging results, see for example:
-{"Related Information":"<a href="http://arctos.database.museum/SpecimenDetail.cfm?collection_object_id=10055684"target="_blank">MVZ Mammals&nbsp;12656</a>","Scientific Name":"Ursus americanus ssp.","Verbatim Date":"not recorded","Specific Locality":"Queen Charlotte Island","Latitude":"53.1597751146","Longitude":"-132.12668774","ErrorRadiusInMeters":"130170","Datum":"World Geodetic System 1984","Collection Code":"MVZ Mammals","Catalog Number":"MVZ Mammals 12656","Collector":"C. d. Green"}
-]
-//TODO: KML TESTING:http://kml-samples.googlecode.com/svn/trunk/kml/misc/thematic1/states.kml

@@ -1,3 +1,0 @@
-UCJEPS	JEPS46736	Sequoiadendron giganteum	W. L. Jepson				2415021	2415385	May 5th, 1900	Tulare		Atwell's Mill	37.12	-121.12	NAD 27
-UCJEPS	JEPS46736	Sequoiadendron giganteum	W. L. Jepson				2415021	2415385	1900	Tulare		Atwell's Mill	37.12	-121.12	NAD 27
-UCJEPS	JEPS46736	Sequoiadendrddkdkon giganteum	W. L. Jepson				2415021	2415385	1900	Tulare		Atwell's Mill	37.12	-121.132	NAD 27

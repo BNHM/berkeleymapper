@@ -5,9 +5,10 @@ import { LayersControl, MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet-draw";
 import "leaflet.markercluster";
-import brandLogo from "../src/main/webapp/img/logo_medium_t.png";
 import { getLayerSourceUrl, loadLayerGeoJson } from "./layerUtils.js";
 import { buildDatasetPayload } from "../shared/buildDatasetPayload.js";
+
+const brandLogo = "/logo_medium_t.png";
 
 delete L.Icon.Default.prototype._getIconUrl;
 

@@ -1,4 +1,0 @@
-Foot of Golden Gate Bridge	United States	California	San Francisco Co.	37.8109	-122.4775	100.0	WGS84	South end of the Golden Gate Bridge
-California State Capital Building	United States	California	Sacramento Co.	38.5766	-121.4933	100.0	WGS84	Zoom to the caiptal using the DOQ
-Half Dome	United States	California		37.74611	-119.53194	400.0	WGS84	This point does not display correctly over the Terraserver WMS DRG but is OK over the DOQ!
-Lincoln Memorial	United States	Washington DC	District of Columbia	38.88923	-77.05033	50.0	WGS84	Point verifies correctly

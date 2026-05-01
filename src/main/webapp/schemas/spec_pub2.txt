@@ -1,5 +1,0 @@
-I11623	11623	I	Gastropoda	Exilia	pergracilis		Hypotype	Tertiary	Paleocene	A1061		WILCOX COUNTY	ALABAMA	United States	North America		yes
-I11806	11806	I	Gastropoda	Exilia	pergracilis		Hypotype	Tertiary	Paleocene	A1061		WILCOX COUNTY	ALABAMA	United States	North America		yes
-M11959	11959	M						Tertiary	Oligocene	A2423	Beneath bridge, W of Floral Church, Byram	COVINGTON COUNTY	ALABAMA	United States	North America		yes
-M11960	11960	M		Nummulites				Tertiary	Oligocene	A2423	Beneath bridge, W of Floral Church, Byram	COVINGTON COUNTY	ALABAMA	United States	North America		yes
-M11961	11961	M		Lepidocyclina	supera			Tertiary	Oligocene	A2428	McGowans Bridge, Conecuh River	ESCOMBIA COUNTY	ALABAMA	United States	North America		yes

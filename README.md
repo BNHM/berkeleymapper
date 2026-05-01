@@ -1,9 +1,7 @@
-<img src='https://raw.githubusercontent.com/BNHM/berkeleymapper/master/src/main/webapp/img/logo_medium.png' width='150' align="left">
+<img src='https://raw.githubusercontent.com/BNHM/berkeleymapper/master/public/logo_medium.png' width='150' align="left">
 
 ## Introduction
-BerkeleyMapper 2.0 is a mapping interface for collections and other tabular geographic datasets. Users configure the map through a legacy BerkeleyMapper XML config file and map records from tab-delimited text files.
-
-The current codebase is a React + Leaflet refactor of the older Java/Google Maps application. It keeps compatibility with the BerkeleyMapper config format while moving loading, rendering, and UI behavior into JavaScript.
+BerkeleyMapper 2.0 is a React + Leaflet mapping interface for collections and other tabular geographic datasets. It keeps compatibility with the BerkeleyMapper XML config format while rendering records, layers, and UI behavior in JavaScript.
 
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
@@ -16,8 +14,8 @@ Sample AmphibiaWeb call:
 
 http://berkeleymapper.berkeley.edu/index.html?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/public/sampledata/amphibiaweb.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/public/sampledata/amphibiaweb.xml
 
-## JavaScript Refactor
-The current app runs as a JavaScript frontend with a small Node server for same-origin proxy endpoints.
+## Application
+The app runs as a JavaScript frontend with a small Node server for same-origin proxy endpoints.
 
 Local development:
 
@@ -117,38 +115,9 @@ Supported areas currently include:
 - record linkback generation
 - GIS layer metadata and overlay loading
 
-## Remaining Legacy Work
-Some features are still legacy Java behavior and need to be ported separately:
+## Roadmap
+Areas still being improved in the JavaScript app include:
 
 - polygon and spatial intersection processing
 - shapefile-backed spatial lookups
 - the remaining config-driven feature surface and older workflow variants
-
-## Developers
-The legacy Java/WAR deployment files are still present for older deployment paths. If you need the older Gradle/WAR flow:
-
-```
-# java libraries built around java 8, to use java 8, use the following:
-# (https://stackoverflow.com/questions/52524112/how-do-i-install-java-on-mac-osx-allowing-version-switching/52524114#52524114)
-# (https://sdkman.io/install)
-sdk use java 8.0.352-amzn
-sdk use gradle 4.10.1
-git clone {this_repo}
-# install gradle if you have not done so, then...
-gradle build
-
-# source ~/.profile
-deployBerkeleymapper
-```         
-
-The gradle build process will create a WAR file called `dist/berkeleymapper.war`
-
-In the `src/main/resources/` directory, copy `config.properties.template` to `config.props` and enter the setting `filesLocation = /path/to/temp/directory/` to point to the directory you want temporary files stored.
-
-Certain connections require importing certificate to allow 3rd party access:
-First, obtain an exported copy of certificate. (On chrome, developer tools->security)
-Second, import into keystore using the keytool program
-```
-keytool -import -alias example -keystore /etc/ssl/certs/java/cacerts -file {FILEAME}
-```
-Note that cert files are stored in ~jdeck/certs
