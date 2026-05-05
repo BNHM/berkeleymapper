@@ -7,6 +7,20 @@ const spatialStatisticsJobs = new Map();
 const MAX_SPATIAL_STATISTICS_JOB_LINES = 60;
 const MAX_SPATIAL_STATISTICS_JOBS = 20;
 
+function formatErrorDetails(error) {
+  if (error instanceof Error) {
+    return error.stack || error.message;
+  }
+
+  return String(error);
+}
+
+function logApiEvent(scope, message, details = "") {
+  const timestamp = new Date().toISOString();
+  const suffix = details ? ` ${details}` : "";
+  console.log(`[${timestamp}] ${scope} ${message}${suffix}`);
+}
+
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
     "Cache-Control": "no-store",
@@ -257,6 +271,7 @@ export async function handleDatasetRequest(request, response, url, options = {})
   const fallbackHost = options.fallbackHost || "localhost";
 
   if (request.method !== "GET" && request.method !== "HEAD") {
+    logApiEvent("dataset", "rejected method", `method=${request.method || "(unknown)"}`);
     sendJson(response, 405, { error: "Method not allowed" });
     return;
   }
@@ -264,6 +279,11 @@ export async function handleDatasetRequest(request, response, url, options = {})
   try {
     const tabfile = resolveSourceUrl(url.searchParams.get("tabfile"), request, fallbackHost);
     const configfile = resolveSourceUrl(url.searchParams.get("configfile"), request, fallbackHost);
+    logApiEvent(
+      "dataset",
+      "request",
+      `method=${request.method} tabfile=${tabfile || "(none)"} configfile=${configfile || "(none)"}`
+    );
 
     if (!tabfile && !configfile) {
       sendJson(response, 400, { error: "Missing required query parameter: tabfile or configfile" });
@@ -294,7 +314,7 @@ export async function handleDatasetRequest(request, response, url, options = {})
     sendJson(response, 200, payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Dataset API error:", error);
+    console.error("Dataset API error:", formatErrorDetails(error));
     sendJson(response, 502, { error: message });
   }
 }
@@ -303,12 +323,14 @@ export async function handleLayerRequest(request, response, url, options = {}) {
   const fallbackHost = options.fallbackHost || "localhost";
 
   if (request.method !== "GET" && request.method !== "HEAD") {
+    logApiEvent("layer", "rejected method", `method=${request.method || "(unknown)"}`);
     sendJson(response, 405, { error: "Method not allowed" });
     return;
   }
 
   try {
     const sourceUrl = resolveSourceUrl(url.searchParams.get("url"), request, fallbackHost);
+    logApiEvent("layer", "request", `method=${request.method} url=${sourceUrl || "(none)"}`);
 
     if (!sourceUrl) {
       sendJson(response, 400, { error: "Missing required query parameter: url" });
@@ -361,13 +383,14 @@ export async function handleLayerRequest(request, response, url, options = {}) {
     response.end(body);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Layer API error:", error);
+    console.error("Layer API error:", formatErrorDetails(error));
     sendJson(response, 502, { error: message });
   }
 }
 
 export async function handleGadmBoundaryRequest(request, response, url) {
   if (request.method !== "GET" && request.method !== "HEAD") {
+    logApiEvent("gadm41", "rejected method", `method=${request.method || "(unknown)"}`);
     sendJson(response, 405, { error: "Method not allowed" });
     return;
   }
@@ -383,6 +406,11 @@ export async function handleGadmBoundaryRequest(request, response, url) {
       .split(",")
       .map((value) => value.trim())
       .filter(Boolean);
+    logApiEvent(
+      "gadm41",
+      "request",
+      `method=${request.method} level=${level || "(none)"} country=${countryName || "(none)"} countries=${countryNames.length} states=${stateNames.length}`
+    );
     const body = await readCachedGadmGeoJson({
       level,
       countryName,
@@ -403,7 +431,7 @@ export async function handleGadmBoundaryRequest(request, response, url) {
     response.end(body);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("GADM boundary API error:", error);
+    console.error("GADM boundary API error:", formatErrorDetails(error));
     sendJson(response, 502, { error: message });
   }
 }
@@ -412,6 +440,7 @@ export async function handleSpatialStatisticsRequest(request, response) {
   if (request.method === "GET") {
     const requestUrl = new URL(request.url || "/api/spatial-statistics", getRequestOrigin(request));
     const requestId = String(requestUrl.searchParams.get("id") || "").trim();
+    logApiEvent("spatial-statistics", "poll", `requestId=${requestId || "(missing)"}`);
 
     if (!requestId) {
       sendJson(response, 400, { error: "Missing required query parameter: id" });
@@ -429,6 +458,7 @@ export async function handleSpatialStatisticsRequest(request, response) {
   }
 
   if (request.method !== "POST") {
+    logApiEvent("spatial-statistics", "rejected method", `method=${request.method || "(unknown)"}`);
     sendJson(response, 405, { error: "Method not allowed" });
     return;
   }
@@ -449,6 +479,7 @@ export async function handleSpatialStatisticsRequest(request, response) {
 
     spatialStatisticsJobs.set(requestId, job);
     trimSpatialStatisticsJobs();
+    logApiEvent("spatial-statistics", "request accepted", `requestId=${requestId} groupedPoints=${points.length}`);
 
     const receivedLine = `request received groupedPoints=${points.length}`;
     appendSpatialStatisticsJobLine(job, receivedLine);
@@ -464,12 +495,18 @@ export async function handleSpatialStatisticsRequest(request, response) {
         job.result = statistics;
         const readyLine = `response ready countryRows=${statistics.country.length} stateRows=${statistics.state.length} countyRows=${statistics.county.length}`;
         appendSpatialStatisticsJobLine(job, readyLine);
+        logApiEvent(
+          "spatial-statistics",
+          "request complete",
+          `requestId=${requestId} countryRows=${statistics.country.length} stateRows=${statistics.state.length} countyRows=${statistics.county.length}`
+        );
       })
       .catch((error) => {
         const message = error instanceof Error ? error.message : "Internal server error";
         job.status = "error";
         job.error = message;
         appendSpatialStatisticsJobLine(job, `error ${message}`);
+        console.error(`Spatial statistics job error requestId=${requestId}:`, formatErrorDetails(error));
       });
 
     sendJson(response, 202, {
@@ -479,7 +516,7 @@ export async function handleSpatialStatisticsRequest(request, response) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Internal server error";
-    console.error("Spatial statistics API error:", error);
+    console.error("Spatial statistics API error:", formatErrorDetails(error));
     sendJson(response, 502, { error: message });
   }
 }

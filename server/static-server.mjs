@@ -10,6 +10,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const distDir = resolve(__dirname, "..", "dist");
 const { host, port } = runtimeConfig;
+let requestSequence = 0;
 
 const contentTypes = {
   ".css": "text/css; charset=utf-8",
@@ -31,6 +32,21 @@ const contentTypes = {
 function sendError(response, statusCode, message) {
   response.writeHead(statusCode, { "Content-Type": "text/plain; charset=utf-8" });
   response.end(message);
+}
+
+function logServerEvent(message, details = "") {
+  const timestamp = new Date().toISOString();
+  const suffix = details ? ` ${details}` : "";
+  console.log(`[${timestamp}] server ${message}${suffix}`);
+}
+
+function getRequestIp(request) {
+  const forwardedFor = request.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string" && forwardedFor.trim()) {
+    return forwardedFor.split(",")[0].trim();
+  }
+
+  return request.socket?.remoteAddress || "(unknown)";
 }
 
 async function resolveRequestPath(urlPath) {
@@ -76,8 +92,26 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  const requestId = `req-${(++requestSequence).toString(36)}`;
+  const startTime = Date.now();
+  response.on("finish", () => {
+    const durationMs = Date.now() - startTime;
+    if (request.url?.startsWith("/api/")) {
+      logServerEvent(
+        "response",
+        `requestId=${requestId} method=${request.method || "(unknown)"} url=${request.url} status=${response.statusCode} durationMs=${durationMs} ip=${getRequestIp(request)}`
+      );
+    }
+  });
+
   try {
     const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+    if (url.pathname.startsWith("/api/")) {
+      logServerEvent(
+        "request",
+        `requestId=${requestId} method=${request.method || "(unknown)"} url=${request.url} ip=${getRequestIp(request)}`
+      );
+    }
 
     if (url.pathname === "/api/dataset") {
       await handleDatasetRequest(request, response, url, {
@@ -100,6 +134,15 @@ const server = createServer(async (request, response) => {
 
     if (url.pathname === "/api/spatial-statistics") {
       await handleSpatialStatisticsRequest(request, response);
+      return;
+    }
+
+    if (url.pathname.startsWith("/api/")) {
+      logServerEvent(
+        "unhandled api route",
+        `requestId=${requestId} method=${request.method || "(unknown)"} url=${request.url}`
+      );
+      sendError(response, 404, "API route not found");
       return;
     }
 
@@ -127,15 +170,23 @@ const server = createServer(async (request, response) => {
 
     createReadStream(filePath).pipe(response);
   } catch (error) {
-    console.error("Static server error:", error);
+    console.error(`Static server error requestId=${requestId}:`, error instanceof Error ? error.stack || error.message : String(error));
     sendError(response, 500, "Internal server error");
   }
 });
 
 server.listen(port, host, () => {
-  console.log(`Serving BerkeleyMapper dist from ${distDir} at http://${host}:${port}`);
+  logServerEvent("listening", `dist=${distDir} url=http://${host}:${port}`);
   if (runtimeConfig.spatialDataDir || runtimeConfig.gadm41Dir) {
-    console.log(`Spatial data root: ${runtimeConfig.spatialDataDir || "(unset)"}`);
-    console.log(`GADM41 root: ${runtimeConfig.gadm41Dir || "(unset)"}`);
+    logServerEvent("spatial data root", runtimeConfig.spatialDataDir || "(unset)");
+    logServerEvent("GADM41 root", runtimeConfig.gadm41Dir || "(unset)");
   }
+});
+
+process.on("unhandledRejection", (error) => {
+  console.error("Unhandled promise rejection:", error instanceof Error ? error.stack || error.message : String(error));
+});
+
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught exception:", error instanceof Error ? error.stack || error.message : String(error));
 });
