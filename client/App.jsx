@@ -175,6 +175,28 @@ function shouldAttemptServerLoad(payload) {
   return Boolean(payload?.tabfile || payload?.configfile) && !payload?.tabdata && !payload?.configdata;
 }
 
+function isSameOriginAssetUrl(value) {
+  if (!value || typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const resolved = new URL(value, window.location.href);
+    return resolved.origin === window.location.origin && !resolved.pathname.startsWith("/api/");
+  } catch {
+    return false;
+  }
+}
+
+function shouldLoadDatasetFromClientFiles(payload) {
+  if (!shouldAttemptServerLoad(payload)) {
+    return false;
+  }
+
+  const sources = [payload?.tabfile, payload?.configfile].filter(Boolean);
+  return sources.length > 0 && sources.every(isSameOriginAssetUrl);
+}
+
 async function fetchRequiredText(url, label) {
   if (!url) {
     return "";
@@ -1317,6 +1339,21 @@ function delay(milliseconds) {
   });
 }
 
+async function readJsonResponse(response, serviceLabel) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+
+  const responseText = await response.text();
+  if (/^\s*</.test(responseText)) {
+    throw new Error(`${serviceLabel} returned HTML instead of JSON. The /api route is likely missing or being rewritten.`);
+  }
+
+  throw new Error(`${serviceLabel} returned an unexpected response.`);
+}
+
 async function fetchSpatialStatistics(pointGroups, onProgress) {
   const response = await fetch("/api/spatial-statistics", {
     method: "POST",
@@ -1329,7 +1366,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
     })
   });
 
-  const responseBody = await response.json();
+  const responseBody = await readJsonResponse(response, "Spatial intersection service");
 
   if (!response.ok) {
     throw new Error(responseBody?.error || `Unable to compute spatial intersections: ${response.status} ${response.statusText}`);
@@ -1356,7 +1393,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
         Accept: "application/json"
       }
     });
-    const statusBody = await statusResponse.json();
+    const statusBody = await readJsonResponse(statusResponse, "Spatial intersection status service");
 
     if (!statusResponse.ok) {
       throw new Error(statusBody?.error || `Unable to read spatial intersection status: ${statusResponse.status} ${statusResponse.statusText}`);
@@ -2975,7 +3012,9 @@ function App() {
     try {
       let data;
 
-      if (shouldAttemptServerLoad(payload)) {
+      if (shouldLoadDatasetFromClientFiles(payload)) {
+        data = await loadDatasetFromClientFiles(payload);
+      } else if (shouldAttemptServerLoad(payload)) {
         try {
           data = await loadDatasetFromServerFiles(payload);
         } catch (serverError) {
