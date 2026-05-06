@@ -147,17 +147,20 @@ function normalizePointGroups(points = []) {
       const latitude = Number(point?.latitude);
       const longitude = Number(point?.longitude);
       const recordIds = Array.isArray(point?.recordIds) ? point.recordIds.filter(Boolean).sort() : [];
+      const explicitCount = Number(point?.count);
+      const count = recordIds.length || (Number.isFinite(explicitCount) ? explicitCount : 0);
 
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !recordIds.length) {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !(count > 0)) {
         return null;
       }
 
       return {
         key: `${latitude},${longitude}:${index}`,
+        groupIndex: index,
         latitude,
         longitude,
         recordIds,
-        count: recordIds.length,
+        count,
         pointFeature: buildPointFeature({ latitude, longitude })
       };
     })
@@ -169,7 +172,12 @@ function buildSpatialStatisticsCacheKey(pointGroups) {
   const hash = createHash("sha1");
 
   pointGroups.forEach((group) => {
-    hash.update(`${group.latitude},${group.longitude}:${group.recordIds.join(",")};`);
+    if (group.recordIds.length) {
+      hash.update(`${group.latitude},${group.longitude}:${group.recordIds.join(",")};`);
+      return;
+    }
+
+    hash.update(`${group.latitude},${group.longitude}:count=${group.count};`);
   });
 
   return hash.digest("hex");
@@ -289,6 +297,7 @@ async function matchPointGroups(pointGroups, boundarySet, { yieldEvery = 80 } = 
 
       matches.push({
         pointGroup,
+        groupIndex: pointGroup.groupIndex,
         recordIds: pointGroup.recordIds,
         count: pointGroup.count,
         properties: featureEntry.properties
@@ -344,14 +353,20 @@ function aggregateMatches(matches, labelBuilder) {
     const existing = rowsByLabel.get(label);
     if (existing) {
       existing.count += match.count;
-      existing.recordIds.push(...match.recordIds);
+      if (Array.isArray(match.recordIds) && match.recordIds.length) {
+        existing.recordIds.push(...match.recordIds);
+      }
+      if (Number.isInteger(match.groupIndex) && match.groupIndex >= 0) {
+        existing.groupIndexes.push(match.groupIndex);
+      }
       return;
     }
 
     rowsByLabel.set(label, {
       value: label,
       count: match.count,
-      recordIds: [...match.recordIds]
+      recordIds: Array.isArray(match.recordIds) ? [...match.recordIds] : [],
+      groupIndexes: Number.isInteger(match.groupIndex) && match.groupIndex >= 0 ? [match.groupIndex] : []
     });
   });
 

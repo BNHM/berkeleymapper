@@ -1355,6 +1355,12 @@ async function readJsonResponse(response, serviceLabel) {
 }
 
 async function fetchSpatialStatistics(pointGroups, onProgress) {
+  const requestPoints = (Array.isArray(pointGroups) ? pointGroups : []).map((group) => ({
+    latitude: group?.latitude,
+    longitude: group?.longitude,
+    count: Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0
+  }));
+
   const response = await fetch("/api/spatial-statistics", {
     method: "POST",
     headers: {
@@ -1362,7 +1368,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      points: pointGroups
+      points: requestPoints
     })
   });
 
@@ -1419,6 +1425,33 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
       };
     }
   }
+}
+
+function resolveSpatialStatisticsRowRecordIds(row, pointGroups) {
+  if (Array.isArray(row?.recordIds) && row.recordIds.length) {
+    return row.recordIds.filter(Boolean);
+  }
+
+  const recordIds = [];
+  const seen = new Set();
+
+  (Array.isArray(row?.groupIndexes) ? row.groupIndexes : []).forEach((groupIndex) => {
+    const pointGroup = pointGroups?.[groupIndex];
+    if (!pointGroup || !Array.isArray(pointGroup.recordIds)) {
+      return;
+    }
+
+    pointGroup.recordIds.forEach((recordId) => {
+      if (!recordId || seen.has(recordId)) {
+        return;
+      }
+
+      seen.add(recordId);
+      recordIds.push(recordId);
+    });
+  });
+
+  return recordIds;
 }
 
 function buildSpatialIntersectionRows(markers, features, buildLabel) {
@@ -4328,8 +4361,9 @@ function App() {
                         <tr
                           key={`${statisticsSpatialMode}-${row.value}`}
                           onClick={() => {
-                            if (Array.isArray(row.recordIds) && row.recordIds.length) {
-                              startRecordQuery(row.recordIds, row.value);
+                            const rowRecordIds = resolveSpatialStatisticsRowRecordIds(row, statisticsSpatialPointGroups);
+                            if (rowRecordIds.length) {
+                              startRecordQuery(rowRecordIds, row.value);
                             }
                           }}
                         >
