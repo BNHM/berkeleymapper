@@ -1348,7 +1348,17 @@ async function readJsonResponse(response, serviceLabel) {
 
   const responseText = await response.text();
   if (/^\s*</.test(responseText)) {
-    throw new Error(`${serviceLabel} returned HTML instead of JSON. The /api route is likely missing or being rewritten.`);
+    const isLikelyGatewayOrSecurityFailure = [400, 403, 404, 413, 502, 503, 504].includes(response.status);
+    if (isLikelyGatewayOrSecurityFailure) {
+      throw new Error(
+        `We hit an issue sending data to the ${serviceLabel.toLowerCase()}. ` +
+        `A proxy or security layer in front of the service returned an HTML error page instead of JSON. ` +
+        `For very large requests, request-size or request-body inspection limits, such as a 2 MB payload cap, may be the cause. ` +
+        `Try narrowing the records in scope and retrying.`
+      );
+    }
+
+    throw new Error(`${serviceLabel} returned HTML instead of JSON. The /api route is likely missing, rewritten, or blocked before reaching the service.`);
   }
 
   throw new Error(`${serviceLabel} returned an unexpected response.`);
