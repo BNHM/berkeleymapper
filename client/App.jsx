@@ -93,6 +93,7 @@ const markerPalette = [
   "#e6ab02"
 ];
 const numberFormatter = new Intl.NumberFormat();
+const spatialStatisticsCoordinatePrecision = 4;
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 const datasetLayerPaneName = "bm-dataset-layers";
 const recordPointPaneName = "bm-record-points";
@@ -1344,6 +1345,15 @@ function delay(milliseconds) {
   });
 }
 
+function roundCoordinateForSpatialStatistics(value) {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) {
+    return numericValue;
+  }
+
+  return Number(numericValue.toFixed(spatialStatisticsCoordinatePrecision));
+}
+
 async function readJsonResponse(response, serviceLabel) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -1371,8 +1381,8 @@ async function readJsonResponse(response, serviceLabel) {
 
 async function fetchSpatialStatistics(pointGroups, onProgress) {
   const requestPoints = (Array.isArray(pointGroups) ? pointGroups : []).map((group) => ({
-    latitude: group?.latitude,
-    longitude: group?.longitude,
+    latitude: roundCoordinateForSpatialStatistics(group?.latitude),
+    longitude: roundCoordinateForSpatialStatistics(group?.longitude),
     count: Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0
   }));
 
