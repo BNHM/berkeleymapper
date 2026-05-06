@@ -1,11 +1,156 @@
 import { normalizeColumnName } from "./parseLegacyConfig.js";
 
-function splitRows(tabText) {
-  return tabText
+function normalizeTabularText(tabText) {
+  return String(tabText || "")
+    .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n")
-    .split("\n")
-    .map((line) => line.trimEnd())
-    .filter(Boolean);
+    .replace(/\r/g, "\n");
+}
+
+function hasUsableRowContent(values = []) {
+  return values.some((value) => String(value || "").trim() !== "");
+}
+
+function detectDelimiter(tabText) {
+  const text = normalizeTabularText(tabText);
+  let inQuotes = false;
+  let commaCount = 0;
+  let tabCount = 0;
+  let rowHasContent = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+
+    if (character === "\"") {
+      if (inQuotes && nextCharacter === "\"") {
+        index += 1;
+        continue;
+      }
+
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (!inQuotes && character === "\n") {
+      if (rowHasContent) {
+        break;
+      }
+
+      commaCount = 0;
+      tabCount = 0;
+      rowHasContent = false;
+      continue;
+    }
+
+    if (character.trim()) {
+      rowHasContent = true;
+    }
+
+    if (!inQuotes && character === ",") {
+      commaCount += 1;
+      continue;
+    }
+
+    if (!inQuotes && character === "\t") {
+      tabCount += 1;
+    }
+  }
+
+  if (tabCount > 0 && tabCount >= commaCount) {
+    return "\t";
+  }
+
+  if (commaCount > 0) {
+    return ",";
+  }
+
+  return "\t";
+}
+
+function parseDelimitedRows(tabText, delimiter = "\t") {
+  const text = normalizeTabularText(tabText);
+  const rows = [];
+  const currentRow = [];
+  let currentValue = "";
+  let inQuotes = false;
+  let lineNumber = 1;
+  let rowLineNumber = 1;
+
+  function pushField() {
+    currentRow.push(currentValue);
+    currentValue = "";
+  }
+
+  function pushRow() {
+    if (!currentRow.length) {
+      return;
+    }
+
+    if (hasUsableRowContent(currentRow)) {
+      rows.push({
+        values: [...currentRow],
+        line: rowLineNumber
+      });
+    }
+
+    currentRow.length = 0;
+  }
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+
+    if (character === "\"") {
+      if (inQuotes && nextCharacter === "\"") {
+        currentValue += "\"";
+        index += 1;
+        continue;
+      }
+
+      if (!inQuotes && currentValue === "") {
+        inQuotes = true;
+        continue;
+      }
+
+      if (inQuotes) {
+        inQuotes = false;
+        continue;
+      }
+    }
+
+    if (character === "\n") {
+      if (inQuotes) {
+        currentValue += character;
+        lineNumber += 1;
+        continue;
+      }
+
+      pushField();
+      pushRow();
+      lineNumber += 1;
+      rowLineNumber = lineNumber;
+      continue;
+    }
+
+    if (!inQuotes && character === delimiter) {
+      pushField();
+      continue;
+    }
+
+    currentValue += character;
+  }
+
+  if (inQuotes) {
+    throw new Error("Data file has an unterminated quoted field.");
+  }
+
+  if (currentValue !== "" || currentRow.length) {
+    pushField();
+    pushRow();
+  }
+
+  return rows;
 }
 
 function buildColumnsFromConfig(concepts) {
@@ -206,14 +351,15 @@ function buildRecordLinkValue(recordValues, columns, recordLinkBack) {
 }
 
 export function parseTabularData(tabText, config) {
-  const rows = splitRows(tabText);
+  const delimiter = detectDelimiter(tabText);
+  const rows = parseDelimitedRows(tabText, delimiter);
 
   if (!rows.length) {
-    throw new Error("Tab file is empty.");
+    throw new Error("Data file is empty.");
   }
 
   const configColumns = buildColumnsFromConfig(config.concepts || []);
-  const rawFirstRow = rows[0].split("\t");
+  const rawFirstRow = rows[0].values;
   const hasHeader = looksLikeHeader(rawFirstRow, configColumns);
   const parseColumns = rawFirstRow.map((headerValue, index) => {
     const fallbackHeader = hasHeader ? headerValue.trim() || `Column ${index + 1}` : `Column ${index + 1}`;
@@ -260,8 +406,8 @@ export function parseTabularData(tabText, config) {
   const records = [];
   const markers = [];
 
-  dataRows.forEach((line, rowIndex) => {
-    const values = line.split("\t");
+  dataRows.forEach((row, rowIndex) => {
+    const values = row.values;
     const recordValues = {};
 
     parseColumns.forEach((column, columnIndex) => {
@@ -278,7 +424,7 @@ export function parseTabularData(tabText, config) {
 
     const record = {
       id: `row-${rowIndex + 1}`,
-      line: rowIndex + (hasHeader ? 2 : 1),
+      line: row.line,
       values: recordValues
     };
 

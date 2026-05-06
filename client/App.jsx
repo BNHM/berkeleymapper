@@ -4489,7 +4489,7 @@ function App() {
                   <img src={brandLogo} alt="BerkeleyMapper" className="about-hero-logo" />
                   <div className="about-hero-copy">
                     <p>
-                      BerkeleyMapper reads a BerkeleyMapper XML configuration file and, when present, a tab-delimited data
+                      BerkeleyMapper reads a BerkeleyMapper XML configuration file and, when present, a tab-delimited or CSV data
                       file. Config-only datasets can still load GIS layers even when no tabfile is available.
                     </p>
                     <p>{aboutPermissionCopy}</p>

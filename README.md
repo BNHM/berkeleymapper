@@ -3,6 +3,8 @@
 ## Introduction
 BerkeleyMapper 2.0 is a React + Leaflet mapping interface for collections and other tabular geographic datasets. It keeps compatibility with the BerkeleyMapper XML config format while rendering records, layers, and UI behavior in JavaScript.
 
+Point datasets can now be supplied as either tab-delimited text or CSV, including standard quoted CSV fields.
+
 Instructions for using BerkeleyMapper are found in the <a href='https://github.com/jdeck88/berkeleymapper/wiki'>wiki</a>
 
 ## Try it out!
@@ -39,7 +41,7 @@ npm run preview
 
 The current React app supports:
 
-- load a tab-delimited dataset directly in the browser from a URL
+- load a tab-delimited or CSV dataset directly in the browser from a URL
 - optionally load a legacy BerkeleyMapper XML config directly in the browser
 - parse records and coordinates in JavaScript
 - render the dataset in a React UI with a Leaflet map and records table
@@ -78,10 +80,11 @@ That script rebuilds the frontend and runs `server/static-server.mjs` under PM2.
 The JavaScript app currently uses several same-origin endpoints.
 
 ### `GET /api/dataset`
-Loads a remote tabfile and optional config file server-side, then returns the parsed BerkeleyMapper dataset payload as JSON.
+Loads a remote tabular data file and optional config file server-side, then returns the parsed BerkeleyMapper dataset payload as JSON.
 
 Query parameters:
-- `tabfile` required, absolute or same-origin URL to a tab-delimited text file
+- `tabfile` required, absolute or same-origin URL to a tab-delimited text file or CSV file
+  The parameter name remains `tabfile` for legacy compatibility even when the source is CSV.
 - `configfile` optional, absolute or same-origin URL to a BerkeleyMapper XML config file
 
 Example:
@@ -92,6 +95,7 @@ Example:
 
 Behavior:
 - supports `GET` and `HEAD`
+- parses tab-delimited text and CSV, including quoted CSV fields
 - rejects non-HTTP(S) URLs
 - returns `400` for missing required parameters
 - returns `502` when upstream data cannot be loaded
