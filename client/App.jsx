@@ -1354,6 +1354,17 @@ function roundCoordinateForSpatialStatistics(value) {
   return Number(numericValue.toFixed(spatialStatisticsCoordinatePrecision));
 }
 
+function buildSpatialStatisticsCsv(pointGroups) {
+  return (Array.isArray(pointGroups) ? pointGroups : [])
+    .map((group) => {
+      const latitude = roundCoordinateForSpatialStatistics(group?.latitude);
+      const longitude = roundCoordinateForSpatialStatistics(group?.longitude);
+      const count = Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0;
+      return `${latitude},${longitude},${count}`;
+    })
+    .join("\n");
+}
+
 async function readJsonResponse(response, serviceLabel) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -1380,21 +1391,13 @@ async function readJsonResponse(response, serviceLabel) {
 }
 
 async function fetchSpatialStatistics(pointGroups, onProgress) {
-  const requestPoints = (Array.isArray(pointGroups) ? pointGroups : []).map((group) => ({
-    latitude: roundCoordinateForSpatialStatistics(group?.latitude),
-    longitude: roundCoordinateForSpatialStatistics(group?.longitude),
-    count: Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0
-  }));
-
   const response = await fetch("/api/spatial-statistics", {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "application/json"
+      "Content-Type": "text/csv; charset=utf-8"
     },
-    body: JSON.stringify({
-      points: requestPoints
-    })
+    body: buildSpatialStatisticsCsv(pointGroups)
   });
 
   const responseBody = await readJsonResponse(response, "Spatial intersection service");

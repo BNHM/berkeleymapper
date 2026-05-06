@@ -62,7 +62,7 @@ function getSpatialStatisticsJobPayload(job) {
   };
 }
 
-async function readJsonBody(request, maxBytes = 1024 * 1024 * 8) {
+async function readTextBody(request, maxBytes = 1024 * 1024 * 8) {
   const chunks = [];
   let totalBytes = 0;
 
@@ -76,8 +76,36 @@ async function readJsonBody(request, maxBytes = 1024 * 1024 * 8) {
     chunks.push(chunk);
   }
 
-  const body = Buffer.concat(chunks).toString("utf-8").trim();
-  return body ? JSON.parse(body) : {};
+  return Buffer.concat(chunks).toString("utf-8").trim();
+}
+
+function parseSpatialStatisticsCsvBody(bodyText) {
+  if (!bodyText) {
+    return [];
+  }
+
+  return bodyText
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const values = line.split(",").map((value) => value.trim());
+
+      if (index === 0 && values.length >= 3 && values[0].toLowerCase() === "latitude" && values[1].toLowerCase() === "longitude") {
+        return null;
+      }
+
+      if (values.length < 3) {
+        throw new Error("Spatial statistics CSV rows must contain latitude, longitude, and count.");
+      }
+
+      return {
+        latitude: Number(values[0]),
+        longitude: Number(values[1]),
+        count: Number(values[2])
+      };
+    })
+    .filter(Boolean);
 }
 
 function getRequestOrigin(request, fallbackHost = "localhost") {
@@ -464,8 +492,8 @@ export async function handleSpatialStatisticsRequest(request, response) {
   }
 
   try {
-    const body = await readJsonBody(request);
-    const points = Array.isArray(body?.points) ? body.points : [];
+    const bodyText = await readTextBody(request);
+    const points = parseSpatialStatisticsCsvBody(bodyText);
     const requestId = createSpatialStatisticsRequestId();
     const job = {
       requestId,
