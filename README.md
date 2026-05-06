@@ -132,7 +132,7 @@ Behavior:
 Queues a spatial-intersection job for grouped record points.
 
 Behavior:
-- accepts `text/csv` rows in the form `latitude,longitude,count`
+- accepts plain-text CSV rows in the form `latitude,longitude,count`
 - returns `202` with a `requestId`
 - requires the Node server and GADM data at runtime
 

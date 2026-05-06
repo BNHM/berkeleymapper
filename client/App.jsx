@@ -1395,7 +1395,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
     method: "POST",
     headers: {
       Accept: "application/json",
-      "Content-Type": "text/csv; charset=utf-8"
+      "Content-Type": "text/plain; charset=utf-8"
     },
     body: buildSpatialStatisticsCsv(pointGroups)
   });
