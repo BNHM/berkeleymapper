@@ -57,6 +57,11 @@ const arctosDemo = {
   configfile: "/sampledata/arctostest.xml"
 };
 const arctosDemoHref = `?${new URLSearchParams(arctosDemo).toString()}`;
+const arctosCsvDemo = {
+  tabfile: "/sampledata/arctostest-100.csv",
+  configfile: "/sampledata/arctostest.xml"
+};
+const arctosCsvDemoHref = `?${new URLSearchParams(arctosCsvDemo).toString()}`;
 const amphibiawebDemo = {
   tabfile: "/sampledata/amphibiaweb.txt",
   configfile: "/sampledata/amphibiaweb.xml"
@@ -3508,6 +3513,7 @@ function App() {
       ? "No legend text defined for this configuration."
       : "Load a dataset to populate the legend.");
   const configFileText = dataset?.rawConfigText || "";
+  const tabFilePreviewText = dataset?.rawTabPreviewText || "";
   const isEmptyLandingState = !dataset && !loading && !error && !loadWarning && !form.tabfile && !form.configfile;
   const aboutPermissionCopy = dataset?.source?.tabfile || dataset?.source?.configfile
     ? "This dataset was requested by passing tabfile/configfile URLs into BerkeleyMapper. The application assumes those URLs were supplied with permission to retrieve and display the data."
@@ -4507,6 +4513,7 @@ function App() {
                     <ul className="about-sample-list">
                       <li><a href={configOnlyDemoHref}>Load Config-Only Demo</a></li>
                       <li><a href={arctosDemoHref}>Load Arctos Demo</a></li>
+                      <li><a href={arctosCsvDemoHref}>Load Arctos CSV Demo (100 Records)</a></li>
                       <li><a href={amphibiawebDemoHref}>Load AmphibiaWeb Demo</a></li>
                       <li><a href={ucmpJoinDemoHref}>Load UCMP County Join Demo</a></li>
                     </ul>
@@ -4605,12 +4612,10 @@ function App() {
                 </section>
 
                 <section className="about-note">
-                  <h4>Current Sources</h4>
-                  <p>
-                    <code>tabfile</code>: {dataset?.source?.tabfile || "Not loaded"}
-                    <br />
-                    <code>configfile</code>: {dataset?.source?.configfile || "Not loaded"}
-                  </p>
+                  <h4>Tabfile Currently In Use: First 20 Rows</h4>
+                  <pre className="config-file-view config-file-view-inline">
+                    {tabFilePreviewText || "No tabfile is currently loaded."}
+                  </pre>
                 </section>
 
                 <section className="about-note">

@@ -153,6 +153,28 @@ function parseDelimitedRows(tabText, delimiter = "\t") {
   return rows;
 }
 
+function escapeDelimitedValue(value, delimiter) {
+  const text = String(value ?? "");
+  if (text.includes("\"")) {
+    return `"${text.replaceAll("\"", "\"\"")}"`;
+  }
+
+  if (text.includes("\n") || text.includes("\r") || text.includes(delimiter)) {
+    return `"${text}"`;
+  }
+
+  return text;
+}
+
+export function buildTabularPreviewText(tabText, rowLimit = 20) {
+  const delimiter = detectDelimiter(tabText);
+  const rows = parseDelimitedRows(tabText, delimiter).slice(0, Math.max(0, rowLimit));
+
+  return rows
+    .map((row) => row.values.map((value) => escapeDelimitedValue(value, delimiter)).join(delimiter))
+    .join("\n");
+}
+
 function buildColumnsFromConfig(concepts) {
   if (!concepts.length) {
     return [];
