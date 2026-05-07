@@ -1362,20 +1362,6 @@ function buildSpatialStatisticsPoints(pointGroups) {
   }));
 }
 
-async function gzipText(text) {
-  if (typeof CompressionStream !== "function") {
-    return null;
-  }
-
-  try {
-    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
-    const arrayBuffer = await new Response(stream).arrayBuffer();
-    return new Uint8Array(arrayBuffer);
-  } catch {
-    return null;
-  }
-}
-
 async function readJsonResponse(response, serviceLabel) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -1405,20 +1391,14 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   const requestBodyText = JSON.stringify({
     points: buildSpatialStatisticsPoints(pointGroups)
   });
-  const gzippedRequestBody = await gzipText(requestBodyText);
   const headers = {
     Accept: "application/json",
     "Content-Type": "application/json; charset=utf-8"
   };
-
-  if (gzippedRequestBody) {
-    headers["Content-Encoding"] = "gzip";
-  }
-
   const response = await fetch("/api/spatial-statistics", {
     method: "POST",
     headers,
-    body: gzippedRequestBody || requestBodyText
+    body: requestBodyText
   });
 
   const responseBody = await readJsonResponse(response, "Spatial intersection service");
