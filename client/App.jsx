@@ -1375,6 +1375,17 @@ async function gzipUtf8Text(text) {
   return new Uint8Array(await new Response(compressionStream.readable).arrayBuffer());
 }
 
+async function gzipUtf8TextWithTimeout(text, timeoutMs = 1500) {
+  try {
+    return await Promise.race([
+      gzipUtf8Text(text),
+      delay(timeoutMs).then(() => null)
+    ]);
+  } catch {
+    return null;
+  }
+}
+
 function shouldRetrySpatialStatisticsWithoutCompression(response, error) {
   if (response) {
     return [400, 403, 404, 413, 415, 422, 502, 503, 504].includes(response.status);
@@ -1412,7 +1423,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   const requestBodyText = JSON.stringify({
     points: buildSpatialStatisticsPoints(pointGroups)
   });
-  const compressedBody = await gzipUtf8Text(requestBodyText);
+  const compressedBody = await gzipUtf8TextWithTimeout(requestBodyText);
   let response;
   let responseBody;
 
