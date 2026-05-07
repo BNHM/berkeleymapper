@@ -1,4 +1,5 @@
 import { extname } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { buildDatasetPayload } from "../../shared/buildDatasetPayload.js";
 import { readCachedGadmGeoJson } from "./gadmBoundaries.js";
 import { buildSpatialStatistics } from "./spatialStatistics.js";
@@ -62,7 +63,7 @@ function getSpatialStatisticsJobPayload(job) {
   };
 }
 
-async function readTextBody(request, maxBytes = 1024 * 1024 * 8) {
+async function readRequestBodyBuffer(request, maxBytes = 1024 * 1024 * 8) {
   const chunks = [];
   let totalBytes = 0;
 
@@ -76,7 +77,25 @@ async function readTextBody(request, maxBytes = 1024 * 1024 * 8) {
     chunks.push(chunk);
   }
 
-  return Buffer.concat(chunks).toString("utf-8").trim();
+  return Buffer.concat(chunks);
+}
+
+function decodeRequestBody(buffer, request) {
+  const contentEncoding = String(request.headers["content-encoding"] || "").toLowerCase();
+
+  if (!contentEncoding) {
+    return buffer.toString("utf-8").trim();
+  }
+
+  if (contentEncoding.includes("gzip")) {
+    try {
+      return gunzipSync(buffer).toString("utf-8").trim();
+    } catch (error) {
+      throw new Error(`Unable to decompress gzip request body: ${error instanceof Error ? error.message : "invalid gzip payload"}`);
+    }
+  }
+
+  throw new Error(`Unsupported request content encoding: ${contentEncoding}`);
 }
 
 function parseSpatialStatisticsCsvBody(bodyText) {
@@ -106,6 +125,25 @@ function parseSpatialStatisticsCsvBody(bodyText) {
       };
     })
     .filter(Boolean);
+}
+
+function parseSpatialStatisticsJsonBody(bodyText) {
+  if (!bodyText) {
+    return [];
+  }
+
+  const body = JSON.parse(bodyText);
+  return Array.isArray(body?.points) ? body.points : [];
+}
+
+function parseSpatialStatisticsBody(bodyText, request) {
+  const contentType = String(request.headers["content-type"] || "").toLowerCase();
+
+  if (contentType.includes("application/json")) {
+    return parseSpatialStatisticsJsonBody(bodyText);
+  }
+
+  return parseSpatialStatisticsCsvBody(bodyText);
 }
 
 function getRequestOrigin(request, fallbackHost = "localhost") {
@@ -492,8 +530,9 @@ export async function handleSpatialStatisticsRequest(request, response) {
   }
 
   try {
-    const bodyText = await readTextBody(request);
-    const points = parseSpatialStatisticsCsvBody(bodyText);
+    const bodyBuffer = await readRequestBodyBuffer(request);
+    const bodyText = decodeRequestBody(bodyBuffer, request);
+    const points = parseSpatialStatisticsBody(bodyText, request);
     const requestId = createSpatialStatisticsRequestId();
     const job = {
       requestId,

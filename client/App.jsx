@@ -1354,15 +1354,26 @@ function roundCoordinateForSpatialStatistics(value) {
   return Number(numericValue.toFixed(spatialStatisticsCoordinatePrecision));
 }
 
-function buildSpatialStatisticsCsv(pointGroups) {
-  return (Array.isArray(pointGroups) ? pointGroups : [])
-    .map((group) => {
-      const latitude = roundCoordinateForSpatialStatistics(group?.latitude);
-      const longitude = roundCoordinateForSpatialStatistics(group?.longitude);
-      const count = Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0;
-      return `${latitude},${longitude},${count}`;
-    })
-    .join("\n");
+function buildSpatialStatisticsPoints(pointGroups) {
+  return (Array.isArray(pointGroups) ? pointGroups : []).map((group) => ({
+    latitude: roundCoordinateForSpatialStatistics(group?.latitude),
+    longitude: roundCoordinateForSpatialStatistics(group?.longitude),
+    count: Array.isArray(group?.recordIds) ? group.recordIds.length : Number(group?.count) || 0
+  }));
+}
+
+async function gzipText(text) {
+  if (typeof CompressionStream !== "function") {
+    return null;
+  }
+
+  try {
+    const stream = new Blob([text]).stream().pipeThrough(new CompressionStream("gzip"));
+    const arrayBuffer = await new Response(stream).arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  } catch {
+    return null;
+  }
 }
 
 async function readJsonResponse(response, serviceLabel) {
@@ -1391,13 +1402,23 @@ async function readJsonResponse(response, serviceLabel) {
 }
 
 async function fetchSpatialStatistics(pointGroups, onProgress) {
+  const requestBodyText = JSON.stringify({
+    points: buildSpatialStatisticsPoints(pointGroups)
+  });
+  const gzippedRequestBody = await gzipText(requestBodyText);
+  const headers = {
+    Accept: "application/json",
+    "Content-Type": "application/json; charset=utf-8"
+  };
+
+  if (gzippedRequestBody) {
+    headers["Content-Encoding"] = "gzip";
+  }
+
   const response = await fetch("/api/spatial-statistics", {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "text/plain; charset=utf-8"
-    },
-    body: buildSpatialStatisticsCsv(pointGroups)
+    headers,
+    body: gzippedRequestBody || requestBodyText
   });
 
   const responseBody = await readJsonResponse(response, "Spatial intersection service");

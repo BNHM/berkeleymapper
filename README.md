@@ -132,7 +132,8 @@ Behavior:
 Queues a spatial-intersection job for grouped record points.
 
 Behavior:
-- accepts plain-text CSV rows in the form `latitude,longitude,count`
+- accepts JSON with a `points` array
+- also accepts gzip-compressed request bodies when sent with `Content-Encoding: gzip`
 - returns `202` with a `requestId`
 - requires the Node server and GADM data at runtime
 
