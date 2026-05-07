@@ -190,16 +190,44 @@ Notes:
 - The server also has compatibility support for plain-text CSV request bodies and gzip-compressed request bodies, but plain JSON is the simplest and safest direct-call format
 - On `berkeleymapper.berkeley.edu`, plain JSON is the recommended format because Apache/ModSecurity may reject compressed request bodies
 
-### Direct Curl Example
+### End-to-End Curl Example
 
 ```bash
-curl -i https://berkeleymapper.berkeley.edu/api/spatial-statistics \
+BASE_URL="https://berkeleymapper.berkeley.edu"
+POST_BODY='{"points":[{"latitude":37.85,"longitude":-122.27,"count":1},{"latitude":37.86,"longitude":-122.28,"count":2}]}'
+
+submit_response="$(curl -s "$BASE_URL/api/spatial-statistics" \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
-  --data '{"points":[{"latitude":37.85,"longitude":-122.27,"count":1},{"latitude":37.86,"longitude":-122.28,"count":2}]}'
+  --data "$POST_BODY")"
+
+request_id="$(printf '%s' "$submit_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["requestId"])')"
+echo "requestId=$request_id"
+
+while true; do
+  status_response="$(curl -s "$BASE_URL/api/spatial-statistics?id=$request_id" \
+    -H 'Accept: application/json')"
+
+  status="$(printf '%s' "$status_response" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')"
+  echo "status=$status"
+
+  if [ "$status" = "complete" ] || [ "$status" = "error" ]; then
+    printf '%s\n' "$status_response" | python3 -m json.tool
+    break
+  fi
+
+  sleep 1
+done
 ```
 
-Expected response:
+What it does:
+
+- submits grouped points to `POST /api/spatial-statistics`
+- extracts the returned `requestId`
+- polls `GET /api/spatial-statistics?id=...`
+- prints the final JSON response when the job finishes
+
+Initial `POST` response example:
 
 ```json
 {
@@ -233,7 +261,7 @@ Polls the status of a queued spatial-statistics job.
 - `id` required.
   The `requestId` returned by `POST /api/spatial-statistics`
 
-### Direct Curl Example
+### Single Poll Example
 
 ```bash
 curl -i "https://berkeleymapper.berkeley.edu/api/spatial-statistics?id=movhfusa-b03dfr"
