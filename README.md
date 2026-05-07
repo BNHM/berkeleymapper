@@ -77,68 +77,14 @@ Production process:
 That script rebuilds the frontend and runs `server/static-server.mjs` under PM2.
 
 ## API Endpoints
-The JavaScript app currently uses several same-origin endpoints.
+Detailed endpoint documentation, request formats, and direct-call examples are in [API.md](API.md).
 
-### `GET /api/dataset`
-Loads a remote tabular data file and optional config file server-side, then returns the parsed BerkeleyMapper dataset payload as JSON.
+That document includes:
 
-Query parameters:
-- `tabfile` required, absolute or same-origin URL to a tab-delimited text file or CSV file
-  The parameter name remains `tabfile` for legacy compatibility even when the source is CSV.
-- `configfile` optional, absolute or same-origin URL to a BerkeleyMapper XML config file
-
-Example:
-
-```text
-/api/dataset?tabfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.txt&configfile=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/arctostest.xml
-```
-
-Behavior:
-- supports `GET` and `HEAD`
-- parses tab-delimited text and CSV, including quoted CSV fields
-- rejects non-HTTP(S) URLs
-- returns `400` for missing required parameters
-- returns `502` when upstream data cannot be loaded
-
-### `GET /api/layer`
-Fetches a remote overlay source server-side and returns it to the browser with the appropriate content type.
-
-Query parameters:
-- `url` required, absolute or same-origin URL to a `.kml`, `.kmz`, `.geojson`, or `.json` layer source
-
-Example:
-
-```text
-/api/layer?url=https://raw.githubusercontent.com/BNHM/berkeleymapper/master/examples/Anaxyrus_canorus.kmz
-```
-
-Behavior:
-- supports `GET` and `HEAD`
-- infers content type for KML, KMZ, GeoJSON, JSON, and XML sources
-- rejects non-HTTP(S) URLs
-- returns `400` for missing required parameters
-- returns `502` when upstream layer content cannot be loaded
-- detects common human-verification HTML pages and treats them as errors instead of valid layer data
-
-### `GET /api/gadm41`
-Returns filtered GADM boundary GeoJSON used by spatial statistics and polygon joins.
-
-Behavior:
-- supports `GET` and `HEAD`
-- requires `GADM41_DIR` to point at the local GADM shapefiles
-- returns GeoJSON for level 0, 1, or 2 boundaries
-
-### `POST /api/spatial-statistics`
-Queues a spatial-intersection job for grouped record points.
-
-Behavior:
-- accepts JSON with a `points` array
-- also accepts gzip-compressed request bodies when sent with `Content-Encoding: gzip`
-- returns `202` with a `requestId`
-- requires the Node server and GADM data at runtime
-
-### `GET /api/spatial-statistics?id=...`
-Returns job status and, when complete, the spatial statistics result payload.
+- request and response structure for each endpoint
+- curl examples
+- direct use of `/api/spatial-statistics` without loading BerkeleyMapper itself
+- request-shaping guidance for grouped point statistics calls
 
 ## Config Support
 Current config support is tracked in [docs/config-file-support.md](/Users/jdeck/IdeaProjects/berkeleymapper/berkeleymapper/docs/config-file-support.md).
