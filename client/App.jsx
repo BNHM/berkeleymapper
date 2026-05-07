@@ -1362,6 +1362,27 @@ function buildSpatialStatisticsPoints(pointGroups) {
   }));
 }
 
+async function gzipUtf8Text(text) {
+  if (typeof CompressionStream !== "function" || typeof TextEncoder !== "function" || typeof Response !== "function") {
+    return null;
+  }
+
+  const compressionStream = new CompressionStream("gzip");
+  const writer = compressionStream.writable.getWriter();
+  await writer.write(new TextEncoder().encode(String(text || "")));
+  await writer.close();
+
+  return new Uint8Array(await new Response(compressionStream.readable).arrayBuffer());
+}
+
+function shouldRetrySpatialStatisticsWithoutCompression(response, error) {
+  if (response) {
+    return [400, 403, 404, 413, 415, 422, 502, 503, 504].includes(response.status);
+  }
+
+  return /html instead of json|proxy or security layer/i.test(String(error?.message || ""));
+}
+
 async function readJsonResponse(response, serviceLabel) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -1391,17 +1412,46 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   const requestBodyText = JSON.stringify({
     points: buildSpatialStatisticsPoints(pointGroups)
   });
-  const headers = {
-    Accept: "application/json",
-    "Content-Type": "application/json; charset=utf-8"
-  };
-  const response = await fetch("/api/spatial-statistics", {
-    method: "POST",
-    headers,
-    body: requestBodyText
-  });
+  const compressedBody = await gzipUtf8Text(requestBodyText);
+  let response;
+  let responseBody;
 
-  const responseBody = await readJsonResponse(response, "Spatial intersection service");
+  const sendSpatialStatisticsRequest = async (body, headers) => {
+    const nextResponse = await fetch("/api/spatial-statistics", {
+      method: "POST",
+      headers,
+      body
+    });
+
+    const nextResponseBody = await readJsonResponse(nextResponse, "Spatial intersection service");
+    return { response: nextResponse, responseBody: nextResponseBody };
+  };
+
+  if (compressedBody) {
+    try {
+      ({ response, responseBody } = await sendSpatialStatisticsRequest(compressedBody, {
+        Accept: "application/json",
+        "Content-Encoding": "gzip",
+        "Content-Type": "application/json"
+      }));
+    } catch (error) {
+      if (!shouldRetrySpatialStatisticsWithoutCompression(null, error)) {
+        throw error;
+      }
+    }
+  }
+
+  if (!response) {
+    ({ response, responseBody } = await sendSpatialStatisticsRequest(requestBodyText, {
+      Accept: "application/json",
+      "Content-Type": "application/json; charset=utf-8"
+    }));
+  } else if (!response.ok && shouldRetrySpatialStatisticsWithoutCompression(response)) {
+    ({ response, responseBody } = await sendSpatialStatisticsRequest(requestBodyText, {
+      Accept: "application/json",
+      "Content-Type": "application/json; charset=utf-8"
+    }));
+  }
 
   if (!response.ok) {
     throw new Error(responseBody?.error || `Unable to compute spatial intersections: ${response.status} ${response.statusText}`);
