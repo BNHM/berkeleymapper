@@ -1363,27 +1363,56 @@ function buildSpatialStatisticsPoints(pointGroups) {
 }
 
 async function gzipUtf8Text(text) {
-  if (typeof CompressionStream !== "function" || typeof TextEncoder !== "function" || typeof Response !== "function") {
-    return null;
+  const support = {
+    hasBlob: typeof Blob === "function",
+    hasCompressionStream: typeof CompressionStream === "function",
+    hasResponse: typeof Response === "function"
+  };
+
+  if (!support.hasBlob || !support.hasCompressionStream || !support.hasResponse) {
+    return {
+      compressedBody: null,
+      status: "unsupported",
+      support
+    };
   }
 
-  const compressionStream = new CompressionStream("gzip");
-  const writer = compressionStream.writable.getWriter();
-  await writer.write(new TextEncoder().encode(String(text || "")));
-  await writer.close();
+  try {
+    const sourceStream = new Blob([String(text || "")], {
+      type: "application/json; charset=utf-8"
+    }).stream();
+    const compressedStream = sourceStream.pipeThrough(new CompressionStream("gzip"));
 
-  return new Uint8Array(await new Response(compressionStream.readable).arrayBuffer());
+    return {
+      compressedBody: new Uint8Array(await new Response(compressedStream).arrayBuffer()),
+      status: "ok",
+      support
+    };
+  } catch (error) {
+    return {
+      compressedBody: null,
+      status: "error",
+      error: error instanceof Error ? error.message : String(error),
+      support
+    };
+  }
 }
 
 async function gzipUtf8TextWithTimeout(text, timeoutMs = 1500) {
-  try {
-    return await Promise.race([
-      gzipUtf8Text(text),
-      delay(timeoutMs).then(() => null)
-    ]);
-  } catch {
-    return null;
-  }
+  const support = {
+    hasBlob: typeof Blob === "function",
+    hasCompressionStream: typeof CompressionStream === "function",
+    hasResponse: typeof Response === "function"
+  };
+
+  return Promise.race([
+    gzipUtf8Text(text),
+    delay(timeoutMs).then(() => ({
+      compressedBody: null,
+      status: "timeout",
+      support
+    }))
+  ]);
 }
 
 function shouldRetrySpatialStatisticsWithoutCompression(response, error) {
@@ -1437,7 +1466,8 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   const plainBytes = typeof TextEncoder === "function"
     ? new TextEncoder().encode(requestBodyText).length
     : requestBodyText.length;
-  const compressedBody = await gzipUtf8TextWithTimeout(requestBodyText);
+  const compressionAttempt = await gzipUtf8TextWithTimeout(requestBodyText, 4000);
+  const compressedBody = compressionAttempt?.compressedBody || null;
   let response;
   let responseBody;
   let resolvedTransport = "plain-json";
@@ -1458,7 +1488,9 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
       logSpatialStatisticsTransport("attempting gzip request", {
         groupedPoints: pointGroups.length,
         plainBytes,
-        gzipBytes: compressedBody.byteLength
+        gzipBytes: compressedBody.byteLength,
+        compressionStatus: compressionAttempt.status,
+        compressionSupport: compressionAttempt.support
       });
       ({ response, responseBody } = await sendSpatialStatisticsRequest(compressedBody, {
         Accept: "application/json",
@@ -1470,6 +1502,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
         groupedPoints: pointGroups.length,
         plainBytes,
         gzipBytes: compressedBody.byteLength,
+        compressionSupport: compressionAttempt.support,
         status: response.status
       });
     } catch (error) {
@@ -1477,6 +1510,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
         groupedPoints: pointGroups.length,
         plainBytes,
         gzipBytes: compressedBody.byteLength,
+        compressionSupport: compressionAttempt.support,
         error: error instanceof Error ? error.message : String(error)
       });
       if (!shouldRetrySpatialStatisticsWithoutCompression(null, error)) {
@@ -1484,9 +1518,12 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
       }
     }
   } else {
-    logSpatialStatisticsTransport("gzip unavailable or timed out; using plain json", {
+    logSpatialStatisticsTransport("gzip unavailable; using plain json", {
       groupedPoints: pointGroups.length,
-      plainBytes
+      plainBytes,
+      compressionStatus: compressionAttempt?.status || "unknown",
+      compressionError: compressionAttempt?.error || "",
+      compressionSupport: compressionAttempt?.support || {}
     });
   }
 
