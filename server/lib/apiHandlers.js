@@ -533,6 +533,8 @@ export async function handleSpatialStatisticsRequest(request, response) {
     const bodyBuffer = await readRequestBodyBuffer(request);
     const bodyText = decodeRequestBody(bodyBuffer, request);
     const points = parseSpatialStatisticsBody(bodyText, request);
+    const contentEncoding = String(request.headers["content-encoding"] || "").toLowerCase() || "(none)";
+    const contentType = String(request.headers["content-type"] || "").toLowerCase() || "(none)";
     const requestId = createSpatialStatisticsRequestId();
     const job = {
       requestId,
@@ -546,7 +548,11 @@ export async function handleSpatialStatisticsRequest(request, response) {
 
     spatialStatisticsJobs.set(requestId, job);
     trimSpatialStatisticsJobs();
-    logApiEvent("spatial-statistics", "request accepted", `requestId=${requestId} groupedPoints=${points.length}`);
+    logApiEvent(
+      "spatial-statistics",
+      "request accepted",
+      `requestId=${requestId} groupedPoints=${points.length} bodyBytes=${bodyBuffer.length} decodedChars=${bodyText.length} contentEncoding=${contentEncoding} contentType=${contentType}`
+    );
 
     const receivedLine = `request received groupedPoints=${points.length}`;
     appendSpatialStatisticsJobLine(job, receivedLine);

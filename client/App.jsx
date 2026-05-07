@@ -1394,6 +1394,17 @@ function shouldRetrySpatialStatisticsWithoutCompression(response, error) {
   return /html instead of json|proxy or security layer/i.test(String(error?.message || ""));
 }
 
+function logSpatialStatisticsTransport(message, details = {}) {
+  if (typeof console === "undefined" || typeof console.info !== "function") {
+    return;
+  }
+
+  console.info("[BerkeleyMapper] spatial-statistics transport", {
+    message,
+    ...details
+  });
+}
+
 async function readJsonResponse(response, serviceLabel) {
   const contentType = response.headers.get("content-type") || "";
 
@@ -1423,9 +1434,13 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   const requestBodyText = JSON.stringify({
     points: buildSpatialStatisticsPoints(pointGroups)
   });
+  const plainBytes = typeof TextEncoder === "function"
+    ? new TextEncoder().encode(requestBodyText).length
+    : requestBodyText.length;
   const compressedBody = await gzipUtf8TextWithTimeout(requestBodyText);
   let response;
   let responseBody;
+  let resolvedTransport = "plain-json";
 
   const sendSpatialStatisticsRequest = async (body, headers) => {
     const nextResponse = await fetch("/api/spatial-statistics", {
@@ -1440,29 +1455,71 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
 
   if (compressedBody) {
     try {
+      logSpatialStatisticsTransport("attempting gzip request", {
+        groupedPoints: pointGroups.length,
+        plainBytes,
+        gzipBytes: compressedBody.byteLength
+      });
       ({ response, responseBody } = await sendSpatialStatisticsRequest(compressedBody, {
         Accept: "application/json",
         "Content-Encoding": "gzip",
         "Content-Type": "application/json"
       }));
+      resolvedTransport = "gzip";
+      logSpatialStatisticsTransport("gzip request accepted by server", {
+        groupedPoints: pointGroups.length,
+        plainBytes,
+        gzipBytes: compressedBody.byteLength,
+        status: response.status
+      });
     } catch (error) {
+      logSpatialStatisticsTransport("gzip request failed before completion; retrying plain json", {
+        groupedPoints: pointGroups.length,
+        plainBytes,
+        gzipBytes: compressedBody.byteLength,
+        error: error instanceof Error ? error.message : String(error)
+      });
       if (!shouldRetrySpatialStatisticsWithoutCompression(null, error)) {
         throw error;
       }
     }
+  } else {
+    logSpatialStatisticsTransport("gzip unavailable or timed out; using plain json", {
+      groupedPoints: pointGroups.length,
+      plainBytes
+    });
   }
 
   if (!response) {
+    logSpatialStatisticsTransport("sending plain json request", {
+      groupedPoints: pointGroups.length,
+      plainBytes
+    });
     ({ response, responseBody } = await sendSpatialStatisticsRequest(requestBodyText, {
       Accept: "application/json",
       "Content-Type": "application/json; charset=utf-8"
     }));
+    resolvedTransport = "plain-json";
   } else if (!response.ok && shouldRetrySpatialStatisticsWithoutCompression(response)) {
+    logSpatialStatisticsTransport("gzip request returned retryable response; sending plain json fallback", {
+      groupedPoints: pointGroups.length,
+      plainBytes,
+      status: response.status
+    });
     ({ response, responseBody } = await sendSpatialStatisticsRequest(requestBodyText, {
       Accept: "application/json",
       "Content-Type": "application/json; charset=utf-8"
     }));
+    resolvedTransport = "plain-json";
   }
+
+  logSpatialStatisticsTransport("active request path resolved", {
+    groupedPoints: pointGroups.length,
+    plainBytes,
+    transport: resolvedTransport,
+    usedGzip: resolvedTransport === "gzip",
+    status: response.status
+  });
 
   if (!response.ok) {
     throw new Error(responseBody?.error || `Unable to compute spatial intersections: ${response.status} ${response.statusText}`);
