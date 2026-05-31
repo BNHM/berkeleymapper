@@ -176,6 +176,7 @@ Body:
 
 ```json
 {
+  "maxLevel": 2,
   "points": [
     { "latitude": 37.85, "longitude": -122.27, "count": 1 },
     { "latitude": 37.86, "longitude": -122.28, "count": 2 }
@@ -186,6 +187,7 @@ Body:
 Notes:
 
 - `count` means how many records are represented by that coordinate pair
+- `maxLevel` is optional; use `0` for countries only, `1` for countries and states/provinces, or `2` for countries, states/provinces, and counties/districts
 - BerkeleyMapper’s own browser client sends grouped points, not full record rows
 - The server also has compatibility support for plain-text CSV request bodies and gzip-compressed request bodies, but plain JSON is the simplest and safest direct-call format
 - On `berkeleymapper.berkeley.edu`, plain JSON is the recommended format because Apache/ModSecurity may reject compressed request bodies
@@ -194,7 +196,7 @@ Notes:
 
 ```bash
 BASE_URL="https://berkeleymapper.berkeley.edu"
-POST_BODY='{"points":[{"latitude":37.85,"longitude":-122.27,"count":1},{"latitude":37.86,"longitude":-122.28,"count":2}]}'
+POST_BODY='{"maxLevel":2,"points":[{"latitude":37.85,"longitude":-122.27,"count":1},{"latitude":37.86,"longitude":-122.28,"count":2}]}'
 
 submit_response="$(curl -s "$BASE_URL/api/spatial-statistics" \
   -H 'Accept: application/json' \

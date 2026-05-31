@@ -5,6 +5,7 @@ import { readCachedGadmGeoJson } from "./gadmBoundaries.js";
 const normalizedBoundaryCache = new Map();
 const spatialStatisticsCache = new Map();
 const pendingSpatialStatisticsBuilds = new Map();
+const NORMALIZED_BOUNDARY_CACHE_LIMIT = 48;
 const SPATIAL_STATISTICS_CACHE_LIMIT = 24;
 const COUNTRY_SIMPLIFY_TOLERANCE = 0.1;
 const GRID_CELL_SIZE_BY_LEVEL = {
@@ -25,6 +26,16 @@ function logSpatialStatistics(logContext, message) {
   if (typeof logContext?.onStatus === "function") {
     logContext.onStatus(message);
   }
+}
+
+function normalizeSpatialStatisticsMaxLevel(value) {
+  const level = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(level)) {
+    return 2;
+  }
+
+  return Math.min(2, Math.max(0, level));
 }
 
 function yieldToEventLoop() {
@@ -168,8 +179,9 @@ function normalizePointGroups(points = []) {
     .sort((left, right) => left.latitude - right.latitude || left.longitude - right.longitude || left.key.localeCompare(right.key));
 }
 
-function buildSpatialStatisticsCacheKey(pointGroups) {
+function buildSpatialStatisticsCacheKey(pointGroups, maxLevel) {
   const hash = createHash("sha1");
+  hash.update(`maxLevel=${maxLevel};`);
 
   pointGroups.forEach((group) => {
     if (group.recordIds.length) {
@@ -235,7 +247,10 @@ async function getNormalizedBoundarySet(options) {
   const cacheKey = buildBoundaryCacheKey(options);
 
   if (normalizedBoundaryCache.has(cacheKey)) {
-    return normalizedBoundaryCache.get(cacheKey);
+    const boundarySet = normalizedBoundaryCache.get(cacheKey);
+    normalizedBoundaryCache.delete(cacheKey);
+    normalizedBoundaryCache.set(cacheKey, boundarySet);
+    return boundarySet;
   }
 
   const body = await readCachedGadmGeoJson(options);
@@ -265,7 +280,7 @@ async function getNormalizedBoundarySet(options) {
     index: buildBoundaryIndex(normalizedFeatures, options?.level)
   };
 
-  normalizedBoundaryCache.set(cacheKey, boundarySet);
+  setBoundedCacheValue(normalizedBoundaryCache, cacheKey, boundarySet, NORMALIZED_BOUNDARY_CACHE_LIMIT);
   return boundarySet;
 }
 
@@ -376,10 +391,11 @@ function aggregateMatches(matches, labelBuilder) {
 
 export async function buildSpatialStatistics(points, logContext = {}) {
   const overallStartTime = nowMs();
+  const maxLevel = normalizeSpatialStatisticsMaxLevel(logContext.maxLevel);
   const pointGroups = normalizePointGroups(points);
   logSpatialStatistics(
     logContext,
-    `start rawPoints=${Array.isArray(points) ? points.length : 0} groupedPoints=${pointGroups.length}`
+    `start rawPoints=${Array.isArray(points) ? points.length : 0} groupedPoints=${pointGroups.length} maxLevel=${maxLevel}`
   );
 
   if (!pointGroups.length) {
@@ -391,7 +407,7 @@ export async function buildSpatialStatistics(points, logContext = {}) {
     };
   }
 
-  const cacheKey = buildSpatialStatisticsCacheKey(pointGroups);
+  const cacheKey = buildSpatialStatisticsCacheKey(pointGroups, maxLevel);
   if (spatialStatisticsCache.has(cacheKey)) {
     logSpatialStatistics(logContext, `cache hit key=${cacheKey.slice(0, 10)} in ${formatDurationMs(overallStartTime)}`);
     return spatialStatisticsCache.get(cacheKey);
@@ -412,6 +428,10 @@ export async function buildSpatialStatistics(points, logContext = {}) {
     const countryMatches = countryMatchesResult.matches;
     const countryNames = [...new Set(countryMatches.map((match) => match.properties?.NAME_0).filter(Boolean))]
       .sort((left, right) => left.localeCompare(right));
+    const countryRows = aggregateMatches(
+      countryMatches,
+      (properties) => properties.COUNTRY || properties.NAME_0 || ""
+    );
     logSpatialStatistics(
       logContext,
       `country pass matched=${countryMatches.length}/${pointGroups.length} countries=${countryNames.length} simplify=${COUNTRY_SIMPLIFY_TOLERANCE} in ${formatDurationMs(countryPhaseStartTime)}`
@@ -426,6 +446,21 @@ export async function buildSpatialStatistics(points, logContext = {}) {
       };
     }
 
+    if (maxLevel === 0) {
+      const result = {
+        country: countryRows,
+        state: [],
+        county: []
+      };
+
+      setBoundedCacheValue(spatialStatisticsCache, cacheKey, result, SPATIAL_STATISTICS_CACHE_LIMIT);
+      logSpatialStatistics(
+        logContext,
+        `complete countryRows=${countryRows.length} stateRows=0 countyRows=0 maxLevel=${maxLevel} in ${formatDurationMs(overallStartTime)}`
+      );
+      return result;
+    }
+
     const pointGroupsByCountry = groupPointGroupsByCountry(countryMatches);
     const countyMatches = [];
     const stateMatches = [];
@@ -434,6 +469,23 @@ export async function buildSpatialStatistics(points, logContext = {}) {
       const countryStartTime = nowMs();
       const countryPointGroups = pointGroupsByCountry.get(countryName) || [];
       if (!countryPointGroups.length) {
+        continue;
+      }
+
+      if (maxLevel === 1) {
+        const statePhaseStartTime = nowMs();
+        const stateBoundarySet = await getNormalizedBoundarySet({
+          level: 1,
+          countryName
+        });
+        const stateMatchesResult = await matchPointGroups(countryPointGroups, stateBoundarySet, { yieldEvery: 120 });
+        stateMatches.push(...stateMatchesResult.matches);
+        logSpatialStatistics(
+          logContext,
+          `country=${countryName} state matched=${stateMatchesResult.matches.length}/${countryPointGroups.length} unmatched=${stateMatchesResult.unmatchedGroups.length} in ${formatDurationMs(statePhaseStartTime)}`
+        );
+        logSpatialStatistics(logContext, `country=${countryName} total refinement ${formatDurationMs(countryStartTime)}`);
+        await yieldToEventLoop();
         continue;
       }
 
@@ -467,10 +519,6 @@ export async function buildSpatialStatistics(points, logContext = {}) {
       await yieldToEventLoop();
     }
 
-    const countryRows = aggregateMatches(
-      countryMatches,
-      (properties) => properties.COUNTRY || properties.NAME_0 || ""
-    );
     const stateRows = aggregateMatches(
       [...countyMatches, ...stateMatches],
       (properties) => {
@@ -498,7 +546,7 @@ export async function buildSpatialStatistics(points, logContext = {}) {
     setBoundedCacheValue(spatialStatisticsCache, cacheKey, result, SPATIAL_STATISTICS_CACHE_LIMIT);
     logSpatialStatistics(
       logContext,
-      `complete countryRows=${countryRows.length} stateRows=${stateRows.length} countyRows=${countyRows.length} in ${formatDurationMs(overallStartTime)}`
+      `complete countryRows=${countryRows.length} stateRows=${stateRows.length} countyRows=${countyRows.length} maxLevel=${maxLevel} in ${formatDurationMs(overallStartTime)}`
     );
     return result;
   })()

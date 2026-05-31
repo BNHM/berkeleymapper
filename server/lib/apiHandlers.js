@@ -57,6 +57,7 @@ function getSpatialStatisticsJobPayload(job) {
   return {
     requestId: job.requestId,
     status: job.status,
+    maxLevel: job.maxLevel ?? 2,
     lines: [...job.lines],
     error: job.error || "",
     result: job.status === "complete" ? job.result : undefined
@@ -129,11 +130,27 @@ function parseSpatialStatisticsCsvBody(bodyText) {
 
 function parseSpatialStatisticsJsonBody(bodyText) {
   if (!bodyText) {
-    return [];
+    return {
+      points: [],
+      maxLevel: 2
+    };
   }
 
   const body = JSON.parse(bodyText);
-  return Array.isArray(body?.points) ? body.points : [];
+  return {
+    points: Array.isArray(body?.points) ? body.points : [],
+    maxLevel: normalizeSpatialStatisticsMaxLevel(body?.maxLevel ?? body?.level)
+  };
+}
+
+function normalizeSpatialStatisticsMaxLevel(value) {
+  const level = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(level)) {
+    return 2;
+  }
+
+  return Math.min(2, Math.max(0, level));
 }
 
 function parseSpatialStatisticsBody(bodyText, request) {
@@ -143,7 +160,10 @@ function parseSpatialStatisticsBody(bodyText, request) {
     return parseSpatialStatisticsJsonBody(bodyText);
   }
 
-  return parseSpatialStatisticsCsvBody(bodyText);
+  return {
+    points: parseSpatialStatisticsCsvBody(bodyText),
+    maxLevel: 2
+  };
 }
 
 function getRequestOrigin(request, fallbackHost = "localhost") {
@@ -532,13 +552,16 @@ export async function handleSpatialStatisticsRequest(request, response) {
   try {
     const bodyBuffer = await readRequestBodyBuffer(request);
     const bodyText = decodeRequestBody(bodyBuffer, request);
-    const points = parseSpatialStatisticsBody(bodyText, request);
+    const spatialStatisticsRequest = parseSpatialStatisticsBody(bodyText, request);
+    const points = spatialStatisticsRequest.points;
+    const maxLevel = spatialStatisticsRequest.maxLevel;
     const contentEncoding = String(request.headers["content-encoding"] || "").toLowerCase() || "(none)";
     const contentType = String(request.headers["content-type"] || "").toLowerCase() || "(none)";
     const requestId = createSpatialStatisticsRequestId();
     const job = {
       requestId,
       status: "pending",
+      maxLevel,
       lines: [],
       error: "",
       result: null,
@@ -551,13 +574,14 @@ export async function handleSpatialStatisticsRequest(request, response) {
     logApiEvent(
       "spatial-statistics",
       "request accepted",
-      `requestId=${requestId} groupedPoints=${points.length} bodyBytes=${bodyBuffer.length} decodedChars=${bodyText.length} contentEncoding=${contentEncoding} contentType=${contentType}`
+      `requestId=${requestId} groupedPoints=${points.length} maxLevel=${maxLevel} bodyBytes=${bodyBuffer.length} decodedChars=${bodyText.length} contentEncoding=${contentEncoding} contentType=${contentType}`
     );
 
-    const receivedLine = `request received groupedPoints=${points.length}`;
+    const receivedLine = `request received groupedPoints=${points.length} maxLevel=${maxLevel}`;
     appendSpatialStatisticsJobLine(job, receivedLine);
 
     buildSpatialStatistics(points, {
+      maxLevel,
       requestId,
       onStatus(message) {
         appendSpatialStatisticsJobLine(job, message);

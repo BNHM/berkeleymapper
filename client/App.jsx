@@ -109,6 +109,18 @@ const emptySpatialStatisticsResult = Object.freeze({
   state: [],
   county: []
 });
+
+function getSpatialStatisticsMaxLevel(mode) {
+  if (mode === "country") {
+    return 0;
+  }
+
+  if (mode === "state") {
+    return 1;
+  }
+
+  return 2;
+}
 const usStateAliasMap = Object.freeze({
   AL: "ALABAMA",
   AK: "ALASKA",
@@ -1345,6 +1357,26 @@ function delay(milliseconds) {
   });
 }
 
+async function fetchWithTimeout(resource, options = {}, timeoutMs = 15000) {
+  if (typeof AbortController !== "function") {
+    return fetch(resource, options);
+  }
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(resource, {
+      ...options,
+      signal: controller.signal
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 function roundCoordinateForSpatialStatistics(value) {
   const numericValue = Number(value);
   if (!Number.isFinite(numericValue)) {
@@ -1423,6 +1455,11 @@ function shouldRetrySpatialStatisticsWithoutCompression(response, error) {
   return /html instead of json|proxy or security layer/i.test(String(error?.message || ""));
 }
 
+function shouldRetrySpatialStatisticsPoll(error) {
+  const message = String(error?.message || error || "");
+  return /abort|timeout|timed out|failed to fetch|network|html instead of json|proxy or security layer|502|503|504/i.test(message);
+}
+
 function logSpatialStatisticsTransport(message, details = {}) {
   if (typeof console === "undefined" || typeof console.info !== "function") {
     return;
@@ -1459,9 +1496,10 @@ async function readJsonResponse(response, serviceLabel) {
   throw new Error(`${serviceLabel} returned an unexpected response.`);
 }
 
-async function fetchSpatialStatistics(pointGroups, onProgress) {
+async function fetchSpatialStatistics(pointGroups, maxLevel, onProgress) {
   const requestBodyText = JSON.stringify({
-    points: buildSpatialStatisticsPoints(pointGroups)
+    points: buildSpatialStatisticsPoints(pointGroups),
+    maxLevel
   });
   const plainBytes = typeof TextEncoder === "function"
     ? new TextEncoder().encode(requestBodyText).length
@@ -1471,6 +1509,8 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   let response;
   let responseBody;
   let resolvedTransport = "plain-json";
+  let lastStatusLines = [];
+  let pollFailureCount = 0;
 
   const sendSpatialStatisticsRequest = async (body, headers) => {
     const nextResponse = await fetch("/api/spatial-statistics", {
@@ -1487,6 +1527,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
     try {
       logSpatialStatisticsTransport("attempting gzip request", {
         groupedPoints: pointGroups.length,
+        maxLevel,
         plainBytes,
         gzipBytes: compressedBody.byteLength,
         compressionStatus: compressionAttempt.status,
@@ -1500,6 +1541,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
       resolvedTransport = "gzip";
       logSpatialStatisticsTransport("gzip request accepted by server", {
         groupedPoints: pointGroups.length,
+        maxLevel,
         plainBytes,
         gzipBytes: compressedBody.byteLength,
         compressionSupport: compressionAttempt.support,
@@ -1508,6 +1550,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
     } catch (error) {
       logSpatialStatisticsTransport("gzip request failed before completion; retrying plain json", {
         groupedPoints: pointGroups.length,
+        maxLevel,
         plainBytes,
         gzipBytes: compressedBody.byteLength,
         compressionSupport: compressionAttempt.support,
@@ -1520,6 +1563,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   } else {
     logSpatialStatisticsTransport("gzip unavailable; using plain json", {
       groupedPoints: pointGroups.length,
+      maxLevel,
       plainBytes,
       compressionStatus: compressionAttempt?.status || "unknown",
       compressionError: compressionAttempt?.error || "",
@@ -1530,6 +1574,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   if (!response) {
     logSpatialStatisticsTransport("sending plain json request", {
       groupedPoints: pointGroups.length,
+      maxLevel,
       plainBytes
     });
     ({ response, responseBody } = await sendSpatialStatisticsRequest(requestBodyText, {
@@ -1540,6 +1585,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   } else if (!response.ok && shouldRetrySpatialStatisticsWithoutCompression(response)) {
     logSpatialStatisticsTransport("gzip request returned retryable response; sending plain json fallback", {
       groupedPoints: pointGroups.length,
+      maxLevel,
       plainBytes,
       status: response.status
     });
@@ -1552,6 +1598,7 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
 
   logSpatialStatisticsTransport("active request path resolved", {
     groupedPoints: pointGroups.length,
+    maxLevel,
     plainBytes,
     transport: resolvedTransport,
     usedGzip: resolvedTransport === "gzip",
@@ -1568,32 +1615,65 @@ async function fetchSpatialStatistics(pointGroups, onProgress) {
   }
 
   if (typeof onProgress === "function") {
+    lastStatusLines = Array.isArray(responseBody?.lines) ? responseBody.lines : [];
     onProgress({
       requestId,
       status: responseBody?.status || "pending",
-      lines: Array.isArray(responseBody?.lines) ? responseBody.lines : []
+      lines: lastStatusLines
     });
   }
 
   for (;;) {
-    await delay(350);
+    await delay(700);
 
-    const statusResponse = await fetch(`/api/spatial-statistics?id=${encodeURIComponent(requestId)}`, {
-      headers: {
-        Accept: "application/json"
+    let statusResponse;
+    let statusBody;
+
+    try {
+      statusResponse = await fetchWithTimeout(`/api/spatial-statistics?id=${encodeURIComponent(requestId)}`, {
+        headers: {
+          Accept: "application/json"
+        }
+      }, 15000);
+      statusBody = await readJsonResponse(statusResponse, "Spatial intersection status service");
+
+      if (!statusResponse.ok) {
+        throw new Error(statusBody?.error || `Unable to read spatial intersection status: ${statusResponse.status} ${statusResponse.statusText}`);
       }
-    });
-    const statusBody = await readJsonResponse(statusResponse, "Spatial intersection status service");
 
-    if (!statusResponse.ok) {
-      throw new Error(statusBody?.error || `Unable to read spatial intersection status: ${statusResponse.status} ${statusResponse.statusText}`);
+      pollFailureCount = 0;
+    } catch (error) {
+      pollFailureCount += 1;
+
+      if (!shouldRetrySpatialStatisticsPoll(error) || pollFailureCount > 12) {
+        throw error;
+      }
+
+      const retryLine = `status check delayed; retrying (${pollFailureCount}/12)`;
+      if (typeof onProgress === "function") {
+        onProgress({
+          requestId,
+          status: "pending",
+          lines: [...lastStatusLines, retryLine]
+        });
+      }
+      logSpatialStatisticsTransport("status poll failed; retrying", {
+        requestId,
+        groupedPoints: pointGroups.length,
+        maxLevel,
+        failures: pollFailureCount,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      await delay(Math.min(5000, 1000 * pollFailureCount));
+      continue;
     }
 
     if (typeof onProgress === "function") {
+      lastStatusLines = Array.isArray(statusBody?.lines) ? statusBody.lines : [];
       onProgress({
         requestId,
         status: statusBody?.status || "pending",
-        lines: Array.isArray(statusBody?.lines) ? statusBody.lines : []
+        lines: lastStatusLines
       });
     }
 
@@ -3654,7 +3734,14 @@ function App() {
     : (Array.isArray(statisticsSpatialResults?.[statisticsSpatialMode]) ? statisticsSpatialResults[statisticsSpatialMode] : []);
   const displayedStatisticsRowCount = displayedStatisticsRows.length;
   const hasStatisticsOptions = Boolean(statisticsColumnCount || markers.length);
-  const isSpatialStatisticsReady = !markerResultCount || statisticsSpatialResultKey === markerResultKey;
+  const statisticsSpatialMaxLevel = getSpatialStatisticsMaxLevel(statisticsSpatialMode);
+  const statisticsSpatialRequestKey = statisticsSpatialMode === "none"
+    ? ""
+    : `${markerResultKey}::maxLevel=${statisticsSpatialMaxLevel}`;
+  const isSpatialStatisticsReady =
+    statisticsSpatialMode === "none" ||
+    !markerResultCount ||
+    statisticsSpatialResultKey === statisticsSpatialRequestKey;
   const shouldShowSpatialLoading =
     statisticsSpatialMode !== "none" &&
     markerResultCount > 0 &&
@@ -3688,7 +3775,11 @@ function App() {
     ? "This dataset was requested by passing tabfile/configfile URLs into BerkeleyMapper. The application assumes those URLs were supplied with permission to retrieve and display the data."
     : "When a tabfile and configfile are supplied to BerkeleyMapper, the application assumes it has permission to retrieve and display that material directly in the browser.";
 
-  const ensureSpatialStatisticsLoaded = useCallback(async () => {
+  const ensureSpatialStatisticsLoaded = useCallback(async (requestedMode = statisticsSpatialMode) => {
+    if (requestedMode === "none") {
+      return;
+    }
+
     if (!markerResultCount) {
       setStatisticsSpatialResults(emptySpatialStatisticsResult);
       setStatisticsSpatialResultKey("");
@@ -3699,32 +3790,35 @@ function App() {
       return;
     }
 
-    if (statisticsSpatialResultKey === markerResultKey || statisticsSpatialRequestKeyRef.current === markerResultKey) {
+    const requestedMaxLevel = getSpatialStatisticsMaxLevel(requestedMode);
+    const requestKey = `${markerResultKey}::maxLevel=${requestedMaxLevel}`;
+
+    if (statisticsSpatialResultKey === requestKey || statisticsSpatialRequestKeyRef.current === requestKey) {
       return;
     }
 
-    statisticsSpatialRequestKeyRef.current = markerResultKey;
+    statisticsSpatialRequestKeyRef.current = requestKey;
     setStatisticsSpatialBusy(true);
     setStatisticsSpatialError("");
     setStatisticsSpatialStatusLines([]);
 
     try {
-      const nextResults = await fetchSpatialStatistics(statisticsSpatialPointGroups, ({ lines }) => {
-        if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+      const nextResults = await fetchSpatialStatistics(statisticsSpatialPointGroups, requestedMaxLevel, ({ lines }) => {
+        if (statisticsSpatialRequestKeyRef.current !== requestKey) {
           return;
         }
 
         setStatisticsSpatialStatusLines(Array.isArray(lines) ? lines : []);
       });
 
-      if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+      if (statisticsSpatialRequestKeyRef.current !== requestKey) {
         return;
       }
 
       setStatisticsSpatialResults(nextResults);
-      setStatisticsSpatialResultKey(markerResultKey);
+      setStatisticsSpatialResultKey(requestKey);
     } catch (error) {
-      if (statisticsSpatialRequestKeyRef.current !== markerResultKey) {
+      if (statisticsSpatialRequestKeyRef.current !== requestKey) {
         return;
       }
 
@@ -3732,18 +3826,20 @@ function App() {
       setStatisticsSpatialResultKey("");
       setStatisticsSpatialError(error instanceof Error ? error.message : "Unable to compute spatial intersections.");
     } finally {
-      if (statisticsSpatialRequestKeyRef.current === markerResultKey) {
+      if (statisticsSpatialRequestKeyRef.current === requestKey) {
         statisticsSpatialRequestKeyRef.current = "";
         setStatisticsSpatialBusy(false);
       }
     }
-  }, [markerResultCount, markerResultKey, statisticsSpatialPointGroups, statisticsSpatialResultKey]);
+  }, [markerResultCount, markerResultKey, statisticsSpatialMode, statisticsSpatialPointGroups, statisticsSpatialResultKey]);
 
   const openStatisticsPanel = useCallback(() => {
     setWindowView("statistics", "open");
     setActiveWindow("statistics");
-    ensureSpatialStatisticsLoaded();
-  }, [ensureSpatialStatisticsLoaded, setWindowView]);
+    if (statisticsSpatialMode !== "none") {
+      ensureSpatialStatisticsLoaded(statisticsSpatialMode);
+    }
+  }, [ensureSpatialStatisticsLoaded, setWindowView, statisticsSpatialMode]);
 
   const handleStatisticsColumnChange = useCallback((event) => {
     setStatisticsColumnName(event.target.value);
@@ -3755,7 +3851,7 @@ function App() {
     setStatisticsSpatialMode(nextMode);
 
     if (nextMode !== "none") {
-      ensureSpatialStatisticsLoaded();
+      ensureSpatialStatisticsLoaded(nextMode);
     }
   }, [ensureSpatialStatisticsLoaded]);
 
