@@ -1306,6 +1306,18 @@ tbody tr.is-selected {
   color: #555;
 }
 
+.macrostrat-unit {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e4e4e4;
+}
+
+.macrostrat-popup .popup-record-heading + .macrostrat-unit {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .popup-kml-description {
   margin-top: 8px;
   max-width: 100%;

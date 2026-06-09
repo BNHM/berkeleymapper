@@ -20,6 +20,8 @@ L.Icon.Default.mergeOptions({
 
 const defaultCenter = [37.85, -122.27];
 const defaultZoom = 4;
+const macrostratBaseLayerName = "Geology (Macrostrat)";
+const macrostratIdentifyUrl = "https://macrostrat.org/api/v2/geologic_units/map";
 const baseMapDefinitions = Object.freeze([
   {
     name: "Street Map",
@@ -50,6 +52,13 @@ const baseMapDefinitions = Object.freeze([
     name: "Imagery",
     attribution: "Tiles &copy; Esri",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+  },
+  {
+    name: macrostratBaseLayerName,
+    attribution: '<a href="https://macrostrat.org">Macrostrat</a>',
+    maxNativeZoom: 18,
+    maxZoom: 19,
+    url: "https://tiles.macrostrat.org/carto/{z}/{x}/{y}.png"
   }
 ]);
 const arctosDemo = {
@@ -1929,6 +1938,228 @@ function downloadTextFile(filename, content, mimeType) {
 
 function serializeGeoJson(feature) {
   return `${JSON.stringify(feature, null, 2)}\n`;
+}
+
+function formatMacrostratAgeValue(value) {
+  const number = Number(value);
+
+  if (!Number.isFinite(number)) {
+    return "";
+  }
+
+  return number.toLocaleString(undefined, {
+    maximumFractionDigits: 4
+  });
+}
+
+function getMacrostratAgeLabel(unit) {
+  const intervalName = unit.best_int_name || unit.t_int_name || unit.b_int_name || "";
+  const topAge = formatMacrostratAgeValue(unit.t_age ?? unit.t_int_age);
+  const bottomAge = formatMacrostratAgeValue(unit.b_age ?? unit.b_int_age);
+  const ageRange = topAge && bottomAge
+    ? `${topAge}-${bottomAge} Ma`
+    : [topAge, bottomAge].filter(Boolean).map((age) => `${age} Ma`).join("-");
+
+  return [intervalName, ageRange].filter(Boolean).join(" ");
+}
+
+function buildMacrostratPopupHtml(units, refs) {
+  if (!units.length) {
+    return '<div class="popup-body">No Macrostrat unit found here.</div>';
+  }
+
+  return `
+    <div class="popup-body macrostrat-popup">
+      <div class="popup-record-heading">Macrostrat Geology</div>
+      ${units.slice(0, 4).map((unit) => {
+        const source = refs?.[String(unit.source_id)] || `Source ${unit.source_id || "unknown"}`;
+        const legendUrl = unit.source_id
+          ? `https://macrostrat.org/api/v2/geologic_units/map/legend?source_id=${encodeURIComponent(String(unit.source_id))}`
+          : "";
+        const ageLabel = getMacrostratAgeLabel(unit) || "Unknown age";
+        const unitName = unit.name || unit.strat_name || "Unnamed unit";
+
+        return `
+          <div class="macrostrat-unit">
+            <div><strong>Unit</strong>: ${escapeHtml(String(unitName))}</div>
+            <div><strong>Age</strong>: ${escapeHtml(String(ageLabel))}</div>
+            ${unit.lith ? `<div><strong>Lithology</strong>: ${escapeHtml(String(unit.lith))}</div>` : ""}
+            ${unit.strat_name ? `<div><strong>Stratigraphy</strong>: ${escapeHtml(String(unit.strat_name))}</div>` : ""}
+            <div>
+              <strong>Source</strong>: ${escapeHtml(String(source))}
+              ${legendUrl ? `<br><a href="${escapeHtml(legendUrl)}" target="_blank" rel="noreferrer">View Macrostrat legend</a>` : ""}
+            </div>
+          </div>
+        `;
+      }).join("")}
+      ${units.length > 4 ? `<div class="popup-record-note">${escapeHtml(String(units.length - 4))} additional unit${units.length - 4 === 1 ? "" : "s"} at this point.</div>` : ""}
+    </div>
+  `;
+}
+
+function MapMacrostratIdentify({ layerName, defaultEnabled }) {
+  const map = useMap();
+  const identifyEnabledRef = useRef(defaultEnabled);
+  const drawActiveRef = useRef(false);
+  const ignoreClicksUntilRef = useRef(0);
+  const requestControllerRef = useRef(null);
+  const requestIdRef = useRef(0);
+  const popupRef = useRef(null);
+
+  useEffect(() => {
+    identifyEnabledRef.current = defaultEnabled;
+  }, [defaultEnabled]);
+
+  useEffect(() => {
+    let drawCooldownTimer = 0;
+
+    function clearActiveRequest() {
+      requestControllerRef.current?.abort();
+      requestControllerRef.current = null;
+    }
+
+    function closeIdentifyPopup() {
+      if (popupRef.current) {
+        map.closePopup(popupRef.current);
+        popupRef.current = null;
+      }
+    }
+
+    function handleBaseLayerChange(event) {
+      identifyEnabledRef.current = event.name === layerName;
+
+      if (!identifyEnabledRef.current) {
+        clearActiveRequest();
+        closeIdentifyPopup();
+      }
+    }
+
+    function markDrawStart() {
+      if (drawCooldownTimer) {
+        window.clearTimeout(drawCooldownTimer);
+        drawCooldownTimer = 0;
+      }
+
+      drawActiveRef.current = true;
+      ignoreClicksUntilRef.current = Number.POSITIVE_INFINITY;
+      clearActiveRequest();
+      closeIdentifyPopup();
+    }
+
+    function markDrawStop() {
+      ignoreClicksUntilRef.current = Date.now() + 250;
+
+      if (drawCooldownTimer) {
+        window.clearTimeout(drawCooldownTimer);
+      }
+
+      drawCooldownTimer = window.setTimeout(() => {
+        drawActiveRef.current = false;
+        drawCooldownTimer = 0;
+      }, 250);
+    }
+
+    async function handleMapClick(event) {
+      if (
+        !identifyEnabledRef.current ||
+        drawActiveRef.current ||
+        Date.now() < ignoreClicksUntilRef.current ||
+        event.propagatedFrom
+      ) {
+        return;
+      }
+
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
+      clearActiveRequest();
+
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
+      const { lat, lng } = event.latlng;
+      const popup = L.popup({
+        maxWidth: 340
+      })
+        .setLatLng(event.latlng)
+        .setContent('<div class="popup-body">Loading Macrostrat geology...</div>')
+        .openOn(map);
+
+      popupRef.current = popup;
+
+      try {
+        const url = new URL(macrostratIdentifyUrl);
+        url.search = new URLSearchParams({
+          lat: lat.toFixed(6),
+          lng: lng.toFixed(6)
+        });
+
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Macrostrat returned ${response.status}`);
+        }
+
+        const json = await response.json();
+
+        if (requestIdRef.current !== requestId || controller.signal.aborted) {
+          return;
+        }
+
+        const units = Array.isArray(json?.success?.data) ? json.success.data : [];
+        const refs = json?.success?.refs || {};
+        popup.setContent(buildMacrostratPopupHtml(units, refs));
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          return;
+        }
+
+        console.error("Unable to load Macrostrat geology:", error);
+        if (requestIdRef.current === requestId) {
+          popup.setContent('<div class="popup-body">Could not load Macrostrat geology here.</div>');
+        }
+      } finally {
+        if (requestControllerRef.current === controller) {
+          requestControllerRef.current = null;
+        }
+      }
+    }
+
+    const drawStartEvents = [
+      L.Draw.Event.DRAWSTART,
+      L.Draw.Event.EDITSTART,
+      L.Draw.Event.DELETESTART
+    ].filter(Boolean);
+    const drawStopEvents = [
+      L.Draw.Event.DRAWSTOP,
+      L.Draw.Event.CREATED,
+      L.Draw.Event.EDITSTOP,
+      L.Draw.Event.DELETED,
+      L.Draw.Event.DELETESTOP
+    ].filter(Boolean);
+
+    map.on("baselayerchange", handleBaseLayerChange);
+    map.on("click", handleMapClick);
+    drawStartEvents.forEach((eventName) => map.on(eventName, markDrawStart));
+    drawStopEvents.forEach((eventName) => map.on(eventName, markDrawStop));
+
+    return () => {
+      map.off("baselayerchange", handleBaseLayerChange);
+      map.off("click", handleMapClick);
+      drawStartEvents.forEach((eventName) => map.off(eventName, markDrawStart));
+      drawStopEvents.forEach((eventName) => map.off(eventName, markDrawStop));
+      if (drawCooldownTimer) {
+        window.clearTimeout(drawCooldownTimer);
+      }
+      clearActiveRequest();
+      closeIdentifyPopup();
+    };
+  }, [map, layerName]);
+
+  return null;
 }
 
 function MapViewport({ selectedMarker, selectedRecordId, shouldPanToSelection }) {
@@ -3976,6 +4207,10 @@ function App() {
               </LayersControl.BaseLayer>
             ))}
           </LayersControl>
+          <MapMacrostratIdentify
+            layerName={macrostratBaseLayerName}
+            defaultEnabled={baseMapDefinitions.some(({ name, checked }) => checked && name === macrostratBaseLayerName)}
+          />
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
           {dataset?.layers?.length ? (
