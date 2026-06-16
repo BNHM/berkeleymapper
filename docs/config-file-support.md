@@ -65,6 +65,20 @@ Implementation:
 - parser: `server/lib/parseLegacyConfig.js`
 - UI listing: `client/App.jsx`
 
+### Settings
+- `settings.setting`
+- `maxerrorinmeters`
+
+Implementation:
+- parser: `server/lib/parseLegacyConfig.js`
+- dataset payload: `shared/buildDatasetPayload.js`
+- UI toggle and Leaflet radius overlay: `client/App.jsx`
+
+Behavior:
+- mapped records with a positive `ErrorRadiusInMeters`, `MaxErrorInMeters`, or Darwin Core coordinate uncertainty value enable the legend Display checkbox
+- `maxerrorinmeters show="0"` hides the checkbox unless overridden by the legacy URL flag
+- legacy URLs with `maxerrorinmeters=1` start the checkbox checked
+
 ## Not Yet Implemented
 
 ### Download-time disclaimer workflow

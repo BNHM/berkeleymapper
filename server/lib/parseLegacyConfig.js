@@ -165,6 +165,28 @@ function parseJoinConfig(joinNode) {
   };
 }
 
+function parseSettings(settingsNode) {
+  const settings = {};
+
+  toArray(settingsNode?.setting).forEach((setting) => {
+    const name = String(setting?.name || "").trim().toLowerCase();
+
+    if (!name) {
+      return;
+    }
+
+    settings[name] = {
+      name,
+      show: setting.show === undefined
+        ? true
+        : ["1", "true", "yes"].includes(String(setting.show).trim().toLowerCase()),
+      value: toText(setting)
+    };
+  });
+
+  return settings;
+}
+
 export function normalizeColumnName(datatype = "") {
   return datatypeMap[datatype.toLowerCase()] || datatype;
 }
@@ -176,7 +198,8 @@ export function parseLegacyConfig(xmlText) {
       concepts: [],
       colors: [],
       logos: [],
-      layers: []
+      layers: [],
+      settings: {}
     };
   }
 
@@ -232,6 +255,7 @@ export function parseLegacyConfig(xmlText) {
       legend: `${layer.legend || ""}` === "1",
       location: layer.cdata || layer["#text"] || ""
     })),
+    settings: parseSettings(root.settings),
     join: parseJoinConfig(root.join),
     recordLinkBack: parseRecordLinkBack(root.recordlinkback || root.linkback || metadata.linkback)
   };

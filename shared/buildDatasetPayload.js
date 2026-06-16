@@ -30,6 +30,7 @@ export function buildDatasetPayload({ requestId, tabfile, configfile, tabdata, c
     colorConfigs: config.colorConfigs || [],
     logos: config.logos,
     layers: config.layers,
+    settings: config.settings || {},
     join: config.join || null,
     ...parsed
   };

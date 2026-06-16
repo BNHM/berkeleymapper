@@ -105,6 +105,7 @@ const numberFormatter = new Intl.NumberFormat();
 const spatialStatisticsCoordinatePrecision = 4;
 const geocodeSearchUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&addressdetails=1&q=";
 const datasetLayerPaneName = "bm-dataset-layers";
+const recordErrorRadiusPaneName = "bm-record-error-radii";
 const recordPointPaneName = "bm-record-points";
 const emptyRecordIdsByCountyKey = new Map();
 const spatialStatisticsModes = Object.freeze([
@@ -250,12 +251,63 @@ function buildInitialForm() {
   };
 }
 
+function isLegacyQueryFlagEnabled(name) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const value = new URLSearchParams(window.location.search).get(name);
+  return value === "1" || value?.toLowerCase() === "true";
+}
+
 function detectPhoneViewport() {
   return typeof window !== "undefined" && window.matchMedia(phoneViewportMediaQuery).matches;
 }
 
 function stripHtml(value) {
   return value.replace(/<[^>]+>/g, "").trim();
+}
+
+function normalizeFieldKey(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function parsePositiveMeters(value) {
+  const meters = Number.parseFloat(stripHtml(String(value || "")).replaceAll(",", ""));
+
+  return Number.isFinite(meters) && meters > 0 ? meters : 0;
+}
+
+function getRecordErrorRadiusMeters(record) {
+  const values = record?.values || {};
+  const directValue =
+    values.ErrorRadiusInMeters ||
+    values.MaxErrorInMeters ||
+    values.coordinateUncertaintyInMeters ||
+    values.CoordinateUncertaintyInMeters;
+  const directMeters = parsePositiveMeters(directValue);
+
+  if (directMeters) {
+    return directMeters;
+  }
+
+  for (const [key, value] of Object.entries(values)) {
+    const normalizedKey = normalizeFieldKey(key);
+    if (
+      normalizedKey === "errorradiusinmeters" ||
+      normalizedKey === "maxerrorinmeters" ||
+      normalizedKey === "coordinateuncertaintyinmeters"
+    ) {
+      return parsePositiveMeters(value);
+    }
+  }
+
+  return 0;
+}
+
+function isDatasetSettingHidden(dataset, name) {
+  const setting = dataset?.settings?.[String(name || "").toLowerCase()];
+  return Boolean(setting && !setting.show);
 }
 
 function decodeHtmlEntities(value) {
@@ -1155,6 +1207,7 @@ function groupMarkersByCoordinate(markers) {
     if (existing) {
       existing.recordIds.push(marker.id);
       existing.records.push(marker.record);
+      existing.errorRadiusMeters = Math.max(existing.errorRadiusMeters || 0, marker.errorRadiusMeters || 0);
       return;
     }
 
@@ -1163,6 +1216,7 @@ function groupMarkersByCoordinate(markers) {
       latitude: marker.latitude,
       longitude: marker.longitude,
       color: marker.color,
+      errorRadiusMeters: marker.errorRadiusMeters || 0,
       recordIds: [marker.id],
       records: [marker.record]
     });
@@ -3121,6 +3175,82 @@ function MapPointLayer({
   return null;
 }
 
+function MapErrorRadiusLayer({ markers, visible }) {
+  const map = useMap();
+  const layerGroupRef = useRef(null);
+  const radiusGroups = useMemo(
+    () => groupMarkersByCoordinate(markers).filter((group) => group.errorRadiusMeters > 0),
+    [markers]
+  );
+
+  useEffect(() => {
+    ensureMapPane(map, recordErrorRadiusPaneName, 625);
+    const layerGroup = L.layerGroup();
+
+    layerGroupRef.current = layerGroup;
+    map.addLayer(layerGroup);
+
+    return () => {
+      map.removeLayer(layerGroup);
+      layerGroupRef.current = null;
+    };
+  }, [map]);
+
+  useEffect(() => {
+    const layerGroup = layerGroupRef.current;
+    if (!layerGroup) {
+      return;
+    }
+
+    layerGroup.clearLayers();
+    if (!visible || !radiusGroups.length) {
+      return;
+    }
+
+    let cancelled = false;
+    let frameId = 0;
+    let index = 0;
+    const chunkSize = 200;
+
+    const processChunk = () => {
+      if (cancelled) {
+        return;
+      }
+
+      const nextIndex = Math.min(index + chunkSize, radiusGroups.length);
+      for (; index < nextIndex; index += 1) {
+        const group = radiusGroups[index];
+        layerGroup.addLayer(
+          L.circle([group.latitude, group.longitude], {
+            radius: group.errorRadiusMeters,
+            color: group.color || "#cc3333",
+            opacity: 0.5,
+            weight: 1,
+            fillColor: group.color || "#cc3333",
+            fillOpacity: 0,
+            interactive: false,
+            pane: recordErrorRadiusPaneName
+          })
+        );
+      }
+
+      if (index < radiusGroups.length) {
+        frameId = window.requestAnimationFrame(processChunk);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(processChunk);
+
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frameId);
+      layerGroup.clearLayers();
+    };
+  }, [radiusGroups, visible]);
+
+  return null;
+}
+
 function LogoImage({ logo }) {
   const [hidden, setHidden] = useState(false);
 
@@ -3162,6 +3292,7 @@ function App() {
   const [selectedLayerFeature, setSelectedLayerFeature] = useState(null);
   const [colorBy, setColorBy] = useState("");
   const [pointDisplay, setPointDisplay] = useState("clustered");
+  const [showErrorRadius, setShowErrorRadius] = useState(() => isLegacyQueryFlagEnabled("maxerrorinmeters"));
   const [activeQuery, setActiveQuery] = useState(null);
   const [hasDrawnShapes, setHasDrawnShapes] = useState(false);
   const [statisticsColumnName, setStatisticsColumnName] = useState("");
@@ -3418,6 +3549,7 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy(getInitialColorField(nextDataset));
+    setShowErrorRadius(isLegacyQueryFlagEnabled("maxerrorinmeters"));
     setStatisticsSpatialMode("none");
     setStatisticsSpatialResults(emptySpatialStatisticsResult);
     setStatisticsSpatialResultKey("");
@@ -3451,6 +3583,7 @@ function App() {
     setHasDrawnShapes(false);
     setRenderProgress({ active: false, loaded: 0, total: 0 });
     setColorBy("");
+    setShowErrorRadius(false);
     setStatisticsSpatialMode("none");
     setStatisticsSpatialResults(emptySpatialStatisticsResult);
     setStatisticsSpatialResultKey("");
@@ -3817,6 +3950,7 @@ function App() {
             id: record.id,
             latitude,
             longitude,
+            errorRadiusMeters: getRecordErrorRadiusMeters(record),
             record,
             label: getRecordLabel(record, columns),
             color: colorMap.get(colorValue.toLowerCase()) || colorMap.get(colorValue) || defaultColor
@@ -3825,6 +3959,17 @@ function App() {
         .filter(Boolean),
     [records, columns, colorBy, colorMap, defaultColor]
   );
+  const errorRadiusForcedByQuery = isLegacyQueryFlagEnabled("maxerrorinmeters");
+  const errorRadiusDisabledByConfig =
+    Boolean(dataset) &&
+    isDatasetSettingHidden(dataset, "maxerrorinmeters") &&
+    !errorRadiusForcedByQuery;
+  const hasPositiveErrorRadius = useMemo(
+    () => markers.some((marker) => marker.errorRadiusMeters > 0),
+    [markers]
+  );
+  const canToggleErrorRadius = Boolean(dataset) && !errorRadiusDisabledByConfig && hasPositiveErrorRadius;
+  const shouldShowErrorRadiusLayer = canToggleErrorRadius && showErrorRadius && pointDisplay !== "none";
   const countymatchLookup = useMemo(
     () => (joinConfig?.method === "countymatch" ? buildCountymatchLookup(records, joinConfig) : null),
     [joinConfig, records]
@@ -4249,6 +4394,12 @@ function App() {
             enableQueries={Boolean(dataset)}
             onSaveGeoJson={handleSaveGeoJson}
           />
+          {dataset ? (
+            <MapErrorRadiusLayer
+              markers={markers}
+              visible={shouldShowErrorRadiusLayer}
+            />
+          ) : null}
           {dataset && pointDisplay !== "markers" ? (
             <MapViewport
               selectedMarker={selectedMarker}
@@ -4456,6 +4607,16 @@ function App() {
                       <option value="markers">Placemarks</option>
                     </select>
                   </label>
+                  {canToggleErrorRadius ? (
+                    <label className="checkbox-option">
+                      <input
+                        type="checkbox"
+                        checked={showErrorRadius}
+                        onChange={(event) => setShowErrorRadius(event.target.checked)}
+                      />{" "}
+                      Show Max Error Radius
+                    </label>
+                  ) : null}
                   {availableColorFields.length ? (
                     <label>
                       Color By

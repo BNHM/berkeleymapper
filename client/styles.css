@@ -264,6 +264,20 @@ a:hover {
   font-size: 12px;
 }
 
+.panel-section label.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.panel-section label.checkbox-option input {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+}
+
 .panel-actions {
   display: flex;
   gap: 6px;
@@ -660,6 +674,22 @@ a:hover {
 .leaflet-top.leaflet-right {
   top: var(--bm-control-top);
   right: 0;
+}
+
+.leaflet-control-layers label span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaflet-control-layers input.leaflet-control-layers-selector {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .bm-draw-controls .leaflet-draw-toolbar {
