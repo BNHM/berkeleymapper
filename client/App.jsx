@@ -20,7 +20,7 @@ L.Icon.Default.mergeOptions({
 
 const defaultCenter = [37.85, -122.27];
 const defaultZoom = 4;
-const macrostratBaseLayerName = "Geology (Macrostrat)";
+const macrostratLayerName = "Geology (Macrostrat)";
 const macrostratIdentifyUrl = "https://macrostrat.org/api/v2/geologic_units/map";
 const baseMapDefinitions = Object.freeze([
   {
@@ -52,15 +52,22 @@ const baseMapDefinitions = Object.freeze([
     name: "Imagery",
     attribution: "Tiles &copy; Esri",
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-  },
-  {
-    name: macrostratBaseLayerName,
-    attribution: '<a href="https://macrostrat.org">Macrostrat</a>',
-    maxNativeZoom: 18,
-    maxZoom: 19,
-    url: "https://tiles.macrostrat.org/carto/{z}/{x}/{y}.png"
   }
 ]);
+const macrostratOverlayDefinition = Object.freeze({
+  name: macrostratLayerName,
+  checked: false,
+  attribution: '<a href="https://macrostrat.org">Macrostrat</a>',
+  maxNativeZoom: 18,
+  maxZoom: 19,
+  opacity: 0.5,
+  url: "https://tiles.macrostrat.org/carto/{z}/{x}/{y}.png"
+});
+const {
+  name: macrostratOverlayName,
+  checked: macrostratOverlayChecked,
+  ...macrostratTileLayerProps
+} = macrostratOverlayDefinition;
 const arctosDemo = {
   tabfile: "/sampledata/arctostest.txt",
   configfile: "/sampledata/arctostest.xml"
@@ -2079,13 +2086,20 @@ function MapMacrostratIdentify({ layerName, defaultEnabled }) {
       }
     }
 
-    function handleBaseLayerChange(event) {
-      identifyEnabledRef.current = event.name === layerName;
-
-      if (!identifyEnabledRef.current) {
-        clearActiveRequest();
-        closeIdentifyPopup();
+    function handleOverlayAdd(event) {
+      if (event.name === layerName) {
+        identifyEnabledRef.current = true;
       }
+    }
+
+    function handleOverlayRemove(event) {
+      if (event.name !== layerName) {
+        return;
+      }
+
+      identifyEnabledRef.current = false;
+      clearActiveRequest();
+      closeIdentifyPopup();
     }
 
     function markDrawStart() {
@@ -2195,13 +2209,15 @@ function MapMacrostratIdentify({ layerName, defaultEnabled }) {
       L.Draw.Event.DELETESTOP
     ].filter(Boolean);
 
-    map.on("baselayerchange", handleBaseLayerChange);
+    map.on("overlayadd", handleOverlayAdd);
+    map.on("overlayremove", handleOverlayRemove);
     map.on("click", handleMapClick);
     drawStartEvents.forEach((eventName) => map.on(eventName, markDrawStart));
     drawStopEvents.forEach((eventName) => map.on(eventName, markDrawStop));
 
     return () => {
-      map.off("baselayerchange", handleBaseLayerChange);
+      map.off("overlayadd", handleOverlayAdd);
+      map.off("overlayremove", handleOverlayRemove);
       map.off("click", handleMapClick);
       drawStartEvents.forEach((eventName) => map.off(eventName, markDrawStart));
       drawStopEvents.forEach((eventName) => map.off(eventName, markDrawStop));
@@ -4351,10 +4367,13 @@ function App() {
                 <TileLayer {...tileLayerProps} />
               </LayersControl.BaseLayer>
             ))}
+            <LayersControl.Overlay checked={macrostratOverlayChecked} name={macrostratOverlayName}>
+              <TileLayer {...macrostratTileLayerProps} />
+            </LayersControl.Overlay>
           </LayersControl>
           <MapMacrostratIdentify
-            layerName={macrostratBaseLayerName}
-            defaultEnabled={baseMapDefinitions.some(({ name, checked }) => checked && name === macrostratBaseLayerName)}
+            layerName={macrostratLayerName}
+            defaultEnabled={macrostratOverlayChecked}
           />
           <MapInstanceBridge onMapReady={setMapInstance} />
           {!dataset ? <MapHomeViewport viewport={homeViewport} marker={homeMarker} /> : null}
